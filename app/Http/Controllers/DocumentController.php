@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Document;
 use App\Models\Employee;
 use App\Models\DocumentCategory;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,16 +16,22 @@ class DocumentController extends Controller
         $user = auth()->user();
         
         if ($user->role === 'superadmin') {
-            $documents = Document::with(['employee', 'category'])->latest()->get();
-            $employees = Employee::all();
-            $categories = DocumentCategory::all();
-            return view('documents.index', compact('documents', 'employees', 'categories'));
+            // Admin sees all employees as folders
+            $employees = Employee::withCount('documents')->get();
+            return view('documents.index', compact('employees'));
         } else {
-            // Regular employee only sees their own documents
+            // Pegawai sees their files in grid
             $employee = Employee::where('user_id', $user->id)->first();
-            $documents = Document::where('employee_id', $employee->id)->with('category')->latest()->get();
+            $documents = Document::where('employee_id', $employee?->id)->with('category')->latest()->get();
             return view('documents.pegawai-index', compact('documents'));
         }
+    }
+
+    public function showEmployeeFolders(Employee $employee)
+    {
+        $documents = Document::where('employee_id', $employee->id)->with('category')->latest()->get();
+        $categories = DocumentCategory::all();
+        return view('documents.show-folder', compact('employee', 'documents', 'categories'));
     }
 
     public function store(Request $request)
@@ -33,7 +40,7 @@ class DocumentController extends Controller
             'employee_id' => 'required|exists:employees,id',
             'document_category_id' => 'required|exists:document_categories,id',
             'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:pdf,xls,xlsx,doc,docx,csv|max:5120', // Max 5MB
+            'file' => 'required|file|mimes:pdf,xls,xlsx,doc,docx,csv|max:5120',
         ]);
 
         $path = $request->file('file')->store('documents');
@@ -51,14 +58,22 @@ class DocumentController extends Controller
 
     public function download(Document $document)
     {
-        // Security check
         $user = auth()->user();
         if ($user->role !== 'superadmin') {
             $employee = Employee::where('user_id', $user->id)->first();
-            if ($document->employee_id !== $employee->id) {
+            if ($document->employee_id !== $employee?->id) {
                 abort(403, 'Akses ditolak.');
             }
         }
+
+        // Log the download
+        AuditLog::create([
+            'user_id' => $user->id,
+            'document_id' => $document->id,
+            'activity' => 'download',
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
 
         return Storage::download($document->file_path, $document->title . '.' . pathinfo($document->file_path, PATHINFO_EXTENSION));
     }

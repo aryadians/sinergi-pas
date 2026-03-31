@@ -97,4 +97,33 @@
     });
 </script>
 @endif
+
+<!-- Import Modal -->
+<div id="importModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-300">
+        <div class="flex justify-between items-center mb-8">
+            <h3 class="text-xl font-bold text-[#1E2432]">Impor Pegawai</h3>
+            <button onclick="document.getElementById('importModal').classList.add('hidden')" class="text-[#8A8A8A] hover:text-[#1E2432]">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        
+        <form action="{{ route('employees.import.excel') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            @csrf
+            <div class="space-y-4">
+                <p class="text-xs text-[#8A8A8A] leading-relaxed italic">
+                    * Pastikan file Excel memiliki heading: <span class="font-bold">nip, nama_lengkap, email, jabatan, pangkat, password</span>.
+                </p>
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider">Pilih File Excel</label>
+                    <input type="file" name="file" required class="w-full px-5 py-3 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                Mulai Impor Data
+            </button>
+        </form>
+    </div>
+</div>
 @endsection

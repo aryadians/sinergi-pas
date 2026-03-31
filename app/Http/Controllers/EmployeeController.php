@@ -8,12 +8,23 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-use App\Exports\EmployeesExport;
+use App\Imports\EmployeesImport;
 use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class EmployeeController extends Controller
 {
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls,csv'
+        ]);
+
+        Excel::import(new EmployeesImport, $request->file('file'));
+
+        return back()->with('success', 'Data pegawai berhasil diimpor.');
+    }
+
     public function exportExcel()
     {
         return Excel::download(new EmployeesExport, 'daftar-pegawai.xlsx');

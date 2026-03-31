@@ -16,6 +16,14 @@
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FCFBF9; }
         .sidebar-item:hover { background-color: #F5F4F2; }
         .sidebar-item.active { background-color: #E85A4F; color: white; }
+        
+        /* 3D Transform for folders */
+        .folder-3d {
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .folder-3d:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
     </style>
 </head>
 <body class="antialiased">
@@ -32,31 +40,35 @@
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Dashboard</span>
                 </a>
+                
+                @if(auth()->user()->role === 'superadmin')
                 <a href="{{ route('employees.index') }}" class="sidebar-item {{ request()->routeIs('employees.*') ? 'active' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
                     <i data-lucide="users" class="w-5 h-5"></i>
                     <span class="text-sm font-medium">Data Pegawai</span>
                 </a>
+                @endif
+
                 <a href="{{ route('documents.index') }}" class="sidebar-item {{ request()->routeIs('documents.*') ? 'active' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
                     <i data-lucide="file-text" class="w-5 h-5"></i>
-                    <span class="text-sm font-medium">Dokumen & Slip Gaji</span>
+                    <span class="text-sm font-medium">Pusat Dokumen</span>
                 </a>
-                <a href="{{ route('employees.index') }}" class="sidebar-item {{ request()->routeIs('employees.*') ? 'active' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
-                    <i data-lucide="users" class="w-5 h-5"></i>
-                    <span class="text-sm font-medium">Data Pegawai</span>
-                </a>
-                <div class="hidden">
-                    <i data-lucide="clipboard-list" class="w-5 h-5"></i>
-                </div>
             </nav>
 
             <div class="pt-6 border-t border-[#EFEFEF]">
                 <div class="flex items-center gap-3 px-2 mb-6">
-                    <div class="w-10 h-10 bg-[#E85A4F] rounded-full flex items-center justify-center text-white font-bold">
-                        {{ substr(auth()->user()->name, 0, 1) }}
+                    @php
+                        $sidebarEmployee = \App\Models\Employee::where('user_id', auth()->id())->first();
+                    @endphp
+                    <div class="w-10 h-10 bg-[#E85A4F] rounded-xl flex items-center justify-center text-white font-bold overflow-hidden">
+                        @if($sidebarEmployee && $sidebarEmployee->photo)
+                            <img src="{{ Storage::url($sidebarEmployee->photo) }}" class="w-full h-full object-cover">
+                        @else
+                            {{ substr(auth()->user()->name, 0, 1) }}
+                        @endif
                     </div>
-                    <div>
-                        <p class="text-sm font-semibold text-[#1E2432]">{{ auth()->user()->name }}</p>
-                        <p class="text-xs text-[#8A8A8A]">{{ auth()->user()->email }}</p>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-semibold text-[#1E2432] truncate">{{ auth()->user()->name }}</p>
+                        <p class="text-xs text-[#8A8A8A] truncate">{{ auth()->user()->email }}</p>
                     </div>
                 </div>
                 <form action="{{ route('logout') }}" method="POST">
@@ -78,9 +90,9 @@
                     <button class="p-2 text-[#8A8A8A] hover:bg-[#F5F4F2] rounded-lg transition-all">
                         <i data-lucide="bell" class="w-5 h-5"></i>
                     </button>
-                    <button class="p-2 text-[#8A8A8A] hover:bg-[#F5F4F2] rounded-lg transition-all">
+                    <a href="{{ route('profile.index') }}" class="p-2 text-[#8A8A8A] hover:bg-[#F5F4F2] rounded-lg transition-all">
                         <i data-lucide="settings" class="w-5 h-5"></i>
-                    </button>
+                    </a>
                 </div>
             </header>
 
