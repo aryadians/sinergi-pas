@@ -18,7 +18,19 @@ class NewDocumentNotification extends Notification
 
     public function via($notifiable): array
     {
-        return ['database'];
+        return ['database', 'mail'];
+    }
+
+    public function toMail($notifiable)
+    {
+        return (new \Illuminate\Notifications\Messages\MailMessage)
+            ->subject('Dokumen Baru: ' . $this->document->title)
+            ->greeting('Halo, ' . $notifiable->name)
+            ->line('Dokumen baru telah diunggah ke akun Sinergi PAS Anda.')
+            ->line('Judul Dokumen: ' . $this->document->title)
+            ->line('Kategori: ' . $this->document->category->name)
+            ->action('Lihat Dokumen', url('/documents'))
+            ->line('Terima kasih telah menggunakan layanan kami!');
     }
 
     public function toArray($notifiable): array

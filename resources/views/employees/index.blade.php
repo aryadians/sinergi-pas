@@ -46,7 +46,7 @@
                 <tr class="hover:bg-[#FCFBF9] transition-all group">
                     <td class="px-8 py-6">
                         <a href="{{ route('employees.show', $employee->id) }}" class="flex items-center gap-4 group/item text-sm font-bold text-[#1E2432] hover:text-[#E85A4F] transition-all">
-                            <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-[#8A8A8A] group-hover/item:bg-[#E85A4F] group-hover/item:text-white transition-all overflow-hidden">
+                            <div class="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-[#8A8A8A] group-hover/item:bg-[#E85A4F] group-hover/item:text-white transition-all overflow-hidden text-xs">
                                 @if($employee->photo)
                                     <img src="{{ Storage::url($employee->photo) }}" class="w-full h-full object-cover">
                                 @else
@@ -118,7 +118,7 @@
     </div>
 </div>
 
-<!-- Import Modal (Tetap Ada) -->
+<!-- Import Modal -->
 <div id="importModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-300">
         <div class="flex justify-between items-center mb-8 text-[#1E2432]">
@@ -141,13 +141,12 @@
     </div>
 </div>
 
-@if(session('success'))
-<script>
-    Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#E85A4F' });
-</script>
-@endif
-@endsection
--[#8A8A8A] hover:text-[#1E2432]">
+<!-- Edit Modal -->
+<div id="editModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-2xl rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-300">
+        <div class="flex justify-between items-center mb-10">
+            <h3 class="text-2xl font-bold text-[#1E2432]">Edit Data Pegawai</h3>
+            <button onclick="document.getElementById('editModal').classList.add('hidden')" class="text-[#8A8A8A] hover:text-[#1E2432]">
                 <i data-lucide="x" class="w-8 h-8"></i>
             </button>
         </div>
@@ -194,6 +193,7 @@
         modal.classList.remove('hidden');
     }
 </script>
+
 @if(session('success'))
 <script>
     Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#E85A4F' });

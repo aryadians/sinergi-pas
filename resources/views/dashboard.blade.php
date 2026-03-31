@@ -86,34 +86,28 @@
 
     <!-- Quick Actions / Notifications -->
     <div class="bg-[#FCFBF9] p-10 rounded-[56px] border border-[#EFEFEF] shadow-inner">
-        <h3 class="text-lg font-black text-[#1E2432] mb-8 uppercase tracking-widest">Aksi Cepat</h3>
-        <div class="space-y-4">
-            <button onclick="window.location='{{ route('documents.index') }}'" class="w-full bg-white p-6 rounded-3xl border border-[#EFEFEF] hover:border-[#E85A4F] hover:shadow-xl transition-all flex items-center gap-4 group">
-                <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center text-[#E85A4F] group-hover:bg-[#E85A4F] group-hover:text-white transition-all">
-                    <i data-lucide="upload" class="w-5 h-5"></i>
-                </div>
-                <div class="text-left">
-                    <p class="text-sm font-black text-[#1E2432]">Unggah File</p>
-                    <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-widest mt-0.5">Pusat Dokumen</p>
-                </div>
-            </button>
-            
-            <button onclick="window.location='{{ route('employees.index') }}'" class="w-full bg-white p-6 rounded-3xl border border-[#EFEFEF] hover:border-[#1E2432] hover:shadow-xl transition-all flex items-center gap-4 group">
-                <div class="w-12 h-12 bg-gray-100 rounded-2xl flex items-center justify-center text-[#1E2432] group-hover:bg-[#1E2432] group-hover:text-white transition-all">
-                    <i data-lucide="user-plus" class="w-5 h-5"></i>
-                </div>
-                <div class="text-left">
-                    <p class="text-sm font-black text-[#1E2432]">Tambah Pegawai</p>
-                    <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-widest mt-0.5">Manajemen SDM</p>
-                </div>
-            </button>
+        <h3 class="text-lg font-black text-[#1E2432] mb-8 uppercase tracking-widest">Pengumuman</h3>
+        <div class="bg-white p-8 rounded-[32px] border-l-8 border-[#E85A4F] shadow-sm mb-8">
+            <p class="text-sm font-bold text-[#1E2432] leading-relaxed">
+                {{ \App\Models\Setting::getValue('announcement', 'Belum ada pengumuman terbaru hari ini.') }}
+            </p>
+            <p class="text-[10px] font-black text-[#ABABAB] uppercase tracking-widest mt-4">Pesan Admin</p>
+        </div>
 
-            <div class="pt-6 mt-6 border-t border-[#EFEFEF]">
-                <p class="text-[10px] font-black text-[#ABABAB] uppercase tracking-widest mb-4">Pengumuman Terbaru</p>
-                <div class="p-4 bg-white/50 rounded-2xl text-[11px] font-bold text-[#8A8A8A] leading-relaxed italic border border-[#EFEFEF]">
-                    "Sistem sedang dalam optimalisasi data periodik. Harap pastikan seluruh SKP telah terunggah."
+        <h3 class="text-lg font-black text-[#1E2432] mb-8 uppercase tracking-widest">Aktivitas Terbaru</h3>
+        <div class="space-y-6">
+            @php
+                $recentLogs = \App\Models\AuditLog::with(['user', 'document'])->latest()->take(3)->get();
+            @endphp
+            @foreach($recentLogs as $log)
+            <div class="flex items-start gap-4">
+                <div class="w-2 h-2 bg-[#E85A4F] rounded-full mt-1.5"></div>
+                <div>
+                    <p class="text-xs font-bold text-[#1E2432]">{{ $log->user->name }} mengunduh {{ $log->document->title ?? 'file' }}</p>
+                    <p class="text-[10px] text-[#ABABAB] font-bold mt-0.5">{{ $log->created_at->diffForHumans() }}</p>
                 </div>
             </div>
+            @endforeach
         </div>
     </div>
 </div>

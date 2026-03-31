@@ -10,6 +10,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="icon" type="image/png" href="{{ asset('logo1.png') }}">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
@@ -90,6 +91,10 @@
                 <a href="{{ route('audit.index') }}" class="sidebar-item {{ request()->routeIs('audit.*') ? 'active' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
                     <i data-lucide="shield-check" class="w-5 h-5"></i>
                     <span class="text-sm font-medium">Laporan Audit</span>
+                </a>
+                <a href="{{ route('settings.index') }}" class="sidebar-item {{ request()->routeIs('settings.*') ? 'active' : 'text-[#8A8A8A]' }} flex items-center gap-3 px-4 py-3 rounded-xl transition-all">
+                    <i data-lucide="settings-2" class="w-5 h-5"></i>
+                    <span class="text-sm font-medium">Pengaturan</span>
                 </a>
                 @endif
             </nav>

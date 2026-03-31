@@ -35,4 +35,10 @@ Route::middleware('auth')->group(function () {
     // Profile Settings
     Route::get('/profile', [\App\Http\Controllers\ProfileController::class, 'index'])->name('profile.index');
     Route::post('/profile', [\App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+
+    // System Settings (Superadmin)
+    Route::middleware('can:superadmin')->group(function () {
+        Route::get('/settings', [\App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
+        Route::post('/settings', [\App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
+    });
 });
