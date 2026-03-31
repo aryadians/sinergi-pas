@@ -44,29 +44,29 @@
         </div>
     </div>
 
-    <div class="bg-white p-8 rounded-[48px] border border-[#EFEFEF] shadow-sm flex flex-col justify-between h-56 transform hover:-translate-y-2 transition-all duration-500">
-        <div class="flex justify-between items-center">
-            <div class="w-12 h-12 bg-green-50 rounded-2xl flex items-center justify-center">
-                <i data-lucide="shield-check" class="w-6 h-6 text-green-600"></i>
+    <div class="bg-white p-8 rounded-[48px] border border-[#EFEFEF] shadow-sm flex flex-col justify-between h-56 transform hover:-translate-y-2 transition-all duration-500 text-[#1E2432]">
+        <div class="flex justify-between items-start">
+            <div class="w-12 h-12 bg-orange-50 rounded-2xl flex items-center justify-center">
+                <i data-lucide="upload-cloud" class="w-6 h-6 text-orange-600"></i>
             </div>
-            <span class="text-xs font-black text-[#8A8A8A] uppercase tracking-widest">Sistem</span>
+            <span class="text-xs font-black text-[#8A8A8A] uppercase tracking-widest">Hari Ini</span>
         </div>
         <div>
-            <h3 class="text-2xl font-black text-[#1E2432]">Terverifikasi</h3>
-            <p class="text-[10px] font-black text-[#ABABAB] mt-1 uppercase tracking-widest leading-relaxed text-green-600">Keamanan Enkripsi Aktif</p>
+            <h3 class="text-4xl font-black">{{ $docsToday }}</h3>
+            <p class="text-[10px] font-black text-[#8A8A8A] mt-1 uppercase tracking-widest leading-relaxed">Unggahan Dokumen Baru</p>
         </div>
     </div>
 
-    <div class="bg-white p-8 rounded-[48px] border border-[#EFEFEF] shadow-sm flex flex-col justify-between h-56 transform hover:-translate-y-2 transition-all duration-500">
-        <div class="flex justify-between items-center">
-            <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
-                <i data-lucide="activity" class="w-6 h-6 text-blue-600"></i>
+    <div class="bg-white p-8 rounded-[48px] border border-[#EFEFEF] shadow-sm flex flex-col justify-between h-56 transform hover:-translate-y-2 transition-all duration-500 text-[#1E2432]">
+        <div class="flex justify-between items-start">
+            <div class="w-12 h-12 bg-red-50 rounded-2xl flex items-center justify-center">
+                <i data-lucide="alert-circle" class="w-6 h-6 text-red-600"></i>
             </div>
-            <span class="text-xs font-black text-[#8A8A8A] uppercase tracking-widest">Uptime</span>
+            <span class="text-xs font-black text-[#8A8A8A] uppercase tracking-widest">Atensi</span>
         </div>
         <div>
-            <h3 class="text-2xl font-black text-[#1E2432]">99.9%</h3>
-            <p class="text-[10px] font-black text-[#ABABAB] mt-1 uppercase tracking-widest leading-relaxed">Server Responsif</p>
+            <h3 class="text-4xl font-black text-red-600">{{ $employeesWithoutSkp }}</h3>
+            <p class="text-[10px] font-black text-[#8A8A8A] mt-1 uppercase tracking-widest leading-relaxed">Pegawai Belum Upload SKP</p>
         </div>
     </div>
 </div>

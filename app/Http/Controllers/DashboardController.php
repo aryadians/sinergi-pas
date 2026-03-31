@@ -16,6 +16,15 @@ class DashboardController extends Controller
         $totalEmployees = Employee::count();
         $totalDocuments = Document::count();
         
+        // Fitur Baru: Dokumen hari ini
+        $docsToday = Document::whereDate('created_at', now())->count();
+        
+        // Fitur Baru: Pegawai tanpa dokumen SKP
+        $skpCategoryId = \App\Models\DocumentCategory::where('slug', 'skp')->first()?->id;
+        $employeesWithoutSkp = Employee::whereDoesntHave('documents', function($query) use ($skpCategoryId) {
+            $query->where('document_category_id', $skpCategoryId);
+        })->count();
+
         // Statistik khusus untuk pegawai yang login
         $myDocumentsCount = 0;
         if ($user->role === 'pegawai') {
