@@ -14,7 +14,8 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
         $employee = Employee::where('user_id', $user->id)->first();
-        return view('profile.index', compact('user', 'employee'));
+        $logs = \App\Models\AuditLog::where('user_id', $user->id)->with('document')->latest()->take(10)->get();
+        return view('profile.index', compact('user', 'employee', 'logs'));
     }
 
     public function update(Request $request)

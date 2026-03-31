@@ -104,6 +104,41 @@
                     </div>
                 </div>
 
+                <!-- Section: My Activity -->
+                <div class="mt-12 pt-12 border-t border-[#EFEFEF]">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-8 h-8 bg-[#FCFBF9] rounded-xl flex items-center justify-center border border-[#EFEFEF]">
+                            <i data-lucide="history" class="w-4 h-4 text-[#1E2432]"></i>
+                        </div>
+                        <h4 class="text-sm font-black text-[#1E2432] uppercase tracking-widest">Aktivitas Saya (10 Terakhir)</h4>
+                    </div>
+
+                    <div class="bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF] overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-white/50">
+                                    <th class="px-8 py-4 text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Aktivitas</th>
+                                    <th class="px-8 py-4 text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Dokumen</th>
+                                    <th class="px-8 py-4 text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Waktu</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-[#EFEFEF]">
+                                @forelse($logs as $log)
+                                <tr>
+                                    <td class="px-8 py-4 text-xs font-bold text-[#1E2432] uppercase tracking-tighter">{{ $log->activity }}</td>
+                                    <td class="px-8 py-4 text-xs text-[#8A8A8A]">{{ $log->document->title ?? 'N/A' }}</td>
+                                    <td class="px-8 py-4 text-xs font-bold text-[#ABABAB]">{{ $log->created_at->diffForHumans() }}</td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="3" class="px-8 py-10 text-center text-[#ABABAB] italic text-xs">Belum ada riwayat aktivitas.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="mt-12 pt-8 border-t border-[#EFEFEF] flex flex-col md:flex-row justify-between items-center gap-6">
                     <p class="text-xs text-[#8A8A8A] font-bold uppercase tracking-widest">Terakhir diperbarui: {{ $user->updated_at->format('d M Y, H:i') }}</p>
                     <button type="submit" class="w-full md:w-auto bg-[#1E2432] text-white px-12 py-5 rounded-[24px] font-black hover:bg-[#E85A4F] transition-all shadow-2xl hover:shadow-red-200 active:scale-[0.98] flex items-center justify-center gap-3">

@@ -52,13 +52,33 @@ class DocumentController extends Controller
 
         $path = $request->file('file')->store('documents');
 
-        $doc = Document::create([
-            'employee_id' => $request->employee_id,
-            'document_category_id' => $request->document_category_id,
-            'title' => $request->title,
-            'file_path' => $path,
-            'description' => $request->description,
-        ]);
+        // Check for existing document with same title for this employee
+        $existingDoc = Document::where('employee_id', $request->employee_id)
+            ->where('title', $request->title)
+            ->first();
+
+        if ($existingDoc) {
+            // Archive old version
+            $latestVersionNumber = \App\Models\DocumentVersion::where('document_id', $existingDoc->id)->max('version_number') ?? 0;
+            
+            \App\Models\DocumentVersion::create([
+                'document_id' => $existingDoc->id,
+                'file_path' => $existingDoc->file_path,
+                'version_number' => $latestVersionNumber + 1,
+            ]);
+
+            // Update existing with new file
+            $existingDoc->update(['file_path' => $path]);
+            $doc = $existingDoc;
+        } else {
+            $doc = Document::create([
+                'employee_id' => $request->employee_id,
+                'document_category_id' => $request->document_category_id,
+                'title' => $request->title,
+                'file_path' => $path,
+                'description' => $request->description,
+            ]);
+        }
 
         // Trigger Notification
         $doc->employee->user->notify(new \App\Notifications\NewDocumentNotification($doc));
