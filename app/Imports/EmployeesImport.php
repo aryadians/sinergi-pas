@@ -5,44 +5,49 @@ namespace App\Imports;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
-use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\ToModel;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 
-class EmployeesImport implements ToCollection, WithHeadingRow
+class EmployeesImport implements ToModel, WithHeadingRow, WithBatchInserts, WithChunkReading
 {
-    public function collection(Collection $rows)
+    public function model(array $row)
     {
-        DB::transaction(function () use ($rows) {
-            foreach ($rows as $row) {
-                $nip = $row['nip'] ?? $row['NIP'] ?? null;
-                $email = $row['email'] ?? $row['Email'] ?? null;
-                $nama = $row['nama_lengkap'] ?? $row['Nama Lengkap'] ?? $row['nama'] ?? null;
-                $jabatan = $row['jabatan'] ?? $row['Jabatan'] ?? null;
+        $nip = $row['nip'] ?? $row['NIP'] ?? null;
+        $email = $row['email'] ?? $row['Email'] ?? null;
+        $nama = $row['nama_lengkap'] ?? $row['Nama Lengkap'] ?? $row['nama'] ?? null;
+        $jabatan = $row['jabatan'] ?? $row['Jabatan'] ?? null;
 
-                if (empty($nip) || empty($email)) continue;
+        if (empty($nip) || empty($email)) return null;
 
-                // Create or Update User
-                $user = User::updateOrCreate(
-                    ['email' => $email],
-                    [
-                        'name' => $nama ?? 'Pegawai Baru',
-                        'password' => Hash::make('password'),
-                        'role' => 'pegawai'
-                    ]
-                );
+        // Use updateOrCreate for performance and stability
+        $user = User::updateOrCreate(
+            ['email' => $email],
+            [
+                'name' => $nama ?? 'Pegawai Baru',
+                'password' => Hash::make($row['password'] ?? 'password'),
+                'role' => 'pegawai'
+            ]
+        );
 
-                // Create or Update Employee
-                Employee::updateOrCreate(
-                    ['nip' => $nip],
-                    [
-                        'user_id' => $user->id,
-                        'full_name' => $nama ?? 'Pegawai Baru',
-                        'position' => $jabatan ?? 'Staf'
-                    ]
-                );
-            }
-        });
+        return Employee::updateOrCreate(
+            ['nip' => $nip],
+            [
+                'user_id' => $user->id,
+                'full_name' => $nama ?? 'Pegawai Baru',
+                'position' => $jabatan ?? 'Staf'
+            ]
+        );
+    }
+
+    public function batchSize(): int
+    {
+        return 100;
+    }
+
+    public function chunkSize(): int
+    {
+        return 100;
     }
 }

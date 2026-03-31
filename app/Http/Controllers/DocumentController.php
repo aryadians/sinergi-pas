@@ -25,7 +25,7 @@ class DocumentController extends Controller
             }
 
             $employees = $query->get();
-            $categories = DocumentCategory::all(); // For admin category management if needed here
+            $categories = DocumentCategory::all();
             return view('documents.index', compact('employees', 'categories'));
         } else {
             $employee = Employee::where('user_id', $user->id)->first();
@@ -49,7 +49,7 @@ class DocumentController extends Controller
         $request->validate([
             'document_category_id' => 'required|exists:document_categories,id',
             'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:pdf,xls,xlsx,doc,docx,csv|max:5120',
+            'file' => 'required|file|max:10240',
         ]);
 
         if ($user->role === 'superadmin') {
@@ -128,11 +128,10 @@ class DocumentController extends Controller
         return back()->with('success', 'Dokumen berhasil dihapus.');
     }
 
-    // New Category CRUD
     public function storeCategory(Request $request)
     {
         $request->validate(['name' => 'required|string|unique:document_categories,name']);
-        DocumentCategory::create([
+        \App\Models\DocumentCategory::create([
             'name' => $request->name,
             'slug' => \Illuminate\Support\Str::slug($request->name),
         ]);

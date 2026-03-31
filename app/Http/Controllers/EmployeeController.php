@@ -95,6 +95,7 @@ class EmployeeController extends Controller
 
     public function importExcel(Request $request)
     {
+        set_time_limit(300); // 5 minutes
         $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
         Excel::import(new EmployeesImport, $request->file('file'));
         return back()->with('success', 'Data pegawai berhasil diimpor.');
