@@ -27,7 +27,7 @@ class EmployeeController extends Controller
             });
         }
 
-        $employees = $query->latest()->get();
+        $employees = $query->latest()->paginate(10);
         return view('employees.index', compact('employees'));
     }
 

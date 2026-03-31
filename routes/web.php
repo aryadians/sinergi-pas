@@ -12,6 +12,26 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [\App\Http\Controllers\ForgotPasswordController::class, 'reset'])->name('password.update');
 });
 
+// PWA Manifest
+Route::get('/manifest.json', function() {
+    return response()->json([
+        "name" => "Sinergi PAS Jombang",
+        "short_name" => "SinergiPAS",
+        "start_url" => "/",
+        "display" => "standalone",
+        "background_color" => "#FCFBF9",
+        "theme_color" => "#E85A4F",
+        "icons" => [
+            [
+                "src" => asset('logo1.png'),
+                "sizes" => "512x512",
+                "type" => "image/png",
+                "purpose" => "any maskable"
+            ]
+        ]
+    ]);
+});
+
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

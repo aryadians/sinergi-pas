@@ -7,13 +7,27 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <!-- Greeting Section -->
-<div class="mb-12">
-    @php
-        $hour = date('H');
-        $greeting = $hour < 12 ? 'Selamat Pagi' : ($hour < 17 ? 'Selamat Siang' : 'Selamat Sore');
-    @endphp
-    <h2 class="text-3xl font-black text-[#1E2432] tracking-tight">{{ $greeting }}, {{ auth()->user()->name }}!</h2>
-    <p class="text-[#8A8A8A] font-bold mt-1 uppercase tracking-[0.2em] text-xs">Pantau aktivitas dan data kepegawaian Anda hari ini.</p>
+<div class="mb-12 flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+    <div>
+        @php
+            $hour = date('H');
+            $greeting = $hour < 12 ? 'Selamat Pagi' : ($hour < 17 ? 'Selamat Siang' : 'Selamat Sore');
+        @endphp
+        <h2 class="text-3xl font-black text-[#1E2432] tracking-tight">{{ $greeting }}, {{ auth()->user()->name }}!</h2>
+        <p class="text-[#8A8A8A] font-bold mt-1 uppercase tracking-[0.2em] text-xs">Pantau aktivitas dan data kepegawaian Anda hari ini.</p>
+    </div>
+
+    @if(auth()->user()->role === 'superadmin')
+    <form action="{{ route('dashboard') }}" method="GET" class="w-full md:w-auto no-loader">
+        <select name="work_unit_id" onchange="this.form.submit()" 
+            class="w-full md:w-64 px-6 py-3.5 rounded-2xl border border-[#EFEFEF] bg-white text-sm font-bold text-[#1E2432] outline-none focus:ring-4 focus:ring-red-500/5 transition-all shadow-sm cursor-pointer appearance-none">
+            <option value="">Seluruh Unit Kerja</option>
+            @foreach($workUnits as $unit)
+                <option value="{{ $unit->id }}" {{ request('work_unit_id') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
+            @endforeach
+        </select>
+    </form>
+    @endif
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">

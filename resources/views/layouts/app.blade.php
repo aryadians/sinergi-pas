@@ -11,6 +11,8 @@
     <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="icon" type="image/png" href="{{ asset('logo1.png') }}">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#E85A4F">
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
