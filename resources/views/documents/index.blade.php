@@ -16,6 +16,33 @@
         <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari folder pegawai..." 
             class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-[#EFEFEF] bg-white text-xs outline-none focus:ring-2 focus:ring-[#E85A4F] transition-all shadow-sm">
     </form>
+
+    <button onclick="document.getElementById('categoryModal').classList.remove('hidden')" class="bg-[#1E2432] text-white px-6 py-2.5 rounded-xl text-xs font-black hover:bg-[#343b4d] transition-all flex items-center gap-2 shadow-lg active:scale-95">
+        <i data-lucide="folder-plus" class="w-4 h-4"></i>
+        Tambah Kategori
+    </button>
+</div>
+
+<!-- Category Modal -->
+<div id="categoryModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-md">
+    <div class="bg-white w-full max-w-md rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-300">
+        <div class="flex justify-between items-center mb-8">
+            <h3 class="text-xl font-black text-[#1E2432]">Kategori Dokumen Baru</h3>
+            <button onclick="document.getElementById('categoryModal').classList.add('hidden')" class="text-[#8A8A8A]">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        <form action="{{ route('documents.category.store') }}" method="POST" class="space-y-6">
+            @csrf
+            <div class="space-y-2">
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-widest ml-1">Nama Kategori</label>
+                <input type="text" name="name" required placeholder="Contoh: SK Kenaikan Gaji" class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5">
+            </div>
+            <button type="submit" class="w-full bg-[#E85A4F] text-white py-4 rounded-[24px] font-black hover:bg-[#d44d42] transition-all shadow-xl">
+                Simpan Kategori
+            </button>
+        </form>
+    </div>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-4 gap-8">

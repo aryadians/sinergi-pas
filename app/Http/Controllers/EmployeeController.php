@@ -33,7 +33,6 @@ class EmployeeController extends Controller
 
     public function show(Employee $employee)
     {
-        // Redirect to employee folder in documents
         return redirect()->route('documents.employee', $employee->id);
     }
 
@@ -44,12 +43,13 @@ class EmployeeController extends Controller
             'full_name' => 'required|string|max:255',
             'position' => 'required|string|max:255',
             'email' => 'required|email|unique:users,email',
+            'password' => 'required|min:8',
         ]);
 
         $user = User::create([
             'name' => $request->full_name,
             'email' => $request->email,
-            'password' => Hash::make('password'),
+            'password' => Hash::make($request->password),
             'role' => 'pegawai',
         ]);
 
@@ -61,6 +61,36 @@ class EmployeeController extends Controller
         ]);
 
         return back()->with('success', 'Pegawai berhasil ditambahkan.');
+    }
+
+    public function update(Request $request, Employee $employee)
+    {
+        $request->validate([
+            'nip' => 'required|unique:employees,nip,' . $employee->id,
+            'full_name' => 'required|string|max:255',
+            'position' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $employee->user_id,
+            'password' => 'nullable|min:8',
+        ]);
+
+        $userData = [
+            'name' => $request->full_name,
+            'email' => $request->email,
+        ];
+
+        if ($request->filled('password')) {
+            $userData['password'] = Hash::make($request->password);
+        }
+
+        $employee->user->update($userData);
+
+        $employee->update([
+            'nip' => $request->nip,
+            'full_name' => $request->full_name,
+            'position' => $request->position,
+        ]);
+
+        return back()->with('success', 'Data pegawai berhasil diperbarui.');
     }
 
     public function importExcel(Request $request)
@@ -76,29 +106,6 @@ class EmployeeController extends Controller
         $employees = Employee::all();
         $pdf = Pdf::loadView('employees.pdf', compact('employees'));
         return $pdf->download('daftar-pegawai.pdf');
-    }
-
-    public function update(Request $request, Employee $employee)
-    {
-        $request->validate([
-            'nip' => 'required|unique:employees,nip,' . $employee->id,
-            'full_name' => 'required|string|max:255',
-            'position' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $employee->user_id,
-        ]);
-
-        $employee->user->update([
-            'name' => $request->full_name,
-            'email' => $request->email,
-        ]);
-
-        $employee->update([
-            'nip' => $request->nip,
-            'full_name' => $request->full_name,
-            'position' => $request->position,
-        ]);
-
-        return back()->with('success', 'Data pegawai berhasil diperbarui.');
     }
 
     public function destroy(Employee $employee)

@@ -25,12 +25,13 @@ class DocumentController extends Controller
             }
 
             $employees = $query->get();
-            return view('documents.index', compact('employees'));
+            $categories = DocumentCategory::all(); // For admin category management if needed here
+            return view('documents.index', compact('employees', 'categories'));
         } else {
-            // Pegawai sees their files in grid
             $employee = Employee::where('user_id', $user->id)->first();
             $documents = Document::where('employee_id', $employee?->id)->with('category')->latest()->get();
-            return view('documents.pegawai-index', compact('documents'));
+            $categories = DocumentCategory::all();
+            return view('documents.pegawai-index', compact('documents', 'categories', 'employee'));
         }
     }
 
@@ -43,36 +44,40 @@ class DocumentController extends Controller
 
     public function store(Request $request)
     {
+        $user = auth()->user();
+        
         $request->validate([
-            'employee_id' => 'required|exists:employees,id',
             'document_category_id' => 'required|exists:document_categories,id',
             'title' => 'required|string|max:255',
             'file' => 'required|file|mimes:pdf,xls,xlsx,doc,docx,csv|max:5120',
         ]);
 
+        if ($user->role === 'superadmin') {
+            $request->validate(['employee_id' => 'required|exists:employees,id']);
+            $employeeId = $request->employee_id;
+        } else {
+            $employee = Employee::where('user_id', $user->id)->first();
+            $employeeId = $employee->id;
+        }
+
         $path = $request->file('file')->store('documents');
 
-        // Check for existing document with same title for this employee
-        $existingDoc = Document::where('employee_id', $request->employee_id)
+        $existingDoc = Document::where('employee_id', $employeeId)
             ->where('title', $request->title)
             ->first();
 
         if ($existingDoc) {
-            // Archive old version
             $latestVersionNumber = \App\Models\DocumentVersion::where('document_id', $existingDoc->id)->max('version_number') ?? 0;
-            
             \App\Models\DocumentVersion::create([
                 'document_id' => $existingDoc->id,
                 'file_path' => $existingDoc->file_path,
                 'version_number' => $latestVersionNumber + 1,
             ]);
-
-            // Update existing with new file
             $existingDoc->update(['file_path' => $path]);
             $doc = $existingDoc;
         } else {
             $doc = Document::create([
-                'employee_id' => $request->employee_id,
+                'employee_id' => $employeeId,
                 'document_category_id' => $request->document_category_id,
                 'title' => $request->title,
                 'file_path' => $path,
@@ -80,8 +85,9 @@ class DocumentController extends Controller
             ]);
         }
 
-        // Trigger Notification
-        $doc->employee->user->notify(new \App\Notifications\NewDocumentNotification($doc));
+        if ($user->role === 'superadmin') {
+            $doc->employee->user->notify(new \App\Notifications\NewDocumentNotification($doc));
+        }
 
         return back()->with('success', 'Dokumen berhasil diunggah.');
     }
@@ -96,7 +102,6 @@ class DocumentController extends Controller
             }
         }
 
-        // Log the download
         AuditLog::create([
             'user_id' => $user->id,
             'document_id' => $document->id,
@@ -110,8 +115,27 @@ class DocumentController extends Controller
 
     public function destroy(Document $document)
     {
+        $user = auth()->user();
+        if ($user->role !== 'superadmin') {
+            $employee = Employee::where('user_id', $user->id)->first();
+            if ($document->employee_id !== $employee?->id) {
+                abort(403, 'Akses ditolak.');
+            }
+        }
+
         Storage::delete($document->file_path);
         $document->delete();
         return back()->with('success', 'Dokumen berhasil dihapus.');
+    }
+
+    // New Category CRUD
+    public function storeCategory(Request $request)
+    {
+        $request->validate(['name' => 'required|string|unique:document_categories,name']);
+        DocumentCategory::create([
+            'name' => $request->name,
+            'slug' => \Illuminate\Support\Str::slug($request->name),
+        ]);
+        return back()->with('success', 'Kategori baru ditambahkan.');
     }
 }

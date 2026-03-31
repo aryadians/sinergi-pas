@@ -119,6 +119,10 @@
                 <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Jabatan</label>
                 <input type="text" name="position" required placeholder="Jabatan" class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
             </div>
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Kata Sandi Akun</label>
+                <input type="password" name="password" required placeholder="Minimal 8 Karakter" class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
+            </div>
             <div class="md:col-span-2 pt-4">
                 <button type="submit" class="w-full bg-[#E85A4F] text-white py-5 rounded-[24px] font-bold hover:bg-[#d44d42] transition-all shadow-xl shadow-red-200 active:scale-[0.98]">
                     Daftarkan Pegawai Sekarang
@@ -210,3 +214,4 @@
 </script>
 @endif
 @endsection
+ion

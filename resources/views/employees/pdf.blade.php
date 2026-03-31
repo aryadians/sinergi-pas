@@ -54,7 +54,7 @@
         <div class="signature">
             <p style="font-size: 10px; margin-bottom: 10px;">Dicetak secara digital pada: {{ date('d/m/Y H:i') }}</p>
             <div class="qr-box">
-                <img src="data:image/png;base64, {!! base64_encode(QrCode::format('png')->size(80)->generate('DocID: ' . md5(time()) . ' - Sinergi PAS Jombang')) !!} ">
+                {!! QrCode::size(80)->generate('DocID: ' . md5(time()) . ' - Sinergi PAS Jombang') !!}
             </div>
             <p><strong>ADMINISTRASI KEPEGAWAIAN</strong></p>
             <p style="font-size: 9px; color: #888; margin-top: 5px;">Sinergi PAS Digital Verification</p>
