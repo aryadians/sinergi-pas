@@ -78,6 +78,29 @@ class EmployeeController extends Controller
         return $pdf->download('daftar-pegawai.pdf');
     }
 
+    public function update(Request $request, Employee $employee)
+    {
+        $request->validate([
+            'nip' => 'required|unique:employees,nip,' . $employee->id,
+            'full_name' => 'required|string|max:255',
+            'position' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email,' . $employee->user_id,
+        ]);
+
+        $employee->user->update([
+            'name' => $request->full_name,
+            'email' => $request->email,
+        ]);
+
+        $employee->update([
+            'nip' => $request->nip,
+            'full_name' => $request->full_name,
+            'position' => $request->position,
+        ]);
+
+        return back()->with('success', 'Data pegawai berhasil diperbarui.');
+    }
+
     public function destroy(Employee $employee)
     {
         $employee->user->delete();

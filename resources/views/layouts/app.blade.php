@@ -64,8 +64,8 @@
         <!-- Sidebar -->
         <aside class="w-64 bg-white border-r border-[#EFEFEF] flex flex-col px-6 py-8 fixed h-full">
             <div class="flex items-center gap-3 mb-12">
-                <div class="w-8 h-8 bg-[#E85A4F] rounded-lg"></div>
-                <h1 class="text-lg font-bold text-[#1E2432]">SINERGI PAS</h1>
+                <img src="{{ asset('logo1.png') }}" class="w-10 h-10 object-contain">
+                <h1 class="text-lg font-black text-[#1E2432] tracking-tighter">SINERGI PAS</h1>
             </div>
 
             <nav class="flex-1 space-y-2">

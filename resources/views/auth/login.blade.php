@@ -33,9 +33,7 @@
     <div class="w-full max-w-[480px] relative z-10">
         <!-- Logo -->
         <div class="text-center mb-12">
-            <div class="w-16 h-16 bg-[#E85A4F] rounded-[24px] mx-auto mb-6 flex items-center justify-center shadow-2xl shadow-red-200 rotate-12 hover:rotate-0 transition-transform duration-500">
-                <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
-            </div>
+            <img src="{{ asset('logo1.png') }}" class="w-20 h-20 mx-auto mb-6 drop-shadow-2xl animate-float">
             <h1 class="text-3xl font-extrabold text-[#1E2432] tracking-tight">SINERGI PAS</h1>
             <p class="text-[#8A8A8A] font-medium mt-2">Sistem Database Kepegawaian Lapas Jombang</p>
         </div>

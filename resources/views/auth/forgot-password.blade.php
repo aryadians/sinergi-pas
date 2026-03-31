@@ -10,7 +10,7 @@
 <body class="antialiased bg-[#FCFBF9] flex items-center justify-center min-h-screen p-6 font-['Plus_Jakarta_Sans']">
     <div class="w-full max-w-md">
         <div class="text-center mb-10">
-            <div class="w-12 h-12 bg-[#E85A4F] rounded-xl mx-auto mb-4 shadow-lg shadow-red-200"></div>
+            <img src="{{ asset('logo1.png') }}" class="w-16 h-16 mx-auto mb-4 drop-shadow-xl">
             <h1 class="text-2xl font-bold text-[#1E2432]">RESET PASSWORD</h1>
         </div>
 

@@ -60,6 +60,9 @@
                     <td class="px-8 py-6 text-sm text-[#8A8A8A] font-medium">{{ $employee->position }}</td>
                     <td class="px-8 py-6 text-sm text-center">
                         <div class="flex justify-center gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                            <button onclick="openEditModal({{ $employee->toJson() }}, '{{ $employee->user->email }}')" class="p-2.5 text-blue-500 hover:bg-blue-50 rounded-xl transition-all">
+                                <i data-lucide="pencil" class="w-4 h-4"></i>
+                            </button>
                             <form action="{{ route('employees.destroy', $employee->id) }}" method="POST" onsubmit="return confirm('Hapus pegawai ini?')">
                                 @csrf @method('DELETE')
                                 <button type="submit" class="p-2.5 text-[#E85A4F] hover:bg-red-50 rounded-xl transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
@@ -138,6 +141,59 @@
     </div>
 </div>
 
+@if(session('success'))
+<script>
+    Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#E85A4F' });
+</script>
+@endif
+@endsection
+-[#8A8A8A] hover:text-[#1E2432]">
+                <i data-lucide="x" class="w-8 h-8"></i>
+            </button>
+        </div>
+        
+        <form id="editForm" method="POST" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            @csrf
+            @method('PUT')
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Nama Lengkap</label>
+                <input type="text" name="full_name" id="edit_full_name" required class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">NIP</label>
+                <input type="text" name="nip" id="edit_nip" required class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Email Akun</label>
+                <input type="email" name="email" id="edit_email" required class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
+            </div>
+            <div class="space-y-2">
+                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider pl-1">Jabatan</label>
+                <input type="text" name="position" id="edit_position" required class="w-full px-5 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
+            </div>
+            <div class="md:col-span-2 pt-4">
+                <button type="submit" class="w-full bg-[#1E2432] text-white py-5 rounded-[24px] font-bold hover:bg-[#343b4d] transition-all shadow-xl active:scale-[0.98]">
+                    Perbarui Data Pegawai
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openEditModal(employee, email) {
+        const modal = document.getElementById('editModal');
+        const form = document.getElementById('editForm');
+        
+        form.action = `/employees/${employee.id}`;
+        document.getElementById('edit_full_name').value = employee.full_name;
+        document.getElementById('edit_nip').value = employee.nip;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_position').value = employee.position;
+        
+        modal.classList.remove('hidden');
+    }
+</script>
 @if(session('success'))
 <script>
     Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#E85A4F' });
