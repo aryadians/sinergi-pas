@@ -96,6 +96,29 @@
     </div>
 </div>
 
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[100] p-10 backdrop-blur-xl">
+    <div class="bg-white w-full h-full max-w-6xl rounded-[48px] overflow-hidden flex flex-col shadow-2xl">
+        <div class="p-8 border-b border-[#EFEFEF] flex justify-between items-center bg-[#FCFBF9]/50">
+            <h3 id="previewTitle" class="text-xl font-black text-[#1E2432]">Pratinjau Dokumen</h3>
+            <button onclick="document.getElementById('previewModal').classList.add('hidden')" class="bg-white p-3 rounded-2xl shadow-sm border border-[#EFEFEF] hover:bg-red-50 hover:text-red-500 transition-all">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+        <div class="flex-1 bg-gray-100">
+            <iframe id="previewFrame" src="" class="w-full h-full border-none"></iframe>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openPreview(url, title) {
+        document.getElementById('previewTitle').innerText = title;
+        document.getElementById('previewFrame').src = url;
+        document.getElementById('previewModal').classList.remove('hidden');
+    }
+</script>
+
 @if(session('success'))
 <script>
     Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#E85A4F' });

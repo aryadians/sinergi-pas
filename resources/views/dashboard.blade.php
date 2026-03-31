@@ -121,14 +121,16 @@
                 <div class="w-2 h-2 bg-[#E85A4F] rounded-full mt-1.5"></div>
                 <div>
                     <p class="text-xs font-bold text-[#1E2432]">{{ $log->user->name }} mengunduh {{ $log->document->title ?? 'file' }}</p>
-                    <p class="text-[10px] text-[#ABABAB] font-bold mt-0.5">{{ $log->created_at->diffForHumans() }}</p>
+                    <p class="text-[10px] text-[#8A8A8A] font-bold mt-0.5">{{ $log->created_at->diffForHumans() }}</p>
                 </div>
             </div>
             @endforeach
         </div>
     </div>
+    @endif
 </div>
 
+@if(\App\Models\Setting::getValue('widget_chart', 'on') === 'on')
 <script>
     const ctx = document.getElementById('docChart').getContext('2d');
     new Chart(ctx, {
@@ -152,4 +154,5 @@
         }
     });
 </script>
+@endif
 @endsection

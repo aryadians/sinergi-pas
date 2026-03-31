@@ -56,6 +56,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
     Route::post('/documents/category', [DocumentController::class, 'storeCategory'])->name('documents.category.store');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+
+    Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
     
     // Audit Logs (Admin)
