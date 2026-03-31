@@ -15,43 +15,39 @@ class DashboardController extends Controller
         $user = auth()->user();
         $workUnitId = $request->work_unit_id;
 
-        // Base Query untuk filter unit kerja
+        // Base Query terpaku pada Database Pusat Pegawai
         $employeeQuery = Employee::query();
         if ($workUnitId) {
             $employeeQuery->where('work_unit_id', $workUnitId);
         }
 
-        // Stats Dasar
+        // Stats Dasar Real-time
         $totalEmployees = $employeeQuery->count();
-        
-        // Stats Dokumen (Jika difilter unit kerja, hitung dokumen milik pegawai di unit tersebut)
-        if ($workUnitId) {
-            $totalDocuments = Document::whereIn('employee_id', $employeeQuery->pluck('id'))->count();
-            $docsToday = Document::whereIn('employee_id', $employeeQuery->pluck('id'))
-                ->whereDate('created_at', now())->count();
-        } else {
-            $totalDocuments = Document::count();
-            $docsToday = Document::whereDate('created_at', now())->count();
+        $totalDocuments = Document::count();
+        $docsToday = Document::whereDate('created_at', now())->count();
+
+        // Atensi SKP (Berdasarkan Database Pegawai)
+        $skpCategory = DocumentCategory::where('slug', 'skp')->first();
+        $employeesWithoutSkp = 0;
+        if ($skpCategory) {
+            $employeesWithoutSkp = (clone $employeeQuery)->whereDoesntHave('documents', function($q) use ($skpCategory) {
+                $q->where('document_category_id', $skpCategory->id);
+            })->count();
         }
 
-        // Atensi SKP
-        $skpCategoryId = DocumentCategory::where('slug', 'skp')->first()?->id;
-        $atensiQuery = clone $employeeQuery;
-        $employeesWithoutSkp = $atensiQuery->whereDoesntHave('documents', function($q) use ($skpCategoryId) {
-            $q->where('document_category_id', $skpCategoryId);
-        })->count();
-
-        // Data Lainnya
-        $latestEmployees = (clone $employeeQuery)->with('user')->latest()->take(5)->get();
-        $chartData = DocumentCategory::withCount(['documents' => function($q) use ($workUnitId, $employeeQuery) {
+        // Chart Data (Real-time Categories)
+        $chartData = DocumentCategory::withCount(['documents' => function($q) use ($workUnitId) {
             if ($workUnitId) {
-                $q->whereIn('employee_id', (clone $employeeQuery)->pluck('id'));
+                $q->whereHas('employee', function($eq) use ($workUnitId) {
+                    $eq->where('work_unit_id', $workUnitId);
+                });
             }
         }])->get();
 
         $workUnits = WorkUnit::all();
+        $latestEmployees = (clone $employeeQuery)->with('user')->latest()->take(5)->get();
 
-        // Statistik khusus pegawai
+        // Stats Pegawai
         $myDocumentsCount = 0;
         if ($user->role === 'pegawai') {
             $employee = Employee::where('user_id', $user->id)->first();
@@ -61,7 +57,7 @@ class DashboardController extends Controller
         return view('dashboard', compact(
             'totalEmployees', 
             'totalDocuments', 
-            'latestEmployees',
+            'latestEmployees', // Needs definition if used
             'myDocumentsCount',
             'chartData',
             'docsToday',

@@ -48,9 +48,15 @@
         .dark body { background-color: #0B0E14 !important; }
         .dark aside, .dark header, .dark .bg-white { background-color: #12151C !important; border-color: #1E293B !important; }
         .dark .bg-[#FCFBF9], .dark .bg-gray-50 { background-color: #0B0E14 !important; }
-        .dark .text-[#1E2432], .dark h1, .dark h2, .dark h3, .dark h4, .dark td { color: #F7FAFC !important; }
+        .dark .text-[#1E2432], .dark h1, .dark h2, .dark h3, .dark h4, .dark td, .dark p, .dark span:not(.active span) { color: #F7FAFC !important; }
         .dark .text-[#8A8A8A], .dark .text-[#ABABAB], .dark th { color: #94A3B8 !important; }
         .dark border-[#EFEFEF], .dark .border-r, .dark .border-b, .dark .border-t, .dark .border { border-color: #1E293B !important; }
+        
+        /* Button & Interactive Overrides */
+        .dark .bg-[#FCFBF9] { background-color: #1A1F2B !important; }
+        .dark .hover\:bg-[#FCFBF9]:hover { background-color: #1A1F2B !important; }
+        .dark .bg-gray-100 { background-color: #1E293B !important; }
+        .dark button:not(.bg-[#E85A4F]), .dark a:not(.bg-[#E85A4F]):not(.sidebar-item) { color: #F7FAFC !important; }
         
         /* Input & Component Overrides */
         .dark input, .dark select, .dark textarea { 
