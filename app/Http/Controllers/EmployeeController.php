@@ -114,4 +114,17 @@ class EmployeeController extends Controller
         $employee->user->delete();
         return back()->with('success', 'Pegawai berhasil dihapus.');
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (empty($ids)) return back()->with('error', 'Tidak ada data terpilih.');
+
+        $employees = Employee::whereIn('id', $ids)->get();
+        foreach ($employees as $employee) {
+            $employee->user->delete(); // Cascades
+        }
+
+        return back()->with('success', count($ids) . ' data pegawai berhasil dihapus.');
+    }
 }

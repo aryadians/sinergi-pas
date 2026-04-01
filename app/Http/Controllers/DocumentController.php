@@ -148,4 +148,35 @@ class DocumentController extends Controller
         DocumentCategory::create(['name' => $request->name, 'slug' => \Illuminate\Support\Str::slug($request->name)]);
         return back()->with('success', 'Kategori baru ditambahkan.');
     }
+
+    public function bulkAction(Request $request)
+    {
+        $ids = $request->ids;
+        $action = $request->action; // 'delete', 'lock', 'unlock'
+        
+        if (empty($ids)) return back()->with('error', 'Tidak ada dokumen terpilih.');
+
+        if ($action === 'delete') {
+            $documents = Document::whereIn('id', $ids)->get();
+            foreach ($documents as $doc) {
+                if (auth()->user()->role === 'superadmin' || (!$doc->is_locked)) {
+                    Storage::disk('private')->delete($doc->file_path);
+                    $doc->delete();
+                }
+            }
+            return back()->with('success', count($ids) . ' dokumen berhasil dihapus.');
+        }
+
+        if ($action === 'lock') {
+            Document::whereIn('id', $ids)->update(['is_locked' => true]);
+            return back()->with('success', count($ids) . ' dokumen berhasil dikunci.');
+        }
+
+        if ($action === 'unlock') {
+            Document::whereIn('id', $ids)->update(['is_locked' => false]);
+            return back()->with('success', count($ids) . ' kunci dokumen berhasil dibuka.');
+        }
+
+        return back();
+    }
 }

@@ -45,18 +45,21 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     // Employee Management (Superadmin)
+    // Employee Management (Superadmin)
     Route::post('/employees/import/excel', [EmployeeController::class, 'importExcel'])->name('employees.import.excel');
     Route::get('/employees/export/excel', [EmployeeController::class, 'exportExcel'])->name('employees.export.excel');
     Route::get('/employees/export/pdf', [EmployeeController::class, 'exportPdf'])->name('employees.export.pdf');
+    Route::delete('/employees/bulk-destroy', [EmployeeController::class, 'bulkDestroy'])->name('employees.bulk-destroy');
     Route::resource('employees', EmployeeController::class);
 
-    // Document Management
     // Document Management
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('/documents/employee/{employee}', [DocumentController::class, 'showEmployeeFolders'])->name('documents.employee');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
     Route::post('/documents/category', [DocumentController::class, 'storeCategory'])->name('documents.category.store');
+    Route::post('/documents/bulk-action', [DocumentController::class, 'bulkAction'])->name('documents.bulk-action');
     Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
+
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::post('/documents/{document}/toggle-lock', [DocumentController::class, 'toggleLock'])->name('documents.toggle-lock');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');

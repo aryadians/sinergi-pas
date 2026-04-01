@@ -4,12 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
-use DB;
+use Illuminate\Support\Facades\DB;
 
 class AuditController extends Controller
 {
     public function index()
     {
+        // Auto-cleanup
+        AuditLog::where('created_at', '<', now()->subDays(30))->delete();
+
         $logs = AuditLog::with(['user', 'document'])->latest()->paginate(20);
         
         $topDownloaders = AuditLog::select('user_id', DB::raw('count(*) as total'))
@@ -19,13 +22,7 @@ class AuditController extends Controller
             ->take(5)
             ->get();
 
-        $activityOverTime = AuditLog::select(DB::raw('DATE(created_at) as date'), DB::raw('count(*) as total'))
-            ->groupBy('date')
-            ->orderBy('date', 'asc')
-            ->take(7)
-            ->get();
-
-        return view('audit.index', compact('logs', 'topDownloaders', 'activityOverTime'));
+        return view('audit.index', compact('logs', 'topDownloaders'));
     }
 
     public function destroyAll()

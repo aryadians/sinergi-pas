@@ -4,106 +4,165 @@
 @section('header-title', 'Dokumen ' . $employee->full_name)
 
 @section('content')
-<div class="mb-8 flex items-center justify-between">
-    <div class="flex items-center gap-3 text-sm">
-        <a href="{{ route('documents.index') }}" class="text-[#8A8A8A] hover:text-[#E85A4F] transition-all">Semua Folder</a>
-        <span class="text-[#8A8A8A]">/</span>
-        <span class="text-[#E85A4F] font-semibold">{{ $employee->full_name }}</span>
-    </div>
-    
-    <!-- Modal Trigger -->
-    <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
-        class="bg-[#E85A4F] text-white px-6 py-3 rounded-2xl font-bold hover:bg-[#d44d42] transition-all flex items-center gap-2 shadow-lg shadow-red-100">
-        <i data-lucide="upload-cloud" class="w-5 h-5"></i>
-        Unggah File
-    </button>
-</div>
+<form id="bulkDocForm" action="{{ route('documents.bulk-action') }}" method="POST">
+    @csrf
+    <input type="hidden" name="action" id="bulkActionInput" value="">
 
-<!-- Files Grid -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-    @foreach($documents as $doc)
-    <div class="group bg-white p-6 rounded-3xl border border-[#EFEFEF] hover:shadow-xl transition-all duration-300">
-        <div class="flex justify-between items-start mb-6">
-            <div class="w-12 h-12 bg-[#F5F4F2] rounded-xl flex items-center justify-center text-[#8A8A8A]">
-                @if(str_contains($doc->file_path, '.pdf'))
-                    <i data-lucide="file-text" class="text-red-500 w-6 h-6"></i>
-                @elseif(str_contains($doc->file_path, '.xls'))
-                    <i data-lucide="file-spreadsheet" class="text-green-600 w-6 h-6"></i>
-                @else
-                    <i data-lucide="file" class="w-6 h-6"></i>
-                @endif
-            </div>
-            <div class="flex gap-1">
-                <form action="{{ route('documents.toggle-lock', $doc->id) }}" method="POST" class="no-loader">
-                    @csrf
-                    <button type="submit" class="p-2 {{ $doc->is_locked ? 'text-red-600 bg-red-50' : 'text-gray-400' }} hover:bg-gray-100 rounded-lg" title="{{ $doc->is_locked ? 'Buka Kunci' : 'Kunci Dokumen' }}">
-                        <i data-lucide="{{ $doc->is_locked ? 'lock' : 'unlock' }}" class="w-4 h-4"></i>
-                    </button>
-                </form>
-                <button onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-green-600 hover:bg-green-50 rounded-lg no-loader" title="Pratinjau"><i data-lucide="eye" class="w-4 h-4"></i></button>
-                <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg no-loader" title="Unduh"><i data-lucide="download" class="w-4 h-4"></i></a>
-                <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Hapus file ini?')">
-                    @csrf @method('DELETE')
-                    <button type="submit" class="p-2 text-[#E85A4F] hover:bg-red-50 rounded-lg"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                </form>
-            </div>
+    <div class="mb-8 flex items-center justify-between">
+        <div class="flex items-center gap-3 text-sm">
+            <a href="{{ route('documents.index') }}" class="text-[#8A8A8A] hover:text-[#E85A4F] transition-all font-bold">Semua Folder</a>
+            <span class="text-[#8A8A8A]">/</span>
+            <span class="text-[#E85A4F] font-black">{{ $employee->full_name }}</span>
         </div>
-        <h4 class="text-sm font-bold text-[#1E2432] truncate" title="{{ $doc->title }}">{{ $doc->title }}</h4>
-        <div class="flex items-center justify-between mt-4">
-            <span class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-widest">{{ $doc->category->name }}</span>
-            <span class="text-[10px] text-[#ABABAB]">{{ $doc->created_at->format('d M Y') }}</span>
+        
+        <div class="flex gap-3">
+            <div id="bulkActions" class="hidden gap-3 animate-in fade-in duration-300">
+                <button type="button" onclick="submitBulk('unlock')" class="bg-gray-100 text-gray-600 px-5 py-3 rounded-2xl font-bold hover:bg-gray-200 transition-all flex items-center gap-2">
+                    <i data-lucide="unlock" class="w-4 h-4"></i> Buka Kunci
+                </button>
+                <button type="button" onclick="submitBulk('lock')" class="bg-blue-50 text-blue-600 px-5 py-3 rounded-2xl font-bold hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2">
+                    <i data-lucide="lock" class="w-4 h-4"></i> Kunci Massal
+                </button>
+                <button type="button" onclick="submitBulk('delete')" class="bg-red-50 text-red-600 px-5 py-3 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus Massal
+                </button>
+            </div>
+
+            <button type="button" onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
+                class="bg-[#E85A4F] text-white px-8 py-3.5 rounded-2xl font-black hover:bg-[#d44d42] transition-all flex items-center gap-2 shadow-lg shadow-red-100">
+                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                Unggah File
+            </button>
         </div>
     </div>
-    @endforeach
-</div>
+
+    <!-- Files Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+        @foreach($documents as $doc)
+        <div class="group relative bg-white p-8 rounded-[40px] border border-[#EFEFEF] hover:border-[#E85A4F] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 flex flex-col justify-between h-[260px]">
+            <!-- Checkbox for Bulk -->
+            <div class="absolute top-6 left-6 z-10">
+                <input type="checkbox" name="ids[]" value="{{ $doc->id }}" class="doc-checkbox w-6 h-6 rounded-xl border-[#EFEFEF] text-[#E85A4F] focus:ring-0 cursor-pointer">
+            </div>
+
+            <div class="flex justify-end items-start mb-4">
+                <div class="flex gap-1">
+                    <form action="{{ route('documents.toggle-lock', $doc->id) }}" method="POST" class="no-loader">
+                        @csrf
+                        <button type="submit" class="p-2 {{ $doc->is_locked ? 'text-red-600 bg-red-50' : 'text-gray-400' }} hover:bg-gray-100 rounded-xl transition-all">
+                            <i data-lucide="{{ $doc->is_locked ? 'lock' : 'unlock' }}" class="w-4 h-4"></i>
+                        </button>
+                    </form>
+                    <button type="button" onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-green-600 hover:bg-green-50 rounded-xl no-loader"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                    <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-blue-500 hover:bg-blue-50 rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></a>
+                    <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Hapus file ini?')" class="m-0 p-0 no-loader">
+                        @csrf @method('DELETE')
+                        <button type="submit" class="p-2 text-[#E85A4F] hover:bg-red-50 rounded-xl transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="flex flex-col items-center justify-center flex-1 mb-4">
+                <div class="w-16 h-16 bg-[#F5F4F2] rounded-3xl flex items-center justify-center text-[#8A8A8A] group-hover:bg-[#E85A4F] group-hover:text-white transition-all duration-500 shadow-sm">
+                    @if(str_contains($doc->file_path, '.pdf'))
+                        <i data-lucide="file-text" class="w-8 h-8 text-red-500 group-hover:text-white"></i>
+                    @elseif(str_contains($doc->file_path, '.xls'))
+                        <i data-lucide="file-spreadsheet" class="w-8 h-8 text-green-600 group-hover:text-white"></i>
+                    @else
+                        <i data-lucide="file" class="w-8 h-8"></i>
+                    @endif
+                </div>
+            </div>
+
+            <div>
+                <h4 class="text-sm font-black text-[#1E2432] truncate text-center mb-2" title="{{ $doc->title }}">{{ $doc->title }}</h4>
+                <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#F5F4F2]">
+                    <span class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">{{ $doc->category->name }}</span>
+                    <span class="text-[10px] font-bold text-[#ABABAB]">{{ $doc->created_at->format('d/m/Y') }}</span>
+                </div>
+            </div>
+        </div>
+        @endforeach
+    </div>
+</form>
 
 @if($documents->isEmpty())
-<div class="py-20 text-center bg-white rounded-3xl border border-dashed border-[#EFEFEF]">
-    <p class="text-[#8A8A8A]">Folder ini kosong.</p>
+<div class="py-24 text-center bg-white rounded-[56px] border-4 border-dashed border-[#F5F4F2]">
+    <p class="text-[#8A8A8A] font-black uppercase tracking-widest text-xs">Folder ini kosong.</p>
 </div>
 @endif
 
-<!-- Upload Modal -->
+<script>
+    const docCheckboxes = document.querySelectorAll('.doc-checkbox');
+    const bulkActionsDiv = document.getElementById('bulkActions');
+
+    docCheckboxes.forEach(cb => {
+        cb.addEventListener('change', function() {
+            const checkedCount = document.querySelectorAll('.doc-checkbox:checked').length;
+            if (checkedCount > 0) {
+                bulkActionsDiv.classList.remove('hidden');
+                bulkActionsDiv.classList.add('flex');
+            } else {
+                bulkActionsDiv.classList.add('hidden');
+                bulkActionsDiv.classList.remove('flex');
+            }
+        });
+    });
+
+    function submitBulk(action) {
+        let text = "Anda akan " + (action === 'delete' ? 'menghapus' : (action === 'lock' ? 'mengunci' : 'membuka kunci')) + " dokumen terpilih.";
+        Swal.fire({
+            title: 'Konfirmasi Aksi Massal',
+            text: text,
+            icon: action === 'delete' ? 'warning' : 'info',
+            showCancelButton: true,
+            confirmButtonColor: '#E85A4F',
+            confirmButtonText: 'Ya, Jalankan!',
+            customClass: { popup: 'rounded-[32px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('bulkActionInput').value = action;
+                document.getElementById('bulkDocForm').submit();
+            }
+        });
+    }
+</script>
+
+<!-- Keep Upload Modal & Preview Modal from previous code -->
 <div id="uploadModal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-lg rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-300">
+    <div class="bg-white w-full max-w-lg rounded-[48px] p-12 shadow-2xl animate-in zoom-in duration-300">
         <div class="flex justify-between items-center mb-8">
-            <h3 class="text-xl font-bold text-[#1E2432]">Unggah ke {{ $employee->full_name }}</h3>
-            <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="text-[#8A8A8A] hover:text-[#1E2432]">
-                <i data-lucide="x" class="w-6 h-6"></i>
+            <h3 class="text-xl font-black text-[#1E2432]">Unggah ke {{ $employee->full_name }}</h3>
+            <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="text-[#8A8A8A] hover:text-red-500">
+                <i data-lucide="x" class="w-8 h-8"></i>
             </button>
         </div>
-        
-        <form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+        <form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
             @csrf
             <input type="hidden" name="employee_id" value="{{ $employee->id }}">
-            
             <div class="space-y-2">
-                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider">Pilih Kategori</label>
-                <select name="document_category_id" required class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm outline-none focus:ring-2 focus:ring-[#E85A4F]">
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-widest ml-1">Pilih Kategori</label>
+                <select name="document_category_id" required class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5">
                     @foreach($categories as $category)
                     <option value="{{ $category->id }}">{{ $category->name }}</option>
                     @endforeach
                 </select>
             </div>
-            
             <div class="space-y-2">
-                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider">Judul File</label>
-                <input type="text" name="title" required placeholder="Nama dokumen" class="w-full px-5 py-3.5 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm">
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-widest ml-1">Judul File</label>
+                <input type="text" name="title" required placeholder="Nama dokumen" class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold">
             </div>
-            
             <div class="space-y-2">
-                <label class="text-xs font-bold text-[#1E2432] uppercase tracking-wider">Pilih File</label>
-                <input type="file" name="file" required class="w-full px-5 py-3 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm">
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-widest ml-1">Pilih File</label>
+                <input type="file" name="file" required class="w-full px-6 py-4 rounded-3xl border border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold file:hidden">
             </div>
-
-            <button type="submit" class="w-full bg-[#E85A4F] text-white py-4 rounded-2xl font-bold hover:bg-[#d44d42] transition-all shadow-lg shadow-red-200">
+            <button type="submit" class="w-full bg-[#E85A4F] text-white py-5 rounded-[28px] font-black text-lg hover:bg-[#d44d42] transition-all shadow-xl shadow-red-200">
                 Mulai Unggah
             </button>
         </form>
     </div>
 </div>
 
-<!-- Preview Modal -->
 <div id="previewModal" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center z-[100] p-10 backdrop-blur-xl">
     <div class="bg-white w-full h-full max-w-6xl rounded-[48px] overflow-hidden flex flex-col shadow-2xl">
         <div class="p-8 border-b border-[#EFEFEF] flex justify-between items-center bg-[#FCFBF9]/50">
@@ -112,9 +171,7 @@
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
-        <div class="flex-1 bg-gray-100">
-            <iframe id="previewFrame" src="" class="w-full h-full border-none"></iframe>
-        </div>
+        <div class="flex-1 bg-gray-100"><iframe id="previewFrame" src="" class="w-full h-full border-none"></iframe></div>
     </div>
 </div>
 
@@ -128,7 +185,7 @@
 
 @if(session('success'))
 <script>
-    Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#E85A4F' });
+    Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#E85A4F', customClass: { popup: 'rounded-[40px]' } });
 </script>
 @endif
 @endsection
