@@ -226,8 +226,10 @@
             container.appendChild(img);
         }
         
-        watermark.classList.remove('hidden');
-        watermark.classList.add('flex');
+        if (watermark) {
+            watermark.classList.remove('hidden');
+            watermark.classList.add('flex');
+        }
         document.getElementById('previewModal').classList.remove('hidden');
     }
 </script>
@@ -286,11 +288,13 @@
         </div>
         <div class="flex-1 bg-gray-100 overflow-auto flex items-center justify-center p-10 relative" id="previewContent">
             <!-- Content will be injected here -->
+            @if($watermarkEnabled)
             <div id="watermarkOverlay" class="absolute inset-0 pointer-events-none hidden flex-wrap gap-20 p-20 opacity-[0.03] overflow-hidden content-center justify-center select-none">
                 @for($i=0; $i<20; $i++)
-                    <div class="text-4xl font-black -rotate-45 uppercase tracking-[0.5em] whitespace-nowrap">SINERGI PAS JOMBANG</div>
+                    <div class="text-4xl font-black -rotate-45 uppercase tracking-[0.5em] whitespace-nowrap">{{ $watermarkText }}</div>
                 @endfor
             </div>
+            @endif
         </div>
     </div>
 </div>

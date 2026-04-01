@@ -39,14 +39,22 @@ class ProfileController extends Controller
             $image = $request->file('photo');
             $path = $image->store('photos', 'public');
             
-            if ($employee) {
-                // Delete old photo if it exists and is a file path (not base64)
-                if ($employee->getRawOriginal('photo') && !str_starts_with($employee->getRawOriginal('photo'), 'data:image')) {
-                    \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->getRawOriginal('photo'));
-                }
-                
-                $employee->update(['photo' => $path]);
+            // Ensure employee record exists
+            if (!$employee) {
+                $employee = Employee::create([
+                    'user_id' => $user->id,
+                    'nip' => 'ADMIN-' . $user->id, // Default NIP for admin if not exists
+                    'full_name' => $user->name,
+                    'position' => 'Administrator',
+                ]);
             }
+
+            // Delete old photo if it exists and is a file path (not base64)
+            if ($employee->getRawOriginal('photo') && !str_starts_with($employee->getRawOriginal('photo'), 'data:image')) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->getRawOriginal('photo'));
+            }
+            
+            $employee->update(['photo' => $path]);
         }
 
         return back()->with('success', 'Profil berhasil diperbarui.');

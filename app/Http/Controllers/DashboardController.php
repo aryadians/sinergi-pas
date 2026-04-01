@@ -8,9 +8,11 @@ use App\Models\WorkUnit;
 use App\Models\DocumentCategory;
 use App\Models\ReportIssue;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class DashboardController extends Controller
+
 {
     public function index(Request $request)
     {

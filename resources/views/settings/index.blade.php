@@ -65,6 +65,33 @@
             </div>
         </div>
 
+        <!-- Watermark Settings -->
+        <div class="bg-white rounded-[40px] border border-[#EFEFEF] shadow-sm p-10 mb-8">
+            <div class="flex items-center gap-4 mb-8">
+                <div class="w-12 h-12 bg-yellow-50 rounded-2xl flex items-center justify-center text-yellow-600">
+                    <i data-lucide="shield" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-black text-[#1E2432]">Pengaturan Watermark</h3>
+                    <p class="text-xs text-[#8A8A8A] font-bold uppercase tracking-widest mt-1">Keamanan visual pada pratinjau dokumen</p>
+                </div>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="flex items-center justify-between p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF]">
+                    <span class="text-sm font-bold text-[#1E2432]">Status Watermark</span>
+                    <select name="watermark_enabled" class="bg-white border border-[#EFEFEF] rounded-xl px-4 py-2 text-xs font-bold outline-none">
+                        <option value="on" {{ ($settings['watermark_enabled'] ?? 'on') == 'on' ? 'selected' : '' }}>Aktif</option>
+                        <option value="off" {{ ($settings['watermark_enabled'] ?? 'on') == 'off' ? 'selected' : '' }}>Nonaktif</option>
+                    </select>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] ml-1">Teks Watermark</label>
+                    <input type="text" name="watermark_text" value="{{ $settings['watermark_text'] ?? 'SINERGI PAS JOMBANG' }}" class="w-full px-6 py-4 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] text-sm font-bold outline-none focus:ring-2 focus:ring-[#E85A4F]">
+                </div>
+            </div>
+        </div>
+
         <!-- Kop Surat Settings -->
         <div class="bg-white rounded-[40px] border border-[#EFEFEF] shadow-sm p-10">
             <div class="flex items-center gap-4 mb-8">

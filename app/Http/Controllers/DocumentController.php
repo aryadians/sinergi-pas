@@ -14,6 +14,9 @@ class DocumentController extends Controller
     public function index(Request $request)
     {
         $user = auth()->user();
+        $watermarkEnabled = \App\Models\Setting::getValue('watermark_enabled', 'on') === 'on';
+        $watermarkText = \App\Models\Setting::getValue('watermark_text', 'SINERGI PAS JOMBANG');
+
         if ($user->role === 'superadmin') {
             $categories = DocumentCategory::withCount('documents')->get();
             $query = Employee::withCount(['documents' => function($q) use ($request) {
@@ -31,18 +34,20 @@ class DocumentController extends Controller
             }
 
             $employees = $query->get();
-            return view('documents.index', compact('employees', 'categories'));
+            return view('documents.index', compact('employees', 'categories', 'watermarkEnabled', 'watermarkText'));
         } else {
             $employee = Employee::where('user_id', $user->id)->first();
             $documents = Document::where('employee_id', $employee?->id)->with('category')->latest()->get();
             $categories = DocumentCategory::all();
-            return view('documents.pegawai-index', compact('documents', 'categories', 'employee'));
+            return view('documents.pegawai-index', compact('documents', 'categories', 'employee', 'watermarkEnabled', 'watermarkText'));
         }
     }
 
     public function showEmployeeFolders(Employee $employee, Request $request)
     {
         $query = Document::where('employee_id', $employee->id)->with('category');
+        $watermarkEnabled = \App\Models\Setting::getValue('watermark_enabled', 'on') === 'on';
+        $watermarkText = \App\Models\Setting::getValue('watermark_text', 'SINERGI PAS JOMBANG');
         
         if ($request->filled('category_id')) {
             $query->where('document_category_id', $request->category_id);
@@ -50,7 +55,7 @@ class DocumentController extends Controller
         
         $documents = $query->latest()->get();
         $categories = DocumentCategory::all();
-        return view('documents.show-folder', compact('employee', 'documents', 'categories'));
+        return view('documents.show-folder', compact('employee', 'documents', 'categories', 'watermarkEnabled', 'watermarkText'));
     }
 
     public function verify(Document $document)
