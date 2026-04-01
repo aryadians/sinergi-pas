@@ -20,16 +20,6 @@
             </div>
         </div>
     </div>
-    
-    <form action="{{ route('dashboard') }}" method="GET" class="no-loader">
-        <select name="work_unit_id" onchange="this.form.submit()" 
-            class="bg-white border border-[#EFEFEF] px-8 py-4 rounded-[24px] font-black text-xs uppercase tracking-widest text-[#1E2432] shadow-xl shadow-gray-100 outline-none focus:ring-4 focus:ring-red-500/5 cursor-pointer">
-            <option value="">Seluruh Unit Kerja</option>
-            @foreach($workUnits as $unit)
-                <option value="{{ $unit->id }}" {{ request('work_unit_id') == $unit->id ? 'selected' : '' }}>{{ $unit->name }}</option>
-            @endforeach
-        </select>
-    </form>
 </div>
 
 <!-- Bento Grid: Smart Action Center -->
@@ -48,7 +38,7 @@
             <div class="p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF] hover:border-[#E85A4F] transition-all">
                 <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Verifikasi Pending</p>
                 <h4 class="text-2xl font-black text-[#1E2432] mt-1">{{ $pendingDocs }} <span class="text-xs font-bold text-[#8A8A8A]">Dokumen</span></h4>
-                <a href="{{ route('documents.index') }}" class="mt-4 inline-flex items-center gap-2 text-[#E85A4F] text-[10px] font-black uppercase tracking-widest hover:underline">
+                <a href="{{ route('documents.index', ['status' => 'pending']) }}" class="mt-4 inline-flex items-center gap-2 text-[#E85A4F] text-[10px] font-black uppercase tracking-widest hover:underline">
                     Tinjau Sekarang <i data-lucide="arrow-right" class="w-3 h-3"></i>
                 </a>
             </div>

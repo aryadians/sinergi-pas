@@ -8,32 +8,31 @@
     @csrf
     <input type="hidden" name="action" id="bulkActionInput" value="">
 
-    <div class="mb-8 flex items-center justify-between">
+    <div class="mb-12 flex flex-col md:flex-row items-center justify-between gap-8">
         <div class="flex items-center gap-3 text-sm">
-            <a href="{{ route('documents.index') }}" class="text-[#8A8A8A] hover:text-[#E85A4F] transition-all font-bold">Semua Folder</a>
+            <a href="{{ route('documents.index') }}" class="text-[#8A8A8A] hover:text-[#E85A4F] transition-all font-bold">Semua Pegawai</a>
             <span class="text-[#8A8A8A]">/</span>
-            <span class="text-[#E85A4F] font-black">{{ $employee->full_name }}</span>
+            <span class="text-[#E85A4F] font-black italic">{{ $employee->full_name }}</span>
         </div>
         
-        <div class="flex gap-3">
-            <div id="bulkActions" class="hidden gap-3 animate-in fade-in duration-300">
-                <button type="button" onclick="submitBulk('unlock')" class="bg-gray-100 text-gray-600 px-5 py-3 rounded-2xl font-bold hover:bg-gray-200 transition-all flex items-center gap-2">
-                    <i data-lucide="unlock" class="w-4 h-4"></i> Buka Kunci
-                </button>
-                <button type="button" onclick="submitBulk('lock')" class="bg-blue-50 text-blue-600 px-5 py-3 rounded-2xl font-bold hover:bg-blue-600 hover:text-white transition-all flex items-center gap-2">
-                    <i data-lucide="lock" class="w-4 h-4"></i> Kunci Massal
-                </button>
-                <button type="button" onclick="submitBulk('delete')" class="bg-red-50 text-red-600 px-5 py-3 rounded-2xl font-bold hover:bg-red-600 hover:text-white transition-all flex items-center gap-2">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus Massal
-                </button>
-            </div>
-
-            <button type="button" onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
-                class="bg-[#E85A4F] text-white px-8 py-3.5 rounded-2xl font-black hover:bg-[#d44d42] transition-all flex items-center gap-2 shadow-lg shadow-red-100">
-                <i data-lucide="upload-cloud" class="w-5 h-5"></i>
-                Unggah File
-            </button>
+        <div class="flex bg-white p-1.5 rounded-[24px] border border-[#EFEFEF] shadow-sm overflow-x-auto max-w-full">
+            <a href="{{ route('documents.employee', $employee->id) }}" 
+                class="px-6 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all {{ !request('category_id') ? 'bg-[#1E2432] text-white shadow-lg' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }}">
+                Semua File
+            </a>
+            @foreach($categories as $cat)
+            <a href="{{ route('documents.employee', ['employee' => $employee->id, 'category_id' => $cat->id]) }}" 
+                class="px-6 py-2.5 rounded-[18px] text-[10px] font-black uppercase tracking-widest transition-all {{ request('category_id') == $cat->id ? 'bg-[#E85A4F] text-white shadow-lg' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }}">
+                {{ $cat->name }}
+            </a>
+            @endforeach
         </div>
+
+        <button type="button" onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
+            class="bg-[#E85A4F] text-white px-8 py-3.5 rounded-2xl font-black hover:bg-[#d44d42] transition-all flex items-center gap-2 shadow-xl shadow-red-100 active:scale-90">
+            <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+            Unggah Ke Folder
+        </button>
     </div>
 
     <!-- Files Grid -->

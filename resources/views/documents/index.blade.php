@@ -4,15 +4,27 @@
 @section('header-title', 'Arsip Digital Pegawai')
 
 @section('content')
-<!-- Header & Stats Row -->
-<div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
-    <div class="md:col-span-3">
-        <h2 class="text-3xl font-black text-[#1E2432] tracking-tight">Manajemen Dokumen Terpadu</h2>
-        <p class="text-[#8A8A8A] font-bold mt-1 uppercase tracking-[0.2em] text-xs">Pusat kontrol arsip digital kepegawaian Lapas Jombang.</p>
+<!-- Search & Tabs Row -->
+<div class="flex flex-col md:flex-row gap-8 justify-between items-center mb-12">
+    <div class="flex bg-white p-1.5 rounded-[24px] border border-[#EFEFEF] shadow-sm">
+        <a href="{{ route('documents.index') }}" 
+            class="px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all {{ !request('status') ? 'bg-[#1E2432] text-white shadow-xl' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }}">
+            Seluruh Pegawai
+        </a>
+        <a href="{{ route('documents.index', ['status' => 'pending']) }}" 
+            class="px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all {{ request('status') === 'pending' ? 'bg-[#E85A4F] text-white shadow-xl' : 'text-[#8A8A8A] hover:bg-[#FCFBF9]' }}">
+            Perlu Tinjauan
+        </a>
     </div>
-    <div class="flex items-center justify-end gap-3">
+
+    <div class="flex gap-4 w-full md:w-auto">
+        <form action="{{ route('documents.index') }}" method="GET" class="relative flex-1 md:w-80 group no-loader">
+            <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#ABABAB]"></i>
+            <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Nama/NIP..." 
+                class="w-full pl-10 pr-4 py-3.5 rounded-2xl border border-[#EFEFEF] bg-white text-xs font-bold outline-none focus:ring-4 focus:ring-red-500/5 transition-all shadow-sm">
+        </form>
         <button onclick="document.getElementById('categoryModal').classList.remove('hidden')" 
-            class="bg-white text-[#1E2432] border border-[#EFEFEF] px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-[#F5F4F2] transition-all shadow-sm">
+            class="bg-white text-[#1E2432] border border-[#EFEFEF] px-6 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-[#F5F4F2] transition-all shadow-sm">
             + Kategori
         </button>
     </div>
