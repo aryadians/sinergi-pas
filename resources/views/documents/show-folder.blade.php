@@ -87,6 +87,10 @@
                         <i data-lucide="file-text" class="w-8 h-8 text-red-500 group-hover:text-white"></i>
                     @elseif(str_contains($doc->file_path, '.xls') || str_contains($doc->file_path, '.xlsx'))
                         <i data-lucide="file-spreadsheet" class="w-8 h-8 text-green-600 group-hover:text-white"></i>
+                    @elseif(str_contains($doc->file_path, '.csv'))
+                        <i data-lucide="file-type" class="w-8 h-8 text-blue-400 group-hover:text-white"></i>
+                    @elseif(str_contains($doc->file_path, '.doc') || str_contains($doc->file_path, '.docx'))
+                        <i data-lucide="file-text" class="w-8 h-8 text-blue-600 group-hover:text-white"></i>
                     @elseif(str_contains($doc->file_path, '.jpg') || str_contains($doc->file_path, '.jpeg') || str_contains($doc->file_path, '.png'))
                         <i data-lucide="image" class="w-8 h-8 text-blue-500 group-hover:text-white"></i>
                     @else

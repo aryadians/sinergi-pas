@@ -50,6 +50,8 @@ class DashboardController extends Controller
                 ->whereHas('user', function($q) { $q->where('role', 'pegawai'); })
                 ->get()
                 ->filter(function($emp) use ($mandatoryCategories) {
+                    if ($mandatoryCategories->isEmpty()) return false;
+                    
                     $uploadedCatIds = Document::where('employee_id', $emp->id)
                         ->where('status', 'verified')
                         ->pluck('document_category_id')
@@ -59,7 +61,7 @@ class DashboardController extends Controller
                         if (!in_array($cat->id, $uploadedCatIds)) return true;
                     }
                     return false;
-                })->take(5);
+                })->values()->take(5);
 
             // Unit Performance
             $unitPerformance = WorkUnit::withCount('employees')->get();

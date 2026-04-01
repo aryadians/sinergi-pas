@@ -25,6 +25,10 @@
                     <i data-lucide="file-text" class="w-7 h-7 text-red-500 group-hover:text-white"></i>
                 @elseif(str_contains($doc->file_path, '.xls') || str_contains($doc->file_path, '.xlsx'))
                     <i data-lucide="file-spreadsheet" class="w-7 h-7 text-green-600 group-hover:text-white"></i>
+                @elseif(str_contains($doc->file_path, '.csv'))
+                    <i data-lucide="file-type" class="w-7 h-7 text-blue-400 group-hover:text-white"></i>
+                @elseif(str_contains($doc->file_path, '.doc') || str_contains($doc->file_path, '.docx'))
+                    <i data-lucide="file-text" class="w-7 h-7 text-blue-600 group-hover:text-white"></i>
                 @elseif(str_contains($doc->file_path, '.jpg') || str_contains($doc->file_path, '.jpeg') || str_contains($doc->file_path, '.png'))
                     <i data-lucide="image" class="w-7 h-7 text-blue-500 group-hover:text-white"></i>
                 @else
@@ -111,12 +115,12 @@
             </div>
             
             <div class="space-y-3">
-                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Pilih File (PDF/Image)</label>
+                <label class="text-[10px] font-black text-[#1E2432] uppercase tracking-[0.2em] ml-1">Pilih File (PDF/Image/Word/Excel/CSV)</label>
                 <div class="relative group">
-                    <input type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png" class="w-full px-6 py-10 rounded-3xl border-2 border-dashed border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold text-[#8A8A8A] file:hidden cursor-pointer hover:border-[#E85A4F] transition-all text-center">
+                    <input type="file" name="file" required accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx,.csv" class="w-full px-6 py-10 rounded-3xl border-2 border-dashed border-[#EFEFEF] bg-[#FCFBF9] text-xs font-bold text-[#8A8A8A] file:hidden cursor-pointer hover:border-[#E85A4F] transition-all text-center">
                     <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-60 group-hover:opacity-100 transition-opacity">
                         <i data-lucide="upload-cloud" class="w-10 h-10 text-[#E85A4F] mb-3"></i>
-                        <span class="text-[10px] uppercase font-black tracking-tighter">PDF, JPG, PNG (Max 10MB)</span>
+                        <span class="text-[10px] uppercase font-black tracking-tighter">PDF, Image, Word, Excel, CSV (Max 10MB)</span>
                     </div>
                 </div>
             </div>

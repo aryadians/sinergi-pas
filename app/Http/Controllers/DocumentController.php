@@ -114,7 +114,7 @@ class DocumentController extends Controller
         $request->validate([
             'document_category_id' => 'required|exists:document_categories,id',
             'title' => 'required|string|max:255',
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:10240' // Strict validation
+            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,xls,xlsx,csv,doc,docx|max:10240' // Expanded validation
         ]);
         
         $employeeId = $user->role === 'superadmin' ? $request->employee_id : Employee::where('user_id', $user->id)->first()->id;
