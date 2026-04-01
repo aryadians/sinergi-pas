@@ -19,7 +19,7 @@
                     <div class="relative group">
                         <div class="w-40 h-40 rounded-[40px] border-[6px] border-white bg-[#F5F4F2] overflow-hidden shadow-2xl flex items-center justify-center text-[#8A8A8A]">
                             @if($employee && $employee->photo)
-                                <img id="avatar-preview" src="{{ Storage::url($employee->photo) }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
+                                <img id="avatar-preview" src="{{ Storage::disk('public')->url($employee->photo) }}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110">
                             @else
                                 <div id="avatar-placeholder" class="text-center">
                                     <i data-lucide="user" class="w-16 h-16 mx-auto opacity-20"></i>
@@ -27,6 +27,7 @@
                                 <img id="avatar-preview" class="hidden w-full h-full object-cover">
                             @endif
                         </div>
+
                         <label for="photoInput" class="absolute -bottom-2 -right-2 bg-[#E85A4F] p-3 rounded-2xl shadow-xl cursor-pointer hover:bg-[#d44d42] transition-all hover:scale-110 active:scale-95 border-4 border-white">
                             <i data-lucide="camera" class="w-5 h-5 text-white"></i>
                             <input type="file" id="photoInput" name="photo" class="hidden" onchange="previewImage(this)">
