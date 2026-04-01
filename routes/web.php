@@ -80,5 +80,10 @@ Route::middleware('auth')->group(function () {
     Route::middleware('can:superadmin')->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+
+        // Report Issues Management
+        Route::get('/admin/report-issues', [\App\Http\Controllers\Admin\ReportIssueController::class, 'index'])->name('admin.report-issues.index');
+        Route::put('/admin/report-issues/{issue}', [\App\Http\Controllers\Admin\ReportIssueController::class, 'update'])->name('admin.report-issues.update');
+        Route::delete('/admin/report-issues/{issue}', [\App\Http\Controllers\Admin\ReportIssueController::class, 'destroy'])->name('admin.report-issues.destroy');
     });
 });

@@ -46,7 +46,7 @@
             <div class="p-6 bg-[#FCFBF9] rounded-[32px] border border-[#EFEFEF] hover:border-[#1E2432] transition-all">
                 <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest">Laporan Masalah</p>
                 <h4 class="text-2xl font-black text-[#1E2432] mt-1">{{ $openIssues }} <span class="text-xs font-bold text-[#8A8A8A]">Pesan</span></h4>
-                <a href="#" class="mt-4 inline-flex items-center gap-2 text-[#1E2432] text-[10px] font-black uppercase tracking-widest hover:underline">
+                <a href="{{ route('admin.report-issues.index') }}" class="mt-4 inline-flex items-center gap-2 text-[#1E2432] text-[10px] font-black uppercase tracking-widest hover:underline">
                     Balas Pegawai <i data-lucide="message-square" class="w-3 h-3"></i>
                 </a>
             </div>
