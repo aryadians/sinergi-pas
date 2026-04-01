@@ -51,13 +51,16 @@ Route::middleware('auth')->group(function () {
     Route::resource('employees', EmployeeController::class);
 
     // Document Management
+    // Document Management
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('/documents/employee/{employee}', [DocumentController::class, 'showEmployeeFolders'])->name('documents.employee');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
     Route::post('/documents/category', [DocumentController::class, 'storeCategory'])->name('documents.category.store');
+    Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
+    Route::post('/documents/{document}/toggle-lock', [DocumentController::class, 'toggleLock'])->name('documents.toggle-lock');
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
-    Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
     
     // Audit Logs (Admin)

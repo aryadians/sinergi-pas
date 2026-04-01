@@ -30,18 +30,24 @@
                 @endif
             </div>
             <div class="flex gap-2">
-                <button onclick="openPreview('{{ Storage::url($doc->file_path) }}', '{{ $doc->title }}')" class="bg-green-50 p-3 rounded-xl text-green-600 hover:bg-green-600 hover:text-white transition-all">
+                <button onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}')" class="bg-green-50 p-3 rounded-xl text-green-600 hover:bg-green-600 hover:text-white transition-all">
                     <i data-lucide="eye" class="w-4 h-4"></i>
                 </button>
                 <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="bg-[#FCFBF9] p-3 rounded-xl text-[#E85A4F] hover:bg-[#E85A4F] hover:text-white transition-all no-loader">
                     <i data-lucide="download" class="w-4 h-4"></i>
                 </a>
+                @if(!$doc->is_locked)
                 <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Hapus dokumen ini?')">
                     @csrf @method('DELETE')
                     <button type="submit" class="bg-red-50 p-3 rounded-xl text-red-500 hover:bg-red-500 hover:text-white transition-all">
                         <i data-lucide="trash-2" class="w-4 h-4"></i>
                     </button>
                 </form>
+                @else
+                <div class="bg-gray-100 p-3 rounded-xl text-gray-400 cursor-not-allowed" title="Dokumen dikunci Admin">
+                    <i data-lucide="lock" class="w-4 h-4"></i>
+                </div>
+                @endif
             </div>
         </div>
         <div>

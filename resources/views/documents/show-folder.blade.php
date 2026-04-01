@@ -34,7 +34,13 @@
                 @endif
             </div>
             <div class="flex gap-1">
-                <button onclick="openPreview('{{ Storage::url($doc->file_path) }}', '{{ $doc->title }}')" class="p-2 text-green-600 hover:bg-green-50 rounded-lg no-loader" title="Pratinjau"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                <form action="{{ route('documents.toggle-lock', $doc->id) }}" method="POST" class="no-loader">
+                    @csrf
+                    <button type="submit" class="p-2 {{ $doc->is_locked ? 'text-red-600 bg-red-50' : 'text-gray-400' }} hover:bg-gray-100 rounded-lg" title="{{ $doc->is_locked ? 'Buka Kunci' : 'Kunci Dokumen' }}">
+                        <i data-lucide="{{ $doc->is_locked ? 'lock' : 'unlock' }}" class="w-4 h-4"></i>
+                    </button>
+                </form>
+                <button onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}')" class="p-2 text-green-600 hover:bg-green-50 rounded-lg no-loader" title="Pratinjau"><i data-lucide="eye" class="w-4 h-4"></i></button>
                 <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-blue-500 hover:bg-blue-50 rounded-lg no-loader" title="Unduh"><i data-lucide="download" class="w-4 h-4"></i></a>
                 <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Hapus file ini?')">
                     @csrf @method('DELETE')
