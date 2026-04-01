@@ -16,6 +16,8 @@ class AuditLog extends Model
         'activity',
         'ip_address',
         'user_agent',
+        'details',
+        'is_system'
     ];
 
     public function user(): BelongsTo
