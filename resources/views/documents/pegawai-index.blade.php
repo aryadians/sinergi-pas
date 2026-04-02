@@ -39,9 +39,15 @@
                 <button onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}', '{{ $doc->file_path }}')" class="bg-green-50 p-3 rounded-xl text-green-600 hover:bg-green-600 hover:text-white transition-all">
                     <i data-lucide="eye" class="w-4 h-4"></i>
                 </button>
+                @if(!$doc->is_locked)
                 <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="bg-[#FCFBF9] p-3 rounded-xl text-[#E85A4F] hover:bg-[#E85A4F] hover:text-white transition-all no-loader">
                     <i data-lucide="download" class="w-4 h-4"></i>
                 </a>
+                @else
+                <div class="bg-gray-50 p-3 rounded-xl text-gray-300 cursor-not-allowed border border-gray-100" title="Unduhan dikunci Admin">
+                    <i data-lucide="download" class="w-4 h-4 opacity-50"></i>
+                </div>
+                @endif
                 @if(!$doc->is_locked)
                 <form action="{{ route('documents.destroy', $doc->id) }}" method="POST" onsubmit="return confirm('Hapus dokumen ini?')" class="no-loader">
                     @csrf @method('DELETE')

@@ -77,7 +77,12 @@
                     </button>
 
                     <button type="button" onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}', '{{ $doc->file_path }}')" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl no-loader"><i data-lucide="eye" class="w-4 h-4"></i></button>
+                    
+                    @if(!$doc->is_locked)
                     <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader"><i data-lucide="download" class="w-4 h-4"></i></a>
+                    @else
+                    <div class="p-2 text-gray-300 bg-gray-50 rounded-xl cursor-not-allowed border border-gray-100" title="Unduhan dikunci"><i data-lucide="download" class="w-4 h-4 opacity-50"></i></div>
+                    @endif
                 </div>
             </div>
 
