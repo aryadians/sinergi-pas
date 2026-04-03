@@ -139,9 +139,9 @@
                                 ]) }}, '{{ $employee->user->email }}')" class="w-12 h-12 bg-blue-50 text-blue-600 border border-blue-100 rounded-2xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-100 action-btn">
                                     <i data-lucide="pencil" class="w-5 h-5"></i>
                                 </button>
-                                <form action="{{ route('employees.destroy', $employee->id) }}" method="POST" onsubmit="return confirm('Hapus pegawai ini?')" class="m-0 p-0 no-loader">
+                                <form id="deleteForm-{{ $employee->id }}" action="{{ route('employees.destroy', $employee->id) }}" method="POST" class="m-0 p-0 no-loader">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="w-12 h-12 bg-red-50 text-red-600 border border-red-100 rounded-2xl flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-lg shadow-red-100 action-btn">
+                                    <button type="button" onclick="confirmIndividualDelete({{ $employee->id }})" class="w-12 h-12 bg-red-50 text-red-600 border border-red-100 rounded-2xl flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-lg shadow-red-100 action-btn">
                                         <i data-lucide="trash-2" class="w-5 h-5"></i>
                                     </button>
                                 </form>
@@ -442,6 +442,24 @@
                 form.innerHTML = `@csrf @method('DELETE')`;
                 document.body.appendChild(form);
                 form.submit();
+            }
+        });
+    }
+
+    function confirmIndividualDelete(id) {
+        Swal.fire({
+            title: 'Hapus Data Pegawai?',
+            text: "Seluruh data dan dokumen pegawai ini akan dimusnahkan secara permanen.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#E85A4F',
+            cancelButtonColor: '#1E2432',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-[48px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteForm-' + id).submit();
             }
         });
     }

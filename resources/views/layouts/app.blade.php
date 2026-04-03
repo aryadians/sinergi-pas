@@ -4,11 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sinergi PAS - @yield('title')</title>
+    
+    <!-- Scripts & Styles -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Optimized Icon Loading -->
+    <script src="https://unpkg.com/lucide@latest" defer></script>
+    
     <link rel="icon" type="image/png" href="{{ asset('logo1.png') }}">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- SweetAlert & Progress Bar -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
+
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #FCFBF9; color: #1E2432; }
         .sidebar-item:hover { background-color: #F5F4F2; }
@@ -21,32 +31,40 @@
         .swal2-title { font-weight: 800 !important; color: #1E2432 !important; }
         .swal2-confirm { border-radius: 16px !important; padding: 12px 32px !important; font-weight: 700 !important; }
 
+        /* NProgress customization */
+        #nprogress .bar { background: #E85A4F !important; height: 4px !important; }
+        #nprogress .spinner-icon { border-top-color: #E85A4F !important; border-left-color: #E85A4F !important; }
+
         #global-loading {
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(8px);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
             z-index: 9999;
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
         .loader-ring {
-            width: 48px;
-            height: 48px;
-            border: 5px solid #F5F4F2;
+            width: 56px;
+            height: 56px;
+            border: 6px solid #F5F4F2;
             border-bottom-color: #E85A4F;
             border-radius: 50%;
-            animation: rotation 0.6s linear infinite;
+            animation: rotation 0.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
         @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Smooth page transition */
+        .page-fade { animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="antialiased">
     <div id="global-loading">
         <span class="loader-ring"></span>
-        <p class="mt-4 text-xs font-black uppercase tracking-widest text-[#E85A4F]">Sedang Memproses...</p>
+        <p class="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-[#1E2432]">Sinkronisasi Sistem...</p>
     </div>
 
     <div class="flex min-h-screen">
@@ -74,7 +92,7 @@
                     @if(auth()->user()->role === 'superadmin')
                         @php $pendingCount = \App\Models\Document::where('status', 'pending')->count(); @endphp
                         @if($pendingCount > 0)
-                            <span class="bg-[#1E2432] text-white text-[9px] font-black px-2 py-0.5 rounded-lg group-hover:bg-white group-hover:text-[#E85A4F] transition-all">{{ $pendingCount }}</span>
+                            <span class="bg-[#1E2432] text-white text-[9px] font-black px-2 py-0.5 rounded-lg transition-all">{{ $pendingCount }}</span>
                         @endif
                     @endif
                 </a>
@@ -110,7 +128,7 @@
             </div>
         </aside>
 
-        <main class="flex-1 ml-64 min-h-screen">
+        <main class="flex-1 ml-64 min-h-screen relative">
             @php 
                 $activeBanner = \App\Models\Announcement::where('is_active', true)->where('type', 'banner')->latest()->first();
                 $activePopup = \App\Models\Announcement::where('is_active', true)->where('type', 'popup')->latest()->first();
@@ -133,10 +151,10 @@
             @endif
 
             <header class="h-20 bg-white border-b border-[#EFEFEF] flex items-center justify-between px-10 sticky top-0 z-10">
-                <h2 class="text-xl font-black text-[#1E2432] tracking-tight">@yield('header-title')</h2>
+                <h2 class="text-xl font-black text-[#1E2432] tracking-tight italic">@yield('header-title')</h2>
                 <div class="flex items-center gap-4">
                     <!-- Notification Bell -->
-                    <div class="relative" x-data="{ open: false }">
+                    <div class="relative">
                         @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp
                         <button onclick="toggleNotifications()" class="relative w-10 h-10 bg-[#FCFBF9] rounded-xl border border-[#EFEFEF] flex items-center justify-center text-[#8A8A8A] hover:text-[#E85A4F] hover:shadow-md transition-all">
                             <i data-lucide="bell" class="w-5 h-5"></i>
@@ -171,20 +189,6 @@
                         </div>
                     </div>
 
-                    <script>
-                        function toggleNotifications() {
-                            const dropdown = document.getElementById('notificationDropdown');
-                            dropdown.classList.toggle('hidden');
-                        }
-                        // Close dropdown when clicking outside
-                        window.addEventListener('click', function(e) {
-                            const dropdown = document.getElementById('notificationDropdown');
-                            if (!e.target.closest('.relative')) {
-                                dropdown.classList.add('hidden');
-                            }
-                        });
-                    </script>
-
                     <a href="{{ route('profile.index') }}" class="flex items-center gap-3 p-2 bg-[#FCFBF9] rounded-2xl border border-[#EFEFEF] hover:shadow-md transition-all">
                         @php $sidebarEmployee = \App\Models\Employee::where('user_id', auth()->id())->first(); @endphp
                         <div class="w-10 h-10 bg-[#E85A4F] rounded-xl flex items-center justify-center text-white font-black overflow-hidden text-xs shadow-lg shadow-red-100">
@@ -199,14 +203,33 @@
                     </a>
                 </div>
             </header>
-            <div class="p-10">@yield('content')</div>
+            <div class="p-10 page-fade">@yield('content')</div>
         </main>
     </div>
 
     <script>
-        lucide.createIcons();
-        
-        // Instant speed: only show loading on actual heavy form submissions
+        window.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            NProgress.done();
+        });
+
+        window.addEventListener('beforeunload', () => {
+            NProgress.start();
+        });
+
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+        }
+
+        window.addEventListener('click', function(e) {
+            const dropdown = document.getElementById('notificationDropdown');
+            if (!e.target.closest('.relative')) {
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        // Instant Loader for Forms
         document.querySelectorAll('form').forEach(form => {
             form.addEventListener('submit', function() {
                 if(!this.classList.contains('no-loader')) {
@@ -215,23 +238,21 @@
             });
         });
 
-        function showLoading() {
-            document.getElementById('global-loading').style.display = 'flex';
-        }
-
         @if(isset($activePopup))
-        if (!sessionStorage.getItem('announcement_seen_{{ $activePopup->id }}')) {
-            Swal.fire({
-                title: 'Informasi Penting!',
-                text: '{{ $activePopup->message }}',
-                icon: 'info',
-                confirmButtonColor: '#1E2432',
-                confirmButtonText: 'Saya Mengerti',
-                customClass: { popup: 'rounded-[40px]' }
-            }).then(() => {
-                sessionStorage.setItem('announcement_seen_{{ $activePopup->id }}', 'true');
-            });
-        }
+        window.addEventListener('load', () => {
+            if (!sessionStorage.getItem('announcement_seen_{{ $activePopup->id }}')) {
+                Swal.fire({
+                    title: 'Informasi Penting!',
+                    text: '{{ $activePopup->message }}',
+                    icon: 'info',
+                    confirmButtonColor: '#1E2432',
+                    confirmButtonText: 'Saya Mengerti',
+                    customClass: { popup: 'rounded-[40px]' }
+                }).then(() => {
+                    sessionStorage.setItem('announcement_seen_{{ $activePopup->id }}', 'true');
+                });
+            }
+        });
         @endif
     </script>
 </body>

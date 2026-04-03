@@ -74,9 +74,9 @@
                             <button onclick="openDetailModal({{ json_encode($issueData) }})" class="w-10 h-10 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-100">
                                 <i data-lucide="eye" class="w-5 h-5"></i>
                             </button>
-                            <form action="{{ route('admin.report-issues.destroy', $issue->id) }}" method="POST" onsubmit="return confirm('Hapus laporan ini?')">
+                            <form id="deleteIssue-{{ $issue->id }}" action="{{ route('admin.report-issues.destroy', $issue->id) }}" method="POST" class="no-loader">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="w-10 h-10 bg-red-50 text-red-600 border border-red-100 rounded-xl flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-lg shadow-red-100">
+                                <button type="button" onclick="confirmDeleteIssue({{ $issue->id }})" class="w-10 h-10 bg-red-50 text-red-600 border border-red-100 rounded-xl flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-lg shadow-red-100">
                                     <i data-lucide="trash-2" class="w-5 h-5"></i>
                                 </button>
                             </form>
@@ -182,6 +182,24 @@
 </div>
 
 <script>
+    function confirmDeleteIssue(id) {
+        Swal.fire({
+            title: 'Hapus Laporan?',
+            text: "Data aspirasi/laporan ini akan dihapus permanen.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#E85A4F',
+            cancelButtonColor: '#1E2432',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-[48px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteIssue-' + id).submit();
+            }
+        });
+    }
+
     function openDetailModal(data) {
         document.getElementById('detailModal').classList.remove('hidden');
         document.getElementById('updateForm').action = `/admin/report-issues/${data.id}`;

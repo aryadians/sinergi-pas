@@ -247,9 +247,9 @@
                                         <i data-lucide="{{ $ann->is_active ? 'eye-off' : 'eye' }}" class="w-5 h-5"></i>
                                     </button>
                                 </form>
-                                <form action="{{ route('announcements.destroy', $ann->id) }}" method="POST" onsubmit="return confirm('Musnahkan data pengumuman ini?')" class="no-loader">
+                                <form id="deleteAnn-{{ $ann->id }}" action="{{ route('announcements.destroy', $ann->id) }}" method="POST" class="no-loader">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="w-12 h-12 bg-white rounded-2xl border border-[#EFEFEF] text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Hapus Permanen">
+                                    <button type="button" onclick="confirmGenericDelete('deleteAnn-{{ $ann->id }}', 'Hapus pengumuman ini?')" class="w-12 h-12 bg-white rounded-2xl border border-[#EFEFEF] text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm flex items-center justify-center" title="Hapus Permanen">
                                         <i data-lucide="trash-2" class="w-5 h-5"></i>
                                     </button>
                                 </form>
@@ -301,9 +301,9 @@
                         <span class="text-xs font-black text-[#1E2432] uppercase tracking-tight">{{ $pos->name }}</span>
                         <span class="text-[8px] font-bold text-[#ABABAB] uppercase mt-1">{{ $pos->slug }}</span>
                     </div>
-                    <form action="{{ route('settings.positions.destroy', $pos->id) }}" method="POST" onsubmit="return confirm('Hapus entitas jabatan ini?')" class="no-loader">
+                    <form id="deletePos-{{ $pos->id }}" action="{{ route('settings.positions.destroy', $pos->id) }}" method="POST" class="no-loader">
                         @csrf @method('DELETE')
-                        <button type="submit" class="w-10 h-10 bg-white rounded-xl border border-[#EFEFEF] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-sm">
+                        <button type="button" onclick="confirmGenericDelete('deletePos-{{ $pos->id }}', 'Hapus jabatan ini?')" class="w-10 h-10 bg-white rounded-xl border border-[#EFEFEF] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-sm">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </form>
@@ -346,9 +346,9 @@
                         <span class="text-xs font-black text-[#1E2432] uppercase tracking-tight">{{ $unit->name }}</span>
                         <span class="text-[8px] font-bold text-[#ABABAB] uppercase mt-1">{{ $unit->slug }}</span>
                     </div>
-                    <form action="{{ route('settings.work-units.destroy', $unit->id) }}" method="POST" onsubmit="return confirm('Hapus entitas unit kerja ini?')" class="no-loader">
+                    <form id="deleteUnit-{{ $unit->id }}" action="{{ route('settings.work-units.destroy', $unit->id) }}" method="POST" class="no-loader">
                         @csrf @method('DELETE')
-                        <button type="submit" class="w-10 h-10 bg-white rounded-xl border border-[#EFEFEF] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-sm">
+                        <button type="button" onclick="confirmGenericDelete('deleteUnit-{{ $unit->id }}', 'Hapus unit kerja ini?')" class="w-10 h-10 bg-white rounded-xl border border-[#EFEFEF] text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center shadow-sm">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </form>
@@ -373,6 +373,24 @@
     if(bgInp) {
         bgInp.addEventListener('input', (e) => bgTxt.value = e.target.value.toUpperCase());
         txInp.addEventListener('input', (e) => txTxt.value = e.target.value.toUpperCase());
+    }
+
+    function confirmGenericDelete(formId, text) {
+        Swal.fire({
+            title: 'Apakah Anda yakin?',
+            text: text || "Data ini akan dihapus permanen.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#E85A4F',
+            cancelButtonColor: '#1E2432',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-[48px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById(formId).submit();
+            }
+        });
     }
 </script>
 
