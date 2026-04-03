@@ -1,48 +1,69 @@
 @extends('layouts.app')
 
-@section('title', 'Laporan Masalah')
-@section('header-title', 'Manajemen Laporan Masalah')
+@section('title', 'Manajemen Laporan')
+@section('header-title', 'Helpdesk Support Center')
 
 @section('content')
-<div class="bg-white rounded-[40px] border border-[#EFEFEF] shadow-sm overflow-hidden">
-    <div class="p-8 border-b border-[#EFEFEF] bg-[#FCFBF9]/50">
-        <h3 class="text-lg font-bold text-[#1E2432]">Daftar Laporan dari Pegawai</h3>
+<div class="bg-white rounded-[56px] border border-[#EFEFEF] shadow-sm overflow-hidden transition-all hover:shadow-2xl hover:shadow-gray-100/50">
+    <div class="p-10 border-b border-[#EFEFEF] bg-[#FCFBF9]/50 flex items-center gap-6">
+        <div class="w-16 h-16 bg-[#1E2432] rounded-[24px] flex items-center justify-center text-white shadow-xl shadow-gray-200">
+            <i data-lucide="message-square" class="w-8 h-8"></i>
+        </div>
+        <div>
+            <h3 class="text-xl font-black text-[#1E2432] tracking-tight italic">Daftar Aspirasi & Laporan Masalah</h3>
+            <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-widest mt-1">Total antrean: {{ $issues->total() }} laporan aktif</p>
+        </div>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-left border-collapse">
             <thead>
                 <tr class="bg-[#FCFBF9]">
-                    <th class="px-8 py-5 text-xs font-bold text-[#8A8A8A] uppercase tracking-widest">Pegawai</th>
-                    <th class="px-8 py-5 text-xs font-bold text-[#8A8A8A] uppercase tracking-widest">Subjek</th>
-                    <th class="px-8 py-5 text-xs font-bold text-[#8A8A8A] uppercase tracking-widest">Status</th>
-                    <th class="px-8 py-5 text-xs font-bold text-[#8A8A8A] uppercase tracking-widest">Tanggal</th>
-                    <th class="px-8 py-5 text-xs font-bold text-[#8A8A8A] uppercase tracking-widest text-center">Aksi</th>
+                    <th class="px-10 py-5 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em]">Identitas Pegawai</th>
+                    <th class="px-10 py-5 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em]">Subjek & Keluhan</th>
+                    <th class="px-10 py-5 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em]">Status Penanganan</th>
+                    <th class="px-10 py-5 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em]">Waktu Kirim</th>
+                    <th class="px-10 py-5 text-[10px] font-black text-[#8A8A8A] uppercase tracking-[0.2em] text-center">Aksi</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-[#EFEFEF]">
                 @foreach($issues as $issue)
-                <tr class="hover:bg-[#FCFBF9] transition-all group">
-                    <td class="px-8 py-6">
-                        <p class="text-sm font-bold text-[#1E2432]">{{ $issue->user->name }}</p>
-                        <p class="text-[10px] text-[#8A8A8A] font-medium">{{ $issue->user->email }}</p>
+                <tr class="hover:bg-[#FCFBF9]/50 transition-all group">
+                    <td class="px-10 py-6">
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-white border border-[#EFEFEF] rounded-xl flex items-center justify-center text-[10px] font-black text-[#1E2432] shadow-sm">
+                                {{ substr($issue->user->name, 0, 1) }}
+                            </div>
+                            <div>
+                                <p class="text-sm font-black text-[#1E2432]">{{ $issue->user->name }}</p>
+                                <p class="text-[9px] text-[#8A8A8A] font-bold uppercase tracking-widest">{{ $issue->user->email }}</p>
+                            </div>
+                        </div>
                     </td>
-                    <td class="px-8 py-6">
-                        <p class="text-sm font-medium text-[#1E2432]">{{ $issue->subject }}</p>
+                    <td class="px-10 py-6">
+                        <p class="text-xs font-black text-[#1E2432] mb-1 italic">"{{ $issue->subject }}"</p>
+                        <p class="text-[10px] text-[#8A8A8A] font-medium truncate max-w-[200px]">{{ $issue->message }}</p>
                     </td>
-                    <td class="px-8 py-6 text-sm">
+                    <td class="px-10 py-6">
                         @if($issue->status === 'open')
-                            <span class="px-3 py-1 bg-red-50 text-red-600 text-[10px] font-black uppercase rounded-full border border-red-100 italic">Open</span>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-red-50 text-red-600 text-[9px] font-black uppercase rounded-lg border border-red-100">
+                                <span class="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span> Open
+                            </span>
                         @elseif($issue->status === 'resolved')
-                            <span class="px-3 py-1 bg-green-50 text-green-600 text-[10px] font-black uppercase rounded-full border border-green-100 italic">Resolved</span>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-green-50 text-green-600 text-[9px] font-black uppercase rounded-lg border border-green-100">
+                                <i data-lucide="check-circle" class="w-3 h-3"></i> Resolved
+                            </span>
                         @else
-                            <span class="px-3 py-1 bg-gray-50 text-gray-600 text-[10px] font-black uppercase rounded-full border border-gray-100 italic">Closed</span>
+                            <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-gray-50 text-gray-600 text-[9px] font-black uppercase rounded-lg border border-gray-100">
+                                <i data-lucide="lock" class="w-3 h-3"></i> Closed
+                            </span>
                         @endif
                     </td>
-                    <td class="px-8 py-6 text-sm text-[#8A8A8A] font-medium">
-                        {{ $issue->created_at->format('d M Y, H:i') }}
+                    <td class="px-10 py-6">
+                        <p class="text-[10px] font-black text-[#1E2432]">{{ $issue->created_at->format('d M Y') }}</p>
+                        <p class="text-[9px] font-bold text-[#ABABAB] uppercase">{{ $issue->created_at->format('H:i') }} • {{ $issue->created_at->diffForHumans() }}</p>
                     </td>
-                    <td class="px-8 py-6 text-sm text-center">
-                        <div class="flex justify-center items-center gap-2">
+                    <td class="px-10 py-6 text-sm text-center">
+                        <div class="flex justify-center items-center gap-2 opacity-0 group-hover:opacity-100 transition-all transform group-hover:scale-105">
                             @php
                                 $employee = \App\Models\Employee::where('user_id', $issue->user_id)->first();
                                 $issueData = array_merge($issue->toArray(), [
@@ -50,23 +71,33 @@
                                     'employee' => $employee
                                 ]);
                             @endphp
-                            <button onclick="openDetailModal({{ json_encode($issueData) }})" class="w-9 h-9 flex items-center justify-center text-blue-500 hover:bg-blue-50 rounded-xl transition-all">
-                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            <button onclick="openDetailModal({{ json_encode($issueData) }})" class="w-10 h-10 bg-blue-50 text-blue-600 border border-blue-100 rounded-xl flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all shadow-lg shadow-blue-100">
+                                <i data-lucide="eye" class="w-5 h-5"></i>
                             </button>
                             <form action="{{ route('admin.report-issues.destroy', $issue->id) }}" method="POST" onsubmit="return confirm('Hapus laporan ini?')">
                                 @csrf @method('DELETE')
-                                <button type="submit" class="w-9 h-9 flex items-center justify-center text-[#E85A4F] hover:bg-red-50 rounded-xl transition-all">
-                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                <button type="submit" class="w-10 h-10 bg-red-50 text-red-600 border border-red-100 rounded-xl flex items-center justify-center hover:bg-red-600 hover:text-white transition-all shadow-lg shadow-red-100">
+                                    <i data-lucide="trash-2" class="w-5 h-5"></i>
                                 </button>
                             </form>
                         </div>
                     </td>
                 </tr>
                 @endforeach
+                @if($issues->isEmpty())
+                <tr>
+                    <td colspan="5" class="px-10 py-24 text-center">
+                        <div class="w-20 h-20 bg-[#FCFBF9] rounded-full flex items-center justify-center mx-auto mb-6 text-gray-200">
+                            <i data-lucide="inbox" class="w-10 h-10"></i>
+                        </div>
+                        <p class="text-xs font-black text-[#ABABAB] uppercase tracking-widest italic">Belum ada laporan yang masuk.</p>
+                    </td>
+                </tr>
+                @endif
             </tbody>
         </table>
     </div>
-    <div class="p-8 bg-[#FCFBF9]/50 border-t border-[#EFEFEF]">
+    <div class="p-10 bg-[#FCFBF9]/50 border-t border-[#EFEFEF]">
         {{ $issues->links() }}
     </div>
 </div>

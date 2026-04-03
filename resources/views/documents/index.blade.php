@@ -48,9 +48,9 @@
                 @if($cat->is_mandatory)
                     <span class="bg-red-500 text-white text-[7px] font-black uppercase px-2 py-1 rounded-lg tracking-widest animate-pulse">Wajib</span>
                 @endif
-                <form action="{{ route('documents.category.destroy', $cat->id) }}" method="POST" onsubmit="return confirm('Hapus kategori ini?')" class="opacity-0 group-hover:opacity-100 transition-all no-loader">
+                <button type="button" onclick="confirmDeleteCategory({{ $cat->id }})" class="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                <form id="deleteCatForm-{{ $cat->id }}" action="{{ route('documents.category.destroy', $cat->id) }}" method="POST" class="hidden no-loader">
                     @csrf @method('DELETE')
-                    <button type="submit" class="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
                 </form>
             </div>
         </div>
@@ -140,4 +140,24 @@
     Swal.fire({ icon: 'success', title: 'Berhasil!', text: "{{ session('success') }}", confirmButtonColor: '#E85A4F', customClass: { popup: 'rounded-[40px]' } });
 </script>
 @endif
+
+<script>
+    function confirmDeleteCategory(id) {
+        Swal.fire({
+            title: 'Hapus Kategori?',
+            text: "Kategori akan dihapus permanen. Pastikan tidak ada dokumen di dalamnya.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#E85A4F',
+            cancelButtonColor: '#8A8A8A',
+            confirmButtonText: 'Ya, Hapus!',
+            cancelButtonText: 'Batalkan',
+            customClass: { popup: 'rounded-[32px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteCatForm-' + id).submit();
+            }
+        });
+    }
+</script>
 @endsection

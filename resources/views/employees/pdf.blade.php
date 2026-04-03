@@ -3,7 +3,7 @@
 <head>
     <title>Daftar Pegawai Lapas Jombang</title>
     <style>
-        body { font-family: sans-serif; font-size: 12px; color: #333; }
+        body { font-family: sans-serif; font-size: 11px; color: #333; }
         .kop { text-align: center; margin-bottom: 30px; border-bottom: 3px double #1E2432; padding-bottom: 15px; position: relative; }
         .kop img { width: 80px; margin-bottom: 10px; }
         .kop h1 { margin: 0; font-size: 18px; font-weight: bold; color: #1E2432; }
@@ -12,7 +12,7 @@
         
         table { width: 100%; border-collapse: collapse; margin-top: 20px; }
         th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-        th { background-color: #f9f9f9; font-weight: bold; text-transform: uppercase; font-size: 10px; }
+        th { background-color: #f9f9f9; font-weight: bold; text-transform: uppercase; font-size: 9px; }
         
         .footer { margin-top: 40px; position: relative; }
         .signature { float: right; text-align: center; width: 200px; }
@@ -36,6 +36,8 @@
                 <th>NIP</th>
                 <th>Nama Lengkap</th>
                 <th>Jabatan</th>
+                <th>Unit Kerja</th>
+                <th>Email</th>
             </tr>
         </thead>
         <tbody>
@@ -45,6 +47,8 @@
                 <td style="font-family: monospace;">{{ $e->nip }}</td>
                 <td style="font-weight: bold;">{{ $e->full_name }}</td>
                 <td>{{ $e->position }}</td>
+                <td>{{ $e->work_unit->name ?? 'N/A' }}</td>
+                <td>{{ $e->user->email ?? 'N/A' }}</td>
             </tr>
             @endforeach
         </tbody>

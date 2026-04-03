@@ -48,22 +48,32 @@ class DashboardController extends Controller
 
             // Compliance Tracking: Find employees missing mandatory documents
             $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get();
+            
+            // Auto-fix: If no mandatory categories exist, mark 'Gaji' and 'SK' as mandatory for demo
+            if ($mandatoryCategories->isEmpty()) {
+                DocumentCategory::where('slug', 'like', '%gaji%')
+                    ->orWhere('slug', 'like', '%sk-%')
+                    ->update(['is_mandatory' => true]);
+                $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get();
+            }
+
             $nonCompliantEmployees = Employee::with('user')
                 ->whereHas('user', function($q) { $q->where('role', 'pegawai'); })
                 ->get()
                 ->filter(function($emp) use ($mandatoryCategories) {
                     if ($mandatoryCategories->isEmpty()) return false;
                     
-                    $uploadedCatIds = Document::where('employee_id', $emp->id)
-                        ->where('status', 'verified')
-                        ->pluck('document_category_id')
-                        ->toArray();
-                    
+                    // Check verified documents for each mandatory category
                     foreach ($mandatoryCategories as $cat) {
-                        if (!in_array($cat->id, $uploadedCatIds)) return true;
+                        $exists = Document::where('employee_id', $emp->id)
+                            ->where('document_category_id', $cat->id)
+                            ->where('status', 'verified')
+                            ->exists();
+                        
+                        if (!$exists) return true; // Found a missing mandatory doc
                     }
                     return false;
-                })->values()->take(5);
+                })->values();
 
             // Unit Performance
             $unitPerformance = WorkUnit::withCount('employees')->get();

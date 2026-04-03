@@ -101,6 +101,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
 
+        // Position & Work Unit Management
+        Route::post('/settings/positions', [SettingController::class, 'storePosition'])->name('settings.positions.store');
+        Route::delete('/settings/positions/{position}', [SettingController::class, 'destroyPosition'])->name('settings.positions.destroy');
+        Route::post('/settings/work-units', [SettingController::class, 'storeWorkUnit'])->name('settings.work-units.store');
+        Route::delete('/settings/work-units/{workUnit}', [SettingController::class, 'destroyWorkUnit'])->name('settings.work-units.destroy');
+
         // Report Issues Management
         Route::get('/admin/report-issues', [\App\Http\Controllers\Admin\ReportIssueController::class, 'index'])->name('admin.report-issues.index');
         Route::put('/admin/report-issues/{issue}', [\App\Http\Controllers\Admin\ReportIssueController::class, 'update'])->name('admin.report-issues.update');

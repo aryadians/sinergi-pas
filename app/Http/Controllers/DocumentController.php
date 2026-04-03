@@ -170,27 +170,64 @@ class DocumentController extends Controller
 
     public function destroy(Document $document)
     {
+        $title = $document->title;
         Storage::disk('private')->delete($document->file_path);
         $document->delete();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'delete_document',
+            'ip_address' => request()->ip(),
+            'details' => auth()->user()->name . ' menghapus dokumen: ' . $title
+        ]);
+
         return back()->with('success', 'Terhapus.');
     }
 
     public function storeCategory(Request $request)
     {
-        DocumentCategory::create([
+        $cat = DocumentCategory::create([
             'name' => $request->name, 
             'slug' => \Illuminate\Support\Str::slug($request->name),
             'is_mandatory' => $request->has('is_mandatory')
         ]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'create_category',
+            'ip_address' => request()->ip(),
+            'details' => auth()->user()->name . ' membuat kategori baru: ' . $cat->name
+        ]);
+
         return back()->with('success', 'Kategori baru ditambahkan.');
     }
 
     public function bulkAction(Request $request)
     {
         $ids = $request->ids;
-        if ($request->action === 'delete') Document::whereIn('id', $ids)->delete();
-        elseif ($request->action === 'lock') Document::whereIn('id', $ids)->update(['is_locked' => true]);
-        elseif ($request->action === 'unlock') Document::whereIn('id', $ids)->update(['is_locked' => false]);
+        if (empty($ids)) return back()->with('error', 'Tidak ada data terpilih.');
+
+        if ($request->action === 'delete') {
+            Document::whereIn('id', $ids)->delete();
+            $activity = 'bulk_delete';
+            $msg = 'menghapus ' . count($ids) . ' dokumen';
+        } elseif ($request->action === 'lock') {
+            Document::whereIn('id', $ids)->update(['is_locked' => true]);
+            $activity = 'bulk_lock';
+            $msg = 'mengunci ' . count($ids) . ' dokumen';
+        } elseif ($request->action === 'unlock') {
+            Document::whereIn('id', $ids)->update(['is_locked' => false]);
+            $activity = 'bulk_unlock';
+            $msg = 'membuka kunci ' . count($ids) . ' dokumen';
+        }
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => $activity,
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . ' ' . $msg
+        ]);
+
         return back()->with('success', 'Aksi massal berhasil.');
     }
 
@@ -199,7 +236,16 @@ class DocumentController extends Controller
         if ($category->documents()->count() > 0) {
             return back()->with('error', 'Kategori ini tidak bisa dihapus karena masih memiliki dokumen terkait.');
         }
+        $name = $category->name;
         $category->delete();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'delete_category',
+            'ip_address' => request()->ip(),
+            'details' => auth()->user()->name . ' menghapus kategori: ' . $name
+        ]);
+
         return back()->with('success', 'Kategori berhasil dihapus.');
     }
 

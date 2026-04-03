@@ -4,8 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use App\Models\Employee;
+use App\Models\AuditLog;
+use App\Models\ReportIssue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
@@ -13,8 +16,8 @@ class ProfileController extends Controller
     {
         $user = auth()->user();
         $employee = Employee::where('user_id', $user->id)->first();
-        $logs = \App\Models\AuditLog::where('user_id', $user->id)->with('document')->latest()->take(10)->get();
-        $myIssues = \App\Models\ReportIssue::where('user_id', $user->id)->latest()->get();
+        $logs = AuditLog::where('user_id', $user->id)->with('document')->latest()->take(10)->get();
+        $myIssues = ReportIssue::where('user_id', $user->id)->latest()->get();
         return view('profile.index', compact('user', 'employee', 'logs', 'myIssues'));
     }
 
@@ -29,16 +32,22 @@ class ProfileController extends Controller
             'password' => 'nullable|min:8|confirmed',
         ]);
 
-        $user->update(['name' => $request->name]);
+        $changes = [];
+
+        if ($request->name !== $user->name) {
+            $user->update(['name' => $request->name]);
+            $changes[] = 'nama';
+        }
 
         if ($request->filled('password')) {
             $user->update(['password' => Hash::make($request->password)]);
+            $changes[] = 'kata sandi';
         }
 
         if ($request->hasFile('photo')) {
             $image = $request->file('photo');
             $path = $image->store('photos', 'public');
-            
+
             // Ensure employee record exists
             if (!$employee) {
                 $employee = Employee::create([
@@ -51,10 +60,20 @@ class ProfileController extends Controller
 
             // Delete old photo if it exists and is a file path (not base64)
             if ($employee->getRawOriginal('photo') && !str_starts_with($employee->getRawOriginal('photo'), 'data:image')) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->getRawOriginal('photo'));
+                Storage::disk('public')->delete($employee->getRawOriginal('photo'));
             }
-            
+
             $employee->update(['photo' => $path]);
+            $changes[] = 'foto profil';
+        }
+
+        if (!empty($changes)) {
+            AuditLog::create([
+                'user_id' => $user->id,
+                'activity' => 'update_profile',
+                'ip_address' => $request->ip(),
+                'details' => $user->name . ' memperbarui ' . implode(', ', $changes)
+            ]);
         }
 
         return back()->with('success', 'Profil berhasil diperbarui.');
@@ -68,14 +87,23 @@ class ProfileController extends Controller
         if ($employee && $employee->getRawOriginal('photo')) {
             // Delete from storage if it's a path
             if (!str_starts_with($employee->getRawOriginal('photo'), 'data:image')) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->getRawOriginal('photo'));
+                Storage::disk('public')->delete($employee->getRawOriginal('photo'));
             }
             $employee->update(['photo' => null]);
+
+            AuditLog::create([
+                'user_id' => $user->id,
+                'activity' => 'delete_profile_photo',
+                'ip_address' => request()->ip(),
+                'details' => $user->name . ' menghapus foto profil'
+            ]);
+
             return back()->with('success', 'Foto profil berhasil dihapus.');
         }
 
         return back()->with('error', 'Tidak ada foto profil untuk dihapus.');
     }
+
 
     public function report(Request $request)
     {
@@ -84,7 +112,7 @@ class ProfileController extends Controller
             'message' => 'required|string',
         ]);
 
-        \App\Models\ReportIssue::create([
+        ReportIssue::create([
             'user_id' => auth()->id(),
             'subject' => $request->subject,
             'message' => $request->message,
