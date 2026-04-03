@@ -1,0 +1,41 @@
+name: Bug Report
+description: Report a bug to help us improve Sinergi PAS
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Terima kasih telah melaporkan bug! Mohon isi detail di bawah ini.
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Langkah Reproduksi
+      description: Bagaimana cara kami menduplikasi bug tersebut?
+      placeholder: |
+        1. Pergi ke halaman '...'
+        2. Klik tombol '...'
+        3. Lihat error '...'
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Perilaku yang Diharapkan
+      description: Apa yang seharusnya terjadi?
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Perilaku Aktual
+      description: Apa yang sebenarnya terjadi (sertakan pesan error jika ada)?
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pengecekan Mandiri
+      options:
+        - label: Saya telah memastikan bahwa bug ini belum dilaporkan sebelumnya.
+          required: true
+        - label: Saya menggunakan versi terbaru dari Sinergi PAS.
+          required: true

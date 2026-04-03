@@ -1,0 +1,22 @@
+name: Feature Request
+description: Suggest an idea for Sinergi PAS
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Masalah Apa yang Ingin Anda Selesaikan?
+      description: Jelaskan secara singkat masalah atau kebutuhan yang ada.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Deskripsi Solusi/Fitur
+      description: Jelaskan fitur atau perubahan yang Anda usulkan.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatif yang Dipertimbangkan
+      description: Apakah ada cara lain untuk menyelesaikan ini?
