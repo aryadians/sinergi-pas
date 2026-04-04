@@ -49,9 +49,10 @@ Untuk keamanan, letakkan file Laravel di folder terpisah, bukan langsung di `pub
 Untuk Shared Hosting, workflow terbaik adalah mem-build assets di GitHub, lalu mengirimkan file final ke server.
 
 ### 1. Tambahkan Secrets di GitHub
-- `FTP_SERVER`: Host FTP (misal: `ftp.domain.com`).
-- `FTP_USERNAME`: Username cPanel/FTP.
-- `FTP_PASSWORD`: Password FTP.
+Pindah ke tab **Settings > Secrets and variables > Actions** di repositori Anda, lalu tambahkan:
+- `FTP_SERVER`: Host FTP Anda (Contoh: `ftp.sinergipas.com` atau alamat IP. **JANGAN** gunakan `ftp://`).
+- `FTP_USERNAME`: Username cPanel atau akun FTP khusus.
+- `FTP_PASSWORD`: Password dari akun FTP tersebut.
 
 ### 2. Workflow CD (GitHub Actions)
 Gunakan workflow yang melakukan build assets terlebih dahulu agar Anda tidak perlu menginstal Node.js di hosting.

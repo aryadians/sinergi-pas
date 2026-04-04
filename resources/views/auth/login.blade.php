@@ -61,10 +61,40 @@
                         <label class="text-xs font-extrabold text-[#1E2432] uppercase tracking-[0.2em]">Password</label>
                         <a href="{{ route('password.request') }}" class="text-xs font-bold text-[#E85A4F] hover:text-[#d44d42] transition-colors">Lupa Password?</a>
                     </div>
-                    <input type="password" name="password" required 
-                        class="w-full px-6 py-4 rounded-[20px] border border-[#EFEFEF] bg-white/50 text-[#1E2432] focus:ring-4 focus:ring-red-500/10 focus:border-[#E85A4F] outline-none transition-all placeholder:text-[#ABABAB] font-medium"
-                        placeholder="••••••••••••">
+                    <div class="relative group">
+                        <input type="password" name="password" id="password" required 
+                            class="w-full px-6 py-4 rounded-[20px] border border-[#EFEFEF] bg-white/50 text-[#1E2432] focus:ring-4 focus:ring-red-500/10 focus:border-[#E85A4F] outline-none transition-all placeholder:text-[#ABABAB] font-medium pr-14"
+                            placeholder="••••••••••••">
+                        <button type="button" onclick="togglePassword()" class="absolute right-5 top-1/2 -translate-y-1/2 text-[#ABABAB] hover:text-[#E85A4F] transition-colors focus:outline-none">
+                            <svg id="eye-icon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path id="eye-open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                <path id="eye-open-outer" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                <path id="eye-closed" class="hidden" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.542-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
+
+                <script>
+                    function togglePassword() {
+                        const passwordInput = document.getElementById('password');
+                        const eyeOpen = document.getElementById('eye-open');
+                        const eyeOpenOuter = document.getElementById('eye-open-outer');
+                        const eyeClosed = document.getElementById('eye-closed');
+                        
+                        if (passwordInput.type === 'password') {
+                            passwordInput.type = 'text';
+                            eyeOpen.classList.add('hidden');
+                            eyeOpenOuter.classList.add('hidden');
+                            eyeClosed.classList.remove('hidden');
+                        } else {
+                            passwordInput.type = 'password';
+                            eyeOpen.classList.remove('hidden');
+                            eyeOpenOuter.classList.remove('hidden');
+                            eyeClosed.classList.add('hidden');
+                        }
+                    }
+                </script>
 
                 <button type="submit" 
                     class="w-full bg-[#E85A4F] text-white py-5 rounded-[24px] font-extrabold text-lg hover:bg-[#d44d42] transition-all shadow-xl shadow-red-200 active:scale-[0.98] flex items-center justify-center gap-3">

@@ -95,11 +95,16 @@ class DashboardController extends Controller
         
         // --- PEGAWAI VIEW DATA ---
         else {
-            $employee = Employee::where('user_id', $user->id)->first();
-            $myDocs = Document::where('employee_id', $employee?->id)->get();
+            $employee = Employee::with(['work_unit', 'position_relation'])->where('user_id', $user->id)->first();
+            $myDocs = Document::where('employee_id', $employee?->id)->with('category')->get();
             
             $myDocumentsCount = $myDocs->count();
             $verifiedDocs = $myDocs->where('status', 'verified')->count();
+            $recentDocuments = Document::where('employee_id', $employee?->id)
+                ->with('category')
+                ->latest()
+                ->take(5)
+                ->get();
             
             // Career Progress: Percentage of mandatory categories uploaded
             $mandatoryCats = DocumentCategory::where('is_mandatory', true)->get();
@@ -123,7 +128,8 @@ class DashboardController extends Controller
                 ->first();
 
             return view('dashboard-pegawai', compact(
-                'myDocumentsCount', 'verifiedDocs', 'careerProgress', 'latestSalary'
+                'myDocumentsCount', 'verifiedDocs', 'careerProgress', 'latestSalary', 
+                'employee', 'recentDocuments'
             ));
         }
     }
