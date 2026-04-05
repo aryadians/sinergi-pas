@@ -74,7 +74,7 @@ class DashboardController extends Controller
                 })->values();
 
             $nonCompliantEmployeesTotal = $nonCompliantEmployees->count();
-            $nonCompliantPreviewLimit = 15;
+            $nonCompliantPreviewLimit = 10;
             $nonCompliantEmployees = $nonCompliantEmployees
                 ->take($nonCompliantPreviewLimit)
                 ->values();

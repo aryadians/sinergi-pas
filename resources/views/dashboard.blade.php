@@ -194,6 +194,10 @@
                     <p class="text-[9px] font-black uppercase tracking-[0.24em] text-[#8A8A8A]">Ditampilkan</p>
                     <p class="mt-1 text-sm font-black text-[#1E2432]">{{ $displayedNonCompliantEmployees }}/{{ $nonCompliantEmployeesTotal }}</p>
                 </div>
+                <a href="{{ route('employees.index') }}" class="inline-flex items-center gap-2 rounded-2xl border border-[#EFEFEF] bg-white px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1E2432] shadow-sm transition-all hover:border-[#E85A4F] hover:text-[#E85A4F]">
+                    <i data-lucide="arrow-up-right" class="h-4 w-4"></i>
+                    Lihat Semua
+                </a>
                 <button onclick="window.location.reload()" class="bg-white border border-[#EFEFEF] p-4 rounded-2xl hover:bg-[#1E2432] hover:text-white transition-all shadow-sm active:scale-95 group">
                     <i data-lucide="refresh-cw" class="w-5 h-5 group-hover:rotate-180 transition-transform duration-700"></i>
                 </button>
@@ -280,6 +284,10 @@
                                 <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">
                                     Menampilkan {{ $displayedNonCompliantEmployees }} dari {{ $nonCompliantEmployeesTotal }} pegawai yang perlu ditindaklanjuti.
                                 </p>
+                                <a href="{{ route('employees.index') }}" class="mt-4 inline-flex items-center gap-2 rounded-2xl border border-[#EFEFEF] bg-[#FCFBF9] px-5 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#1E2432] transition-all hover:border-[#E85A4F] hover:text-[#E85A4F]">
+                                    <i data-lucide="list" class="h-4 w-4"></i>
+                                    Lihat Semua Data Pegawai
+                                </a>
                             </div>
                         @endif
                     </div>
