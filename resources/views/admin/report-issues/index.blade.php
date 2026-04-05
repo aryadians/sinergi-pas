@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('title', 'Manajemen Laporan')
-@section('header-title', 'Helpdesk Support Center')
+@section('header-title', 'Helpdesk Support')
 
 @section('content')
 @php
@@ -12,429 +12,216 @@
     $searchActive = request()->anyFilled(['search', 'status', 'date', 'work_unit_id']);
 @endphp
 
-<style>
-    .issue-card {
-        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
-    }
-
-    .issue-card:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 24px 48px -32px rgba(30, 36, 50, 0.25);
-    }
-</style>
-
-<div class="space-y-8">
-    <section class="overflow-hidden rounded-[40px] border border-[#EFEFEF] bg-white shadow-sm">
-        <div class="border-b border-[#F2F1EE] bg-[#F1F5F9] px-6 py-6 sm:px-8">
-            <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-                <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#EAB308]">Laporan Masalah</p>
-                    <h2 class="mt-2 text-3xl font-black tracking-tight text-[#0F172A]">Antrean laporan.</h2>
-                </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
-                        <i data-lucide="message-square" class="h-4 w-4 text-[#EAB308]"></i>
-                        {{ $issueStats['total'] }} total
-                    </span>
-                    @if($searchActive)
-                        <span class="inline-flex items-center gap-2 rounded-full border border-amber-100 bg-amber-50 px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-amber-700 shadow-sm">
-                            <i data-lucide="filter" class="h-4 w-4"></i>
-                            Filter aktif
-                        </span>
-                    @endif
-                    <button type="button" id="deleteAllIssuesBtn" class="inline-flex items-center gap-3 rounded-[20px] border border-red-100 bg-red-50 px-5 py-3 text-[10px] font-black uppercase tracking-[0.24em] text-red-600 transition-all hover:bg-red-600 hover:text-white">
-                        <i data-lucide="flame" class="h-4 w-4"></i>
-                        Delete All
-                    </button>
-                </div>
+<div class="space-y-8 page-fade">
+    <!-- Stats Header -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="md:col-span-2 bg-slate-900 rounded-3xl p-8 text-white relative overflow-hidden shadow-xl card-3d">
+            <div class="absolute -right-4 -bottom-4 opacity-10">
+                <i data-lucide="message-square" class="w-32 h-32"></i>
             </div>
+            <h4 class="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500 mb-2">Total Laporan</h4>
+            <h3 class="text-4xl font-bold tracking-tight">{{ $issueStats['total'] }}</h3>
+            <p class="mt-4 text-xs font-medium text-slate-400">Antrean laporan masuk dari seluruh pegawai.</p>
+        </div>
+        
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover-lift border-l-4 border-l-red-500 flex flex-col justify-between">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status Terbuka</p>
+            <h3 class="text-3xl font-bold text-red-600">{{ $openCount }}</h3>
         </div>
 
-        <div class="grid gap-4 px-6 py-6 sm:px-8 md:grid-cols-3">
-            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
-                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Open</p>
-                <p class="mt-3 text-3xl font-black text-[#0F172A]">{{ $openCount }}</p>
-            </div>
-            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
-                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Resolved</p>
-                <p class="mt-3 text-3xl font-black text-[#0F172A]">{{ $resolvedCount }}</p>
-            </div>
-            <div class="rounded-[24px] border border-[#EFEFEF] bg-[#F1F5F9] p-5">
-                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Closed</p>
-                <p class="mt-3 text-3xl font-black text-[#0F172A]">{{ $closedCount }}</p>
-            </div>
+        <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm hover-lift border-l-4 border-l-green-500 flex flex-col justify-between">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Telah Selesai</p>
+            <h3 class="text-3xl font-bold text-green-600">{{ $resolvedCount }}</h3>
         </div>
-    </section>
+    </div>
 
-        <section class="overflow-hidden rounded-[40px] border border-[#EFEFEF] bg-white shadow-sm">
-            <div class="flex flex-col gap-4 border-b border-[#F2F1EE] bg-[#F1F5F9] px-8 py-7 lg:flex-row lg:items-center lg:justify-between">
-                <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-[#EAB308]">Daftar Laporan</p>
-                    <h3 class="mt-2 text-2xl font-black tracking-tight text-[#0F172A]">Daftar laporan.</h3>
+    <!-- Filters & Actions -->
+    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col lg:flex-row justify-between items-center gap-4">
+            <form action="{{ route('admin.report-issues.index') }}" method="GET" class="w-full lg:flex-1 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari laporan..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-blue-500">
                 </div>
-                <div class="flex flex-wrap items-center gap-3">
-                    <span class="inline-flex items-center gap-2 rounded-full border border-[#EFEFEF] bg-white px-4 py-2 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A] shadow-sm">
-                        <i data-lucide="message-square" class="h-4 w-4 text-[#EAB308]"></i>
-                        {{ $currentIssues->count() }} laporan di halaman ini
-                    </span>
-                </div>
-            </div>
-
-            <div class="border-b border-[#F2F1EE] bg-white px-8 py-7">
-                <form action="{{ route('admin.report-issues.index') }}" method="GET" class="grid gap-4 xl:grid-cols-[minmax(0,1fr),180px,200px,220px,auto,auto]">
-                    <div class="relative">
-                        <i data-lucide="search" class="absolute left-5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#8A8A8A]"></i>
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari subjek, isi laporan, nama, email, atau NIP..." class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#F1F5F9] py-4 pl-12 pr-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
-                    </div>
-                    <select name="status" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#F1F5F9] px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
-                        <option value="">Semua status</option>
-                        <option value="open" {{ request('status') === 'open' ? 'selected' : '' }}>Open</option>
-                        <option value="resolved" {{ request('status') === 'resolved' ? 'selected' : '' }}>Resolved</option>
-                        <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Closed</option>
-                    </select>
-                    <input type="date" name="date" value="{{ request('date') }}" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#F1F5F9] px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
-                    <select name="work_unit_id" class="w-full rounded-[22px] border border-[#EFEFEF] bg-[#F1F5F9] px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
-                        <option value="">Semua unit kerja</option>
-                        @foreach($workUnits as $workUnit)
-                            <option value="{{ $workUnit->id }}" {{ (string) request('work_unit_id') === (string) $workUnit->id ? 'selected' : '' }}>
-                                {{ $workUnit->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <button type="submit" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-[#0F172A] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white transition-all hover:bg-[#EAB308]">
-                        Terapkan
-                    </button>
+                <select name="status" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-blue-500 appearance-none bg-white">
+                    <option value="">Semua Status</option>
+                    <option value="open" {{ request('status') === 'open' ? 'selected' : '' }}>Open</option>
+                    <option value="resolved" {{ request('status') === 'resolved' ? 'selected' : '' }}>Resolved</option>
+                    <option value="closed" {{ request('status') === 'closed' ? 'selected' : '' }}>Closed</option>
+                </select>
+                <input type="date" name="date" value="{{ request('date') }}" class="px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-blue-500 bg-white">
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-slate-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all btn-3d">Filter</button>
                     @if($searchActive)
-                        <a href="{{ route('admin.report-issues.index') }}" class="inline-flex items-center justify-center gap-3 rounded-[22px] border border-[#EFEFEF] bg-white px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-[#8A8A8A] transition-all hover:bg-[#F1F5F9]">
-                            Reset
+                        <a href="{{ route('admin.report-issues.index') }}" class="px-3 flex items-center justify-center bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all">
+                            <i data-lucide="refresh-ccw" class="w-4 h-4"></i>
                         </a>
                     @endif
-                </form>
-            </div>
-
-            <div id="bulkActionBar" class="hidden border-b border-[#F2F1EE] bg-[#FFF5F4] px-8 py-5">
-                <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div class="flex items-center gap-3">
-                        <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-[#EAB308] shadow-sm">
-                            <i data-lucide="check-check" class="h-4 w-4"></i>
-                        </div>
-                        <div>
-                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#EAB308]">Bulk Action Aktif</p>
-                            <p class="mt-1 text-sm font-bold text-[#0F172A]"><span id="selectedIssuesCount">0</span> laporan dipilih pada halaman ini.</p>
-                        </div>
-                    </div>
-                    <button type="button" id="bulkDeleteBtn" class="inline-flex items-center justify-center gap-3 rounded-[22px] bg-red-500 px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-100 transition-all hover:bg-[#0F172A]">
-                        <i data-lucide="trash-2" class="h-4 w-4"></i>
-                        Bulk Delete
-                    </button>
                 </div>
-            </div>
-
-            <div class="divide-y divide-[#F2F1EE]">
-                @forelse($issues as $issue)
-                    @php
-                        $employee = $issue->user?->employee;
-                        $issueData = array_merge($issue->toArray(), [
-                            'user' => $issue->user,
-                            'employee' => $employee,
-                        ]);
-                    @endphp
-
-                    <div class="issue-card px-8 py-7 hover:bg-[#F1F5F9]">
-                        <div class="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
-                            <div class="flex min-w-0 flex-1 gap-4">
-                                <div class="pt-1">
-                                    <input type="checkbox" name="ids[]" value="{{ $issue->id }}" class="issue-checkbox h-5 w-5 rounded-lg border-[#D7D3CF] text-[#EAB308] focus:ring-0">
-                                </div>
-
-                                <div class="min-w-0 flex-1">
-                                    <div class="flex flex-wrap items-center gap-3">
-                                        <div class="flex items-center gap-4">
-                                            <div class="flex h-12 w-12 items-center justify-center rounded-2xl border border-[#EFEFEF] bg-white text-sm font-black text-[#0F172A] shadow-sm">
-                                                {{ substr($issue->user->name ?? 'S', 0, 1) }}
-                                            </div>
-                                            <div>
-                                                <p class="text-sm font-black text-[#0F172A]">{{ $issue->user->name ?? 'User tidak tersedia' }}</p>
-                                                <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">{{ $issue->user->email ?? '-' }}</p>
-                                            </div>
-                                        </div>
-
-                                        <span class="rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.22em] {{ $issue->status === 'open' ? 'border-red-100 bg-red-50 text-red-600' : ($issue->status === 'resolved' ? 'border-emerald-100 bg-emerald-50 text-emerald-600' : 'border-slate-200 bg-slate-50 text-slate-500') }}">
-                                            {{ $issue->status }}
-                                        </span>
-                                    </div>
-
-                                    <div class="mt-5">
-                                        <h4 class="text-lg font-black tracking-tight text-[#0F172A]">{{ $issue->subject }}</h4>
-                                        <p class="mt-3 max-w-3xl text-sm font-medium leading-relaxed text-[#8A8A8A]">{{ $issue->message }}</p>
-                                    </div>
-
-                                    <div class="mt-5 grid gap-3 text-sm font-medium text-[#8A8A8A] sm:grid-cols-3">
-                                        <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
-                                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Pengirim</p>
-                                            <p class="mt-2 font-bold text-[#0F172A]">{{ $issue->user->name ?? 'User tidak tersedia' }}</p>
-                                        </div>
-                                        <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
-                                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Waktu Kirim</p>
-                                            <p class="mt-2 font-bold text-[#0F172A]">{{ $issue->created_at->format('d M Y, H:i') }}</p>
-                                        </div>
-                                        <div class="rounded-[22px] border border-[#EFEFEF] bg-white px-4 py-3">
-                                            <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Catatan Admin</p>
-                                            <p class="mt-2 font-bold text-[#0F172A]">{{ $issue->admin_note ? 'Sudah diisi' : 'Belum ada tanggapan' }}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="flex shrink-0 gap-3 xl:flex-col">
-                                <button type="button" onclick="openDetailModal({{ \Illuminate\Support\Js::from($issueData) }})" class="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50 text-blue-600 shadow-sm transition-all hover:bg-blue-600 hover:text-white">
-                                    <i data-lucide="eye" class="h-4 w-4"></i>
-                                </button>
-                                <form id="deleteIssue-{{ $issue->id }}" action="{{ route('admin.report-issues.destroy', $issue->id) }}" method="POST" class="no-loader">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="button" onclick="confirmDeleteIssue({{ $issue->id }})" class="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-red-100 bg-red-50 text-red-500 shadow-sm transition-all hover:bg-red-500 hover:text-white">
-                                        <i data-lucide="trash-2" class="h-4 w-4"></i>
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                @empty
-                    <div class="px-8 py-20 text-center">
-                        <div class="mx-auto flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#F1F5F9] text-[#ABABAB]">
-                            <i data-lucide="inbox" class="h-9 w-9"></i>
-                        </div>
-                        <p class="mt-5 text-sm font-black uppercase tracking-[0.22em] text-[#0F172A]">Belum ada laporan masuk</p>
-                    </div>
-                @endforelse
-            </div>
-
-            @if($currentIssues->isNotEmpty())
-                <div class="border-t border-[#F2F1EE] bg-[#F1F5F9] px-8 py-5">
-                    <label class="inline-flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.22em] text-[#0F172A]">
-                        <input type="checkbox" id="selectAllIssues" class="h-5 w-5 rounded-lg border-[#D7D3CF] text-[#EAB308] focus:ring-0">
-                        Pilih semua laporan di halaman ini
-                    </label>
-                </div>
-            @endif
-
-            <div class="border-t border-[#F2F1EE] bg-[#F1F5F9] px-8 py-6">
-                {{ $issues->links() }}
-            </div>
-        </section>
-</div>
-
-<form id="bulkDeleteForm" action="{{ route('admin.report-issues.bulk-destroy') }}" method="POST" class="hidden no-loader">
-    @csrf
-    @method('DELETE')
-</form>
-
-<form id="deleteAllIssuesForm" action="{{ route('admin.report-issues.destroy-all') }}" method="POST" class="hidden no-loader">
-    @csrf
-    @method('DELETE')
-</form>
-
-<div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/55 p-6 backdrop-blur-md">
-    <div class="w-full max-w-4xl overflow-hidden rounded-[44px] border border-[#EFEFEF] bg-white shadow-2xl">
-        <div class="bg-[#0F172A] px-8 py-7 text-white">
-            <div class="flex items-center justify-between gap-6">
-                <div>
-                    <p class="text-[10px] font-black uppercase tracking-[0.24em] text-white/55">Detail Penanganan</p>
-                    <h3 class="mt-2 text-2xl font-black tracking-tight">Buka konteks laporan dan kirim tanggapan admin.</h3>
-                </div>
-                <button type="button" onclick="document.getElementById('detailModal').classList.add('hidden')" class="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 text-white transition-all hover:bg-white/20">
-                    <i data-lucide="x" class="h-5 w-5"></i>
-                </button>
-            </div>
+            </form>
+            
+            <div class="h-8 w-px bg-slate-200 hidden lg:block mx-2"></div>
+            
+            <button type="button" onclick="confirmDeleteAll()" class="w-full lg:w-auto px-6 py-2.5 bg-red-50 text-red-600 border border-red-100 rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all btn-3d flex items-center justify-center gap-2">
+                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                Hapus Semua
+            </button>
         </div>
 
-        <form id="updateForm" method="POST" class="grid gap-8 p-8 lg:grid-cols-[320px,minmax(0,1fr)]">
-            @csrf
-            @method('PUT')
+        <!-- Issue List -->
+        <div class="divide-y divide-slate-100">
+            @forelse($issues as $issue)
+            <div class="p-6 hover:bg-slate-50/50 transition-colors group">
+                <div class="flex flex-col lg:flex-row gap-6 justify-between">
+                    <div class="flex gap-4 min-w-0">
+                        <div class="w-12 h-12 rounded-2xl bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:text-blue-600 transition-all border border-transparent group-hover:border-slate-200 shrink-0">
+                            {{ substr($issue->user->name ?? 'S', 0, 1) }}
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-3 mb-2">
+                                <h4 class="text-sm font-bold text-slate-900 truncate">{{ $issue->user->name ?? 'User Unknown' }}</h4>
+                                <span class="px-2 py-0.5 rounded-lg text-[8px] font-bold uppercase tracking-wider border {{ $issue->status === 'open' ? 'bg-red-50 text-red-600 border-red-100' : ($issue->status === 'resolved' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-slate-100 text-slate-500 border-slate-200') }}">
+                                    {{ $issue->status }}
+                                </span>
+                            </div>
+                            <h3 class="text-base font-bold text-slate-800 mb-2 leading-tight">{{ $issue->subject }}</h3>
+                            <p class="text-sm text-slate-500 line-clamp-2 leading-relaxed mb-4">{{ $issue->message }}</p>
+                            
+                            <div class="flex flex-wrap gap-4">
+                                <div class="flex items-center gap-1.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                    <i data-lucide="clock" class="w-3.5 h-3.5"></i>
+                                    {{ $issue->created_at->format('d M Y, H:i') }}
+                                </div>
+                                @if($issue->admin_note)
+                                <div class="flex items-center gap-1.5 text-[10px] font-bold text-blue-600 uppercase tracking-widest">
+                                    <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                    Telah Ditanggapi
+                                </div>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
 
-            <div class="space-y-6">
-                <div class="rounded-[32px] border border-[#EFEFEF] bg-[#F1F5F9] p-6 text-center">
-                    <div id="detail_photo_container" class="mx-auto mb-4 flex h-20 w-20 items-center justify-center overflow-hidden rounded-[24px] border-2 border-white bg-white shadow-lg">
-                        <i data-lucide="user" class="h-10 w-10 text-gray-300"></i>
-                    </div>
-                    <h4 id="detail_name" class="text-sm font-black text-[#0F172A]"></h4>
-                    <p id="detail_nip" class="mt-1 text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]"></p>
-                </div>
-
-                <div class="space-y-4 rounded-[32px] border border-[#EFEFEF] bg-white p-6">
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Email</p>
-                        <p id="detail_email" class="mt-2 text-sm font-bold text-[#0F172A]"></p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Jabatan</p>
-                        <p id="detail_position" class="mt-2 text-sm font-bold text-[#0F172A]"></p>
-                    </div>
-                    <div>
-                        <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#ABABAB]">Dikirim</p>
-                        <p id="detail_date" class="mt-2 text-sm font-bold text-[#0F172A]"></p>
+                    <div class="flex lg:flex-col gap-2 shrink-0">
+                        <button onclick="openDetailModal({{ json_encode($issue->load('user.employee')) }})" class="flex-1 lg:flex-none w-10 h-10 lg:w-11 lg:h-11 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-blue-600 hover:border-blue-200 hover:shadow-md transition-all btn-3d">
+                            <i data-lucide="eye" class="w-5 h-5"></i>
+                        </button>
+                        <form id="deleteIssue-{{ $issue->id }}" action="{{ route('admin.report-issues.destroy', $issue->id) }}" method="POST" class="flex-1 lg:flex-none no-loader">
+                            @csrf @method('DELETE')
+                            <button type="button" onclick="confirmDeleteIssue({{ $issue->id }})" class="w-full h-10 lg:w-11 lg:h-11 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-600 hover:border-red-200 hover:shadow-md transition-all btn-3d">
+                                <i data-lucide="trash-2" class="w-5 h-5"></i>
+                            </button>
+                        </form>
                     </div>
                 </div>
             </div>
-
-            <div class="space-y-6">
-                <div class="rounded-[32px] border border-[#EFEFEF] bg-[#F1F5F9] p-6">
-                    <p class="text-[10px] font-black uppercase tracking-[0.22em] text-[#EAB308]">Subjek Laporan</p>
-                    <h4 id="detail_subject" class="mt-3 text-xl font-black tracking-tight text-[#0F172A]"></h4>
-                    <div id="detail_message" class="mt-5 rounded-[24px] border border-[#EFEFEF] bg-white px-5 py-5 text-sm font-medium leading-relaxed text-[#0F172A]"></div>
+            @empty
+            <div class="py-24 text-center">
+                <div class="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-dashed border-slate-200">
+                    <i data-lucide="inbox" class="w-10 h-10 text-slate-300"></i>
                 </div>
-
-                <div class="grid gap-6 md:grid-cols-2">
-                    <div>
-                        <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Status Penanganan</label>
-                        <select name="status" id="detail_status" class="mt-3 w-full rounded-[20px] border border-[#EFEFEF] bg-white px-5 py-4 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5">
-                            <option value="open">Open</option>
-                            <option value="resolved">Resolved</option>
-                            <option value="closed">Closed</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="ml-1 block text-[10px] font-black uppercase tracking-[0.22em] text-[#8A8A8A]">Catatan Admin</label>
-                    <textarea name="admin_note" id="detail_note" rows="5" class="mt-3 w-full rounded-[24px] border border-[#EFEFEF] bg-white px-6 py-5 text-sm font-bold text-[#0F172A] outline-none transition-all focus:border-[#EAB308] focus:ring-4 focus:ring-red-500/5" placeholder="Berikan tanggapan atau langkah tindak lanjut untuk laporan ini..."></textarea>
-                </div>
-
-                <button type="submit" class="inline-flex w-full items-center justify-center gap-3 rounded-[24px] bg-[#EAB308] px-6 py-4 text-[10px] font-black uppercase tracking-[0.24em] text-white shadow-xl shadow-red-100 transition-all hover:bg-[#0F172A]">
-                    Simpan Penanganan
-                    <i data-lucide="save" class="h-4 w-4"></i>
-                </button>
+                <p class="text-sm font-bold text-slate-400 uppercase tracking-[0.2em] italic">Kotak masuk laporan kosong</p>
             </div>
-        </form>
+            @endforelse
+        </div>
+
+        @if($issues->hasPages())
+        <div class="p-6 border-t border-slate-100 bg-slate-50/30">
+            {{ $issues->links() }}
+        </div>
+        @endif
     </div>
 </div>
 
-@if(session('success'))
-    <script>
-        Swal.fire({
-            icon: 'success',
-            title: 'Perubahan Tersimpan',
-            text: "{{ session('success') }}",
-            confirmButtonColor: '#0F172A',
-            customClass: { popup: 'rounded-[32px]' }
-        });
-    </script>
-@endif
+<!-- Detail Modal -->
+<div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-4xl rounded-[32px] overflow-hidden shadow-2xl animate-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+        <div class="bg-slate-900 px-8 py-6 text-white flex justify-between items-center shrink-0">
+            <div>
+                <h3 class="text-xl font-bold tracking-tight">Detail Penanganan Laporan</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Sinergi PAS Support System</p>
+            </div>
+            <button type="button" onclick="document.getElementById('detailModal').classList.add('hidden')" class="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center hover:bg-white/20 transition-all">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
 
-@if(session('error'))
-    <script>
-        Swal.fire({
-            icon: 'error',
-            title: 'Aksi Gagal',
-            text: "{{ session('error') }}",
-            confirmButtonColor: '#EAB308',
-            customClass: { popup: 'rounded-[32px]' }
-        });
-    </script>
-@endif
+        <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left: Sender Info -->
+                <div class="space-y-6">
+                    <div class="p-6 rounded-2xl bg-slate-50 border border-slate-100 text-center">
+                        <div id="detail_photo_container" class="w-20 h-20 mx-auto mb-4 rounded-2xl border-2 border-white bg-white shadow-md overflow-hidden flex items-center justify-center text-slate-300">
+                            <i data-lucide="user" class="w-10 h-10"></i>
+                        </div>
+                        <h4 id="detail_name" class="text-base font-bold text-slate-900 leading-tight"></h4>
+                        <p id="detail_nip" class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1"></p>
+                    </div>
+
+                    <div class="space-y-4 p-2">
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Email Kedinasan</p>
+                            <p id="detail_email" class="text-sm font-semibold text-slate-700"></p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Jabatan / Unit</p>
+                            <p id="detail_position" class="text-sm font-semibold text-slate-700"></p>
+                        </div>
+                        <div>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Tanggal Kirim</p>
+                            <p id="detail_date" class="text-sm font-semibold text-slate-700"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Content & Action -->
+                <div class="lg:col-span-2 space-y-8">
+                    <div class="p-6 rounded-2xl bg-blue-50 border border-blue-100">
+                        <p class="text-[9px] font-bold text-blue-400 uppercase tracking-widest mb-3">Subjek & Pesan:</p>
+                        <h4 id="detail_subject" class="text-lg font-bold text-blue-900 mb-4"></h4>
+                        <div id="detail_message" class="text-sm text-blue-800 leading-relaxed bg-white/50 p-4 rounded-xl"></div>
+                    </div>
+
+                    <form id="updateForm" method="POST" class="space-y-6">
+                        @csrf @method('PUT')
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Status Penanganan</label>
+                                <select name="status" id="detail_status" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                                    <option value="open">Open (Dalam Antrean)</option>
+                                    <option value="resolved">Resolved (Sudah Selesai)</option>
+                                    <option value="closed">Closed (Ditutup)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tanggapan / Catatan Admin</label>
+                            <textarea name="admin_note" id="detail_note" rows="4" class="w-full px-5 py-4 rounded-xl border border-slate-200 bg-slate-50 text-sm font-semibold outline-none focus:border-blue-500" placeholder="Ketik tanggapan untuk pegawai..."></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg btn-3d">
+                            Simpan Perubahan Penanganan
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="deleteAllIssuesForm" action="{{ route('admin.report-issues.destroy-all') }}" method="POST" class="hidden no-loader">@csrf @method('DELETE')</form>
 
 <script>
-    const selectAllIssues = document.getElementById('selectAllIssues');
-    const issueCheckboxes = Array.from(document.querySelectorAll('.issue-checkbox'));
-    const bulkActionBar = document.getElementById('bulkActionBar');
-    const selectedIssuesCount = document.getElementById('selectedIssuesCount');
-    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
-    const bulkDeleteForm = document.getElementById('bulkDeleteForm');
-    const deleteAllIssuesBtn = document.getElementById('deleteAllIssuesBtn');
-    const deleteAllIssuesForm = document.getElementById('deleteAllIssuesForm');
-
-    function syncIssueSelectionState() {
-        const checkedCount = issueCheckboxes.filter((checkbox) => checkbox.checked).length;
-
-        if (selectedIssuesCount) {
-            selectedIssuesCount.textContent = checkedCount;
-        }
-
-        if (bulkActionBar) {
-            bulkActionBar.classList.toggle('hidden', checkedCount === 0);
-        }
-
-        if (selectAllIssues) {
-            selectAllIssues.checked = issueCheckboxes.length > 0 && checkedCount === issueCheckboxes.length;
-            selectAllIssues.indeterminate = checkedCount > 0 && checkedCount < issueCheckboxes.length;
-        }
-    }
-
-    if (selectAllIssues) {
-        selectAllIssues.addEventListener('change', function () {
-            issueCheckboxes.forEach((checkbox) => {
-                checkbox.checked = this.checked;
-            });
-            syncIssueSelectionState();
-        });
-    }
-
-    issueCheckboxes.forEach((checkbox) => {
-        checkbox.addEventListener('change', syncIssueSelectionState);
-    });
-
-    if (bulkDeleteBtn) {
-        bulkDeleteBtn.addEventListener('click', function () {
-            const checkedCount = issueCheckboxes.filter((checkbox) => checkbox.checked).length;
-
-            Swal.fire({
-                title: 'Bulk delete laporan?',
-                text: `${checkedCount} laporan yang dipilih di halaman ini akan dihapus permanen.`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#EAB308',
-                cancelButtonColor: '#0F172A',
-                confirmButtonText: 'Ya, hapus terpilih',
-                cancelButtonText: 'Batal',
-                customClass: { popup: 'rounded-[32px]' }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    bulkDeleteForm.querySelectorAll('input[name="ids[]"]').forEach((input) => input.remove());
-                    issueCheckboxes.filter((checkbox) => checkbox.checked).forEach((checkbox) => {
-                        const hiddenInput = document.createElement('input');
-                        hiddenInput.type = 'hidden';
-                        hiddenInput.name = 'ids[]';
-                        hiddenInput.value = checkbox.value;
-                        bulkDeleteForm.appendChild(hiddenInput);
-                    });
-                    bulkDeleteForm.submit();
-                }
-            });
-        });
-    }
-
-    if (deleteAllIssuesBtn) {
-        deleteAllIssuesBtn.addEventListener('click', function () {
-            Swal.fire({
-                title: 'Delete all laporan?',
-                text: 'Semua laporan masalah di database akan dihapus permanen. Aksi ini tidak bisa dibatalkan.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#EAB308',
-                cancelButtonColor: '#0F172A',
-                confirmButtonText: 'Ya, hapus semua',
-                cancelButtonText: 'Batal',
-                customClass: { popup: 'rounded-[32px]' }
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    deleteAllIssuesForm.submit();
-                }
-            });
-        });
-    }
-
     function confirmDeleteIssue(id) {
         Swal.fire({
-            title: 'Hapus laporan ini?',
-            text: 'Laporan yang dihapus tidak dapat dipulihkan kembali.',
+            title: 'Hapus Laporan?',
+            text: "Laporan yang dihapus tidak dapat dikembalikan.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#EAB308',
+            confirmButtonColor: '#EF4444',
             cancelButtonColor: '#0F172A',
-            confirmButtonText: 'Ya, hapus',
+            confirmButtonText: 'Ya, Hapus!',
             cancelButtonText: 'Batal',
-            customClass: { popup: 'rounded-[32px]' }
+            customClass: { popup: 'rounded-2xl' }
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById(`deleteIssue-${id}`).submit();
@@ -442,38 +229,56 @@
         });
     }
 
-    function openDetailModal(data) {
-        document.getElementById('detailModal').classList.remove('hidden');
-        document.getElementById('detailModal').classList.add('flex');
-        document.getElementById('updateForm').action = `/admin/report-issues/${data.id}`;
+    function confirmDeleteAll() {
+        Swal.fire({
+            title: 'Bersihkan Seluruh Laporan?',
+            text: "Semua data laporan akan dihapus permanen dari database.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            cancelButtonColor: '#0F172A',
+            confirmButtonText: 'Ya, Bersihkan!',
+            cancelButtonText: 'Batal',
+            customClass: { popup: 'rounded-2xl' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                document.getElementById('deleteAllIssuesForm').submit();
+            }
+        });
+    }
 
+    function openDetailModal(data) {
+        const modal = document.getElementById('detailModal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        document.getElementById('updateForm').action = `/admin/report-issues/${data.id}`;
         document.getElementById('detail_name').innerText = data.user.name;
         document.getElementById('detail_email').innerText = data.user.email;
-        document.getElementById('detail_nip').innerText = data.employee ? `NIP. ${data.employee.nip}` : 'Data pegawai tidak ditemukan';
-        document.getElementById('detail_position').innerText = data.employee ? data.employee.position : 'Tidak tersedia';
-        document.getElementById('detail_date').innerText = new Date(data.created_at).toLocaleString('id-ID', {
-            day: 'numeric',
-            month: 'short',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-
-        const photoContainer = document.getElementById('detail_photo_container');
-        if (data.employee && data.employee.photo) {
-            photoContainer.innerHTML = `<img src="${data.employee.photo}" class="h-full w-full object-cover">`;
-        } else {
-            photoContainer.innerHTML = '<i data-lucide="user" class="h-10 w-10 text-gray-300"></i>';
-        }
-
+        document.getElementById('detail_nip').innerText = data.user.employee ? `NIP. ${data.user.employee.nip}` : '-';
+        document.getElementById('detail_position').innerText = data.user.employee ? data.user.employee.position : 'Administrator';
+        document.getElementById('detail_date').innerText = new Date(data.created_at).toLocaleString('id-ID', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         document.getElementById('detail_subject').innerText = data.subject;
         document.getElementById('detail_message').innerText = data.message;
         document.getElementById('detail_status').value = data.status;
         document.getElementById('detail_note').value = data.admin_note || '';
 
+        const photoContainer = document.getElementById('detail_photo_container');
+        if (data.user.employee && data.user.employee.photo) {
+            photoContainer.innerHTML = `<img src="${data.user.employee.photo}" class="w-full h-full object-cover">`;
+        } else {
+            photoContainer.innerHTML = '<i data-lucide="user" class="w-10 h-10"></i>';
+        }
+
         lucide.createIcons();
     }
-
-    syncIssueSelectionState();
 </script>
+
+@if(session('success'))
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: "{{ session('success') }}", confirmButtonColor: '#0F172A', customClass: { popup: 'rounded-2xl' } });
+    });
+</script>
+@endif
 @endsection

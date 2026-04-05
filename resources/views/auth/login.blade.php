@@ -13,6 +13,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
     <style>
         :root {
             --font-custom: 'Plus Jakarta Sans', sans-serif;
@@ -44,6 +47,13 @@
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-15px); }
         }
+        .btn-3d {
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .btn-3d:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -6px rgba(15, 23, 42, 0.3);
+        }
     </style>
 </head>
 <body class="antialiased min-h-screen flex items-center justify-center p-6">
@@ -74,13 +84,18 @@
                         class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white text-sm font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all">
                 </div>
 
-                <div class="space-y-2">
+                <div class="space-y-2 relative">
                     <div class="flex justify-between items-center px-1">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Kata Sandi</label>
                         <a href="{{ route('password.request') }}" class="text-[10px] font-bold text-blue-600 hover:underline">Lupa Password?</a>
                     </div>
-                    <input type="password" name="password" required placeholder="••••••••" 
-                        class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white text-sm font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all">
+                    <div class="relative">
+                        <input type="password" name="password" id="password" required placeholder="••••••••" 
+                            class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-white text-sm font-semibold outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all pr-12">
+                        <button type="button" onclick="togglePassword()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors">
+                            <i data-lucide="eye" id="eye-icon" class="w-5 h-5"></i>
+                        </button>
+                    </div>
                 </div>
 
                 <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg shadow-slate-200 active:scale-[0.98] btn-3d">
@@ -99,5 +114,21 @@
         <div class="absolute top-[10%] right-[10%] w-64 h-64 bg-blue-500/5 rounded-full blur-3xl"></div>
         <div class="absolute bottom-[10%] left-[10%] w-64 h-64 bg-amber-500/5 rounded-full blur-3xl"></div>
     </div>
+
+    <script>
+        lucide.createIcons();
+        function togglePassword() {
+            const input = document.getElementById('password');
+            const icon = document.getElementById('eye-icon');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            lucide.createIcons();
+        }
+    </script>
 </body>
 </html>

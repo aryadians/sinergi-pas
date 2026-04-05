@@ -4,286 +4,239 @@
 @section('header-title', 'Pusat Dokumen Pribadi')
 
 @section('content')
-<!-- Header Section with Statistics -->
-<div class="mb-12">
-    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10">
-        <div>
-            <h2 class="text-3xl font-black text-[#0F172A] tracking-tight mb-2">Arsip Digital Anda</h2>
-            <p class="text-sm text-[#8A8A8A] font-medium">Halo, <span class="text-[#EAB308] font-bold">{{ auth()->user()->name }}</span>. Kelola dan akses seluruh dokumen kepegawaian Anda di sini.</p>
-        </div>
-        
-        <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
-            class="bg-[#EAB308] text-white px-10 py-4 rounded-[24px] font-black hover:bg-[#CA8A04] transition-all flex items-center gap-3 shadow-xl shadow-red-100 active:scale-95 group">
-            <div class="bg-white/20 p-2 rounded-xl group-hover:rotate-12 transition-transform">
-                <i data-lucide="upload-cloud" class="w-5 h-5 text-white"></i>
+<div class="space-y-10 page-fade">
+    <!-- Header Section with Statistics -->
+    <div class="space-y-8">
+        <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div>
+                <h2 class="text-3xl font-bold text-slate-900 tracking-tight mb-2">Arsip Digital Anda</h2>
+                <p class="text-sm text-slate-500 font-medium">Kelola dan pantau seluruh dokumen kepegawaian Anda secara mandiri.</p>
             </div>
-            Unggah Dokumen Baru
-        </button>
-</div>
+            
+            <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
+                class="w-full lg:w-auto bg-blue-600 text-white px-8 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all flex items-center justify-center gap-3 shadow-lg shadow-blue-200 btn-3d">
+                <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+                Unggah Dokumen Baru
+            </button>
+        </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <div class="bg-white p-6 rounded-[32px] border border-[#EFEFEF] shadow-sm">
-            <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest mb-1">Total Dokumen</p>
-            <h3 class="text-2xl font-black text-[#0F172A]">{{ $documents->count() }} <span class="text-xs text-[#ABABAB] font-bold uppercase ml-1">Berkas</span></h3>
-        </div>
-        <div class="bg-white p-6 rounded-[32px] border border-[#EFEFEF] shadow-sm">
-            <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest mb-1">Terverifikasi</p>
-            <h3 class="text-2xl font-black text-green-600">{{ $documents->where('status', 'verified')->count() }} <span class="text-xs text-[#ABABAB] font-bold uppercase ml-1">Selesai</span></h3>
-        </div>
-        <div class="bg-white p-6 rounded-[32px] border border-[#EFEFEF] shadow-sm">
-            <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest mb-1">Menunggu</p>
-            <h3 class="text-2xl font-black text-orange-500">{{ $documents->where('status', 'pending')->count() }} <span class="text-xs text-[#ABABAB] font-bold uppercase ml-1">Proses</span></h3>
-        </div>
-        <div class="bg-white p-6 rounded-[32px] border border-[#EFEFEF] shadow-sm">
-            <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest mb-1">Pembaruan Terakhir</p>
-            <h3 class="text-sm font-black text-[#0F172A] mt-2">{{ $documents->first() ? $documents->first()->created_at->diffForHumans() : '-' }}</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover-lift">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Total Arsip</p>
+                <h3 class="text-2xl font-bold text-slate-900">{{ $documents->count() }} <span class="text-[10px] text-slate-400 font-semibold ml-1">BERKAS</span></h3>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover-lift border-l-4 border-l-green-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Terverifikasi</p>
+                <h3 class="text-2xl font-bold text-green-600">{{ $documents->where('status', 'verified')->count() }}</h3>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover-lift border-l-4 border-l-amber-500">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Proses Tinjau</p>
+                <h3 class="text-2xl font-bold text-amber-600">{{ $documents->where('status', 'pending')->count() }}</h3>
+            </div>
+            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover-lift">
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Update Terakhir</p>
+                <h3 class="text-xs font-bold text-slate-700 mt-2 uppercase tracking-tight">{{ $documents->first() ? $documents->first()->created_at->diffForHumans() : 'Belum ada data' }}</h3>
+            </div>
         </div>
     </div>
-</div>
 
-<!-- Documents Grid -->
-<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
-    @forelse($documents as $doc)
-    <div class="group bg-white p-8 rounded-[48px] border border-[#EFEFEF] hover:border-[#EAB308] hover:shadow-2xl hover:shadow-red-100/30 transition-all duration-500 flex flex-col justify-between h-[320px] relative overflow-hidden">
-        <!-- Status Badge -->
-        <div class="absolute top-6 right-8">
-            @if($doc->status === 'verified')
-                <span class="bg-green-50 text-green-600 text-[8px] font-black uppercase px-2.5 py-1 rounded-lg border border-green-100">Verified</span>
-            @elseif($doc->status === 'rejected')
-                <span class="bg-red-50 text-red-600 text-[8px] font-black uppercase px-2.5 py-1 rounded-lg border border-red-100">Rejected</span>
-            @else
-                <span class="bg-orange-50 text-orange-600 text-[8px] font-black uppercase px-2.5 py-1 rounded-lg border border-orange-100">Pending</span>
-            @endif
-        </div>
-
-        <div>
-            <div class="w-16 h-16 bg-[#F1F5F9] rounded-3xl flex items-center justify-center text-[#8A8A8A] group-hover:bg-[#EAB308] group-hover:text-white transition-all duration-500 mb-6 shadow-inner">
-                @if(str_contains($doc->file_path, '.pdf'))
-                    <i data-lucide="file-text" class="w-8 h-8 text-red-500 group-hover:text-white"></i>
-                @elseif(str_contains($doc->file_path, '.xls') || str_contains($doc->file_path, '.xlsx'))
-                    <i data-lucide="file-spreadsheet" class="w-8 h-8 text-green-600 group-hover:text-white"></i>
-                @elseif(str_contains($doc->file_path, '.doc') || str_contains($doc->file_path, '.docx'))
-                    <i data-lucide="file-text" class="w-8 h-8 text-blue-600 group-hover:text-white"></i>
-                @elseif(str_contains($doc->file_path, '.jpg') || str_contains($doc->file_path, '.jpeg') || str_contains($doc->file_path, '.png'))   
-                    <i data-lucide="image" class="w-8 h-8 text-blue-500 group-hover:text-white"></i>
+    <!-- Documents Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-4 gap-8">
+        @forelse($documents as $doc)
+        <div class="group bg-white p-6 rounded-[32px] border border-slate-200 hover:border-blue-300 hover:shadow-xl transition-all duration-500 flex flex-col justify-between min-h-[300px] relative card-3d">
+            <!-- Status Badge -->
+            <div class="absolute top-6 right-6">
+                @if($doc->status === 'verified')
+                    <span class="bg-green-50 text-green-600 text-[8px] font-bold uppercase px-2 py-1 rounded-lg border border-green-100">Verified</span>
+                @elseif($doc->status === 'rejected')
+                    <span class="bg-red-50 text-red-600 text-[8px] font-bold uppercase px-2 py-1 rounded-lg border border-red-100">Rejected</span>
                 @else
-                    <i data-lucide="file" class="w-8 h-8"></i>
+                    <span class="bg-amber-50 text-amber-600 text-[8px] font-bold uppercase px-2 py-1 rounded-lg border border-amber-100">Pending</span>
                 @endif
             </div>
 
-            <h4 class="text-xl font-black text-[#0F172A] leading-tight group-hover:text-[#EAB308] transition-colors line-clamp-2">{{ $doc->title }}</h4>
-            <p class="text-[10px] font-black text-[#ABABAB] uppercase tracking-[0.2em] mt-2">{{ $doc->category->name ?? 'Tanpa Kategori' }}</p>
-        </div>
+            <div>
+                <div class="w-14 h-14 bg-slate-50 rounded-2xl flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white transition-all duration-500 mb-6 border border-slate-100 group-hover:border-blue-600">
+                    @if(str_contains($doc->file_path, '.pdf'))
+                        <i data-lucide="file-text" class="w-7 h-7"></i>
+                    @elseif(str_contains($doc->file_path, '.xls'))
+                        <i data-lucide="file-spreadsheet" class="w-7 h-7"></i>
+                    @else
+                        <i data-lucide="file" class="w-7 h-7"></i>
+                    @endif
+                </div>
 
-        <div class="flex items-center justify-between mt-auto pt-6 border-t border-dashed border-[#EFEFEF]">
-            <div class="flex gap-2">
-                <button onclick="openPreview('{{ route('documents.preview', $doc->id) }}', '{{ $doc->title }}', '{{ $doc->file_path }}')" class="bg-[#F1F5F9] p-3 rounded-2xl text-[#0F172A] hover:bg-[#0F172A] hover:text-white transition-all shadow-sm" title="Pratinjau">
-                    <i data-lucide="eye" class="w-4 h-4"></i>
-                </button>
-                <button onclick="openRevisionModal({{ $doc->id }}, '{{ $doc->title }}')" class="bg-[#F1F5F9] p-3 rounded-2xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Revisi">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                </button>
+                <h4 class="text-lg font-bold text-slate-900 leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">{{ $doc->title }}</h4>
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2">{{ $doc->category->name ?? 'Dokumen' }}</p>
             </div>
 
-            <div class="flex gap-2">
-                @if(!$doc->is_locked)
-                    <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="bg-[#F1F5F9] p-3 rounded-2xl text-[#EAB308] hover:bg-[#EAB308] hover:text-white transition-all no-loader shadow-sm" title="Unduh">
-                        <i data-lucide="download" class="w-4 h-4"></i>
-                    </a>
-                    <form id="deleteDoc-{{ $doc->id }}" action="{{ route('documents.destroy', $doc->id) }}" method="POST" class="no-loader">
-                        @csrf @method('DELETE')
-                        <button type="button" onclick="confirmDocDelete({{ $doc->id }})" class="bg-[#F1F5F9] p-3 rounded-2xl text-red-500 hover:bg-red-500 hover:text-white transition-all shadow-sm" title="Hapus">
+            <div class="flex items-center justify-between mt-8 pt-5 border-t border-slate-50">
+                <div class="flex gap-2">
+                    <button onclick="window.open('{{ route('documents.preview', $doc->id) }}', '_blank')" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition-all border border-slate-100" title="Pratinjau">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="openRevisionModal({{ $doc->id }}, '{{ $doc->title }}')" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all border border-slate-100" title="Revisi">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+
+                <div class="flex gap-2">
+                    @if(!$doc->is_locked)
+                        <a href="{{ route('documents.download', $doc->id) }}" target="_blank" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-amber-600 hover:bg-amber-600 hover:text-white transition-all no-loader border border-slate-100" title="Unduh">
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                        </a>
+                        <button type="button" onclick="confirmDocDelete({{ $doc->id }})" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-red-500 hover:bg-red-600 hover:text-white transition-all border border-slate-100" title="Hapus">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
-                    </form>
-                @else
-                    <div class="bg-gray-50 p-3 rounded-2xl text-gray-300 cursor-not-allowed border border-gray-100" title="Dokumen dikunci">       
-                        <i data-lucide="lock" class="w-4 h-4 opacity-50"></i>
-                    </div>
-                @endif
+                    @else
+                        <div class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-slate-300 border border-slate-50 cursor-not-allowed" title="Dokumen dikunci">       
+                            <i data-lucide="lock" class="w-4 h-4 opacity-50"></i>
+                        </div>
+                    @endif
+                </div>
             </div>
         </div>
-    </div>
-    @empty
-    <div class="col-span-full bg-white rounded-[48px] p-20 border border-dashed border-[#EFEFEF] text-center">
-        <div class="w-24 h-24 bg-[#F1F5F9] rounded-[32px] flex items-center justify-center mx-auto mb-6">
-            <i data-lucide="folder-open" class="w-10 h-10 text-[#ABABAB]"></i>
+        @empty
+        <div class="col-span-full py-32 text-center bg-white rounded-[40px] border border-dashed border-slate-200">
+            <div class="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="folder-search" class="w-10 h-10 text-slate-300"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Arsip Digital Kosong</h3>
+            <p class="text-sm text-slate-400 font-medium max-w-xs mx-auto mb-10">Mulai unggah dokumen kepegawaian Anda agar tersimpan dengan aman di sistem.</p>
+            <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" class="bg-slate-900 text-white px-10 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d">
+                Unggah Sekarang
+            </button>
         </div>
-        <h3 class="text-2xl font-black text-[#0F172A] mb-2">Belum Ada Dokumen</h3>
-        <p class="text-sm text-[#8A8A8A] font-medium max-w-xs mx-auto mb-8">Anda belum mengunggah dokumen apapun ke dalam sistem.</p>
-        <button onclick="document.getElementById('uploadModal').classList.remove('hidden')" class="bg-[#0F172A] text-white px-8 py-4 rounded-2xl font-black hover:bg-[#EAB308] transition-all shadow-xl">
-            Unggah Sekarang
-        </button>
+        @endforelse
     </div>
-    @endforelse
 </div>
 
 <!-- Upload Modal -->
-<div id="uploadModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-md">
-    <div class="bg-white w-full max-w-lg rounded-[48px] p-12 shadow-2xl animate-in zoom-in duration-300">
-        <div class="flex justify-between items-center mb-10">
-            <div>
-                <h3 class="text-2xl font-black text-[#0F172A] tracking-tight">Unggah Arsip</h3>
-                <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-widest mt-1">Penyimpanan Digital Aman</p>
+<div id="uploadModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-lg rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-300 relative overflow-hidden">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
+        <div class="relative z-10">
+            <div class="flex justify-between items-center mb-10">
+                <div>
+                    <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Unggah Arsip Baru</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Penyimpanan Digital Terenkripsi</p>
+                </div>
+                <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
             </div>
-            <button onclick="document.getElementById('uploadModal').classList.add('hidden')" class="bg-[#F1F5F9] p-3 rounded-2xl text-[#8A8A8A] hover:text-red-500 transition-all border border-[#EFEFEF]">
-                <i data-lucide="x" class="w-6 h-6"></i>
-            </button>
-        </div>
-        <form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
-            @csrf
-            <input type="hidden" name="employee_id" value="{{ $employee->id }}">
-            <div class="space-y-4">
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em] ml-1">Nama Dokumen</label>
-                    <input type="text" name="title" required placeholder="Contoh: SK CPNS 2024" 
-                        class="w-full px-6 py-4 rounded-[20px] border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5 transition-all">
+            <form action="{{ route('documents.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+                @csrf
+                <input type="hidden" name="employee_id" value="{{ $employee->id }}">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Judul Dokumen</label>
+                    <input type="text" name="title" required placeholder="Contoh: SK Kenaikan Pangkat 2024" 
+                        class="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold outline-none focus:border-blue-500 transition-all">
                 </div>
                 
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em] ml-1">Kategori</label>
-                    <select name="document_category_id" required class="w-full px-6 py-4 rounded-[20px] border border-[#EFEFEF] bg-[#F1F5F9] text-sm font-bold outline-none focus:ring-4 focus:ring-red-500/5 transition-all appearance-none cursor-pointer">
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kategori</label>
+                    <select name="document_category_id" required class="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold outline-none focus:border-blue-500 appearance-none cursor-pointer">
                         @foreach($categories as $cat)
                             <option value="{{ $cat->id }}">{{ $cat->name }}</option>
                         @endforeach
                     </select>
                 </div>
 
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-[#0F172A] uppercase tracking-[0.2em] ml-1">Berkas Dokumen</label>
-                    <div class="relative group">
-                        <input type="file" name="file" required class="w-full px-6 py-12 rounded-[32px] border-2 border-dashed border-[#EFEFEF] bg-[#F1F5F9] text-xs font-bold text-[#8A8A8A] file:hidden cursor-pointer hover:border-[#EAB308] transition-all text-center">
-                        <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-40 group-hover:opacity-100 transition-opacity">
-                            <i data-lucide="file-up" class="w-10 h-10 text-[#EAB308] mb-2"></i>
-                            <span class="text-[10px] uppercase font-black">Seret atau Klik untuk Pilih File</span>
-                        </div>
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">File Berkas</label>
+                    <div class="p-8 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 text-center group hover:bg-white hover:border-blue-400 transition-all cursor-pointer relative">
+                        <input type="file" name="file" required class="absolute inset-0 opacity-0 cursor-pointer" onchange="updateFileName(this)">
+                        <i data-lucide="file-up" class="w-10 h-10 text-slate-300 mx-auto mb-3 group-hover:text-blue-500 group-hover:scale-110 transition-all"></i>
+                        <p id="uploadFileName" class="text-xs font-bold text-slate-500 group-hover:text-blue-600">Klik atau seret file ke sini</p>
+                        <p class="text-[9px] text-slate-400 mt-1 uppercase font-bold">PDF, JPG, PNG (Max 5MB)</p>
                     </div>
                 </div>
-            </div>
-            <button type="submit" class="w-full bg-[#EAB308] text-white py-5 rounded-[28px] font-black text-lg hover:bg-[#CA8A04] transition-all shadow-xl shadow-red-200 active:scale-95 flex items-center justify-center gap-3">
-                Simpan Dokumen <i data-lucide="check-circle" class="w-5 h-5"></i>
-            </button>
-        </form>
-    </div>
-</div>
 
-<!-- Preview Modal -->
-<div id="previewModal" class="fixed inset-0 bg-[#0F172A]/95 hidden flex items-center justify-center z-[100] p-6 md:p-12 backdrop-blur-xl">
-    <div class="bg-white w-full h-full max-w-7xl rounded-[56px] overflow-hidden flex flex-col shadow-2xl relative">
-        <div class="p-8 border-b border-[#EFEFEF] flex justify-between items-center bg-white">
-            <div>
-                <h3 id="previewTitle" class="text-2xl font-black text-[#0F172A]">Pratinjau</h3>
-                <p class="text-[10px] font-black text-[#8A8A8A] uppercase tracking-widest mt-1">Sistem Keamanan Sinergi PAS</p>
-            </div>
-            <button onclick="document.getElementById('previewModal').classList.add('hidden')" class="bg-[#F1F5F9] p-4 rounded-[24px] shadow-sm border border-[#EFEFEF] hover:bg-red-50 hover:text-red-500 transition-all group">
-                <i data-lucide="x" class="w-7 h-7 group-hover:rotate-90 transition-transform"></i>
-            </button>
-        </div>
-        <div class="flex-1 bg-[#F1F5F9] overflow-auto flex items-center justify-center p-6 md:p-12 relative" id="previewContent">
-            <!-- Content Injected Here -->
-            @if($watermarkEnabled)
-            <div id="watermarkOverlay" class="absolute inset-0 pointer-events-none hidden flex-wrap gap-20 p-20 opacity-[0.03] overflow-hidden content-center justify-center select-none z-10">
-                @for($i=0; $i<30; $i++)
-                    <div class="text-5xl font-black -rotate-45 uppercase tracking-[1em] whitespace-nowrap">{{ $watermarkText }}</div>
-                @endfor
-            </div>
-            @endif
+                <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d mt-4">
+                    Simpan Dokumen
+                </button>
+            </form>
         </div>
     </div>
 </div>
 
 <!-- Revision Modal -->
-<div id="revisionModal" class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-md">
-    <div class="bg-white w-full max-w-md rounded-[48px] p-12 shadow-2xl animate-in zoom-in duration-300">
-        <div class="flex justify-between items-center mb-10">
+<div id="revisionModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-300">
+        <div class="flex justify-between items-center mb-8">
             <div>
-                <h3 class="text-2xl font-black text-[#0F172A]">Pembaruan</h3>
-                <p class="text-[10px] font-bold text-[#8A8A8A] uppercase tracking-widest mt-1">Kirim Revisi Dokumen</p>
+                <h3 class="text-2xl font-bold text-slate-900">Kirim Revisi</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Pembaruan Berkas Terdaftar</p>
             </div>
-            <button onclick="document.getElementById('revisionModal').classList.add('hidden')" class="bg-[#F1F5F9] p-3 rounded-2xl text-[#8A8A8A] hover:text-red-500 transition-all border border-[#EFEFEF]">
+            <button onclick="document.getElementById('revisionModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
-        <form id="revisionForm" action="" method="POST" enctype="multipart/form-data" class="space-y-8">
+        <form id="revisionForm" action="" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
             <input type="hidden" name="document_id" id="revision_doc_id">
-            <div class="space-y-4">
-                <div class="bg-[#F1F5F9] p-6 rounded-3xl border border-[#EFEFEF]">
-                    <p class="text-[10px] font-black text-[#ABABAB] uppercase tracking-widest mb-2">Merevisi Berkas:</p>
-                    <p id="revision_doc_title" class="text-sm font-black text-[#EAB308]"></p>
-                </div>
-                <div class="relative group">
-                    <input type="file" name="file" required class="w-full px-6 py-12 rounded-[32px] border-2 border-dashed border-[#EFEFEF] bg-[#F1F5F9] text-xs font-bold text-[#8A8A8A] file:hidden cursor-pointer hover:border-blue-500 transition-all text-center">
-                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none opacity-40 group-hover:opacity-100 transition-opacity">
-                        <i data-lucide="refresh-cw" class="w-10 h-10 text-blue-600 mb-2"></i>
-                        <span class="text-[10px] uppercase font-black">Pilih Berkas Baru</span>
-                    </div>
+            <div class="p-5 bg-blue-50 rounded-2xl border border-blue-100 mb-6">
+                <p class="text-[9px] font-bold text-blue-400 uppercase tracking-widest mb-1">Merevisi Dokumen:</p>
+                <p id="revision_doc_title" class="text-sm font-bold text-blue-700"></p>
+            </div>
+            <div class="space-y-1.5">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">File Baru</label>
+                <div class="p-8 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 text-center group hover:bg-white hover:border-blue-400 transition-all cursor-pointer relative">
+                    <input type="file" name="file" required class="absolute inset-0 opacity-0 cursor-pointer" onchange="updateFileNameRev(this)">
+                    <i data-lucide="refresh-cw" class="w-10 h-10 text-slate-300 mx-auto mb-3 group-hover:text-blue-500 group-hover:rotate-180 transition-all duration-700"></i>
+                    <p id="revFileName" class="text-xs font-bold text-slate-500 group-hover:text-blue-600">Klik untuk ganti file</p>
                 </div>
             </div>
-            <button type="submit" class="w-full bg-[#0F172A] text-white py-5 rounded-[28px] font-black text-lg hover:bg-blue-600 transition-all shadow-xl active:scale-95 flex items-center justify-center gap-3">
-                Unggah Revisi <i data-lucide="arrow-right" class="w-5 h-5"></i>
+            <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl btn-3d">
+                Kirim Revisi
             </button>
         </form>
     </div>
 </div>
 
-@endsection
+<form id="deleteDocForm" action="" method="POST" class="hidden no-loader">@csrf @method('DELETE')</form>
 
-@push('scripts')
 <script>
-    function openPreview(url, title, filePath) {
-        document.getElementById('previewTitle').innerText = title;
-        const container = document.getElementById('previewContent');
-        const watermark = document.getElementById('watermarkOverlay');
-        
-        container.innerHTML = '';
-        if (filePath.toLowerCase().endsWith('.pdf')) {
-            const iframe = document.createElement('iframe');
-            iframe.src = url;
-            iframe.className = 'w-full h-full rounded-3xl border-0 shadow-2xl relative z-0 bg-white';
-            container.appendChild(iframe);
-        } else {
-            const img = document.createElement('img');
-            img.src = url;
-            img.className = 'max-w-full max-h-full object-contain shadow-2xl rounded-3xl border-[12px] border-white relative z-0';
-            container.appendChild(img);
+    function updateFileName(input) {
+        if (input.files && input.files[0]) {
+            document.getElementById('uploadFileName').textContent = input.files[0].name;
+            document.getElementById('uploadFileName').classList.add('text-blue-600');
         }
-
-        if (watermark) {
-            watermark.classList.remove('hidden');
-            watermark.classList.add('flex');
-        }
-        document.getElementById('previewModal').classList.remove('hidden');
-        lucide.createIcons();
     }
-
+    function updateFileNameRev(input) {
+        if (input.files && input.files[0]) {
+            document.getElementById('revFileName').textContent = input.files[0].name;
+            document.getElementById('revFileName').classList.add('text-blue-600');
+        }
+    }
     function openRevisionModal(id, title) {
-        document.getElementById('revisionForm').action = `/documents/${id}/revision`;
+        const modal = document.getElementById('revisionModal');
+        const form = document.getElementById('revisionForm');
+        form.action = `/documents/${id}/revision`;
         document.getElementById('revision_doc_id').value = id;
         document.getElementById('revision_doc_title').innerText = title;
-        document.getElementById('revisionModal').classList.remove('hidden');
+        modal.classList.remove('hidden');
+        lucide.createIcons();
     }
-
     function confirmDocDelete(id) {
         Swal.fire({
             title: 'Hapus Dokumen?',
-            text: "Berkas ini akan dihapus permanen dari sistem kami.",
+            text: "Berkas akan dimusnahkan permanen dari server.",
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#EAB308',
+            confirmButtonColor: '#EF4444',
             cancelButtonColor: '#0F172A',
             confirmButtonText: 'Ya, Hapus!',
             cancelButtonText: 'Batal',
-            customClass: { 
-                popup: 'rounded-[48px]',
-                confirmButton: 'rounded-2xl px-8 py-3',
-                cancelButton: 'rounded-2xl px-8 py-3'
-            }
+            customClass: { popup: 'rounded-3xl' }
         }).then((result) => {
             if (result.isConfirmed) {
-                document.getElementById('deleteDoc-' + id).submit();
+                const form = document.getElementById('deleteDocForm');
+                form.action = `/documents/${id}`;
+                form.submit();
             }
         });
     }
 </script>
-@endpush
+@endsection

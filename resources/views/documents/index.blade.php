@@ -99,7 +99,7 @@
                                 </div>
                                 <div class="min-w-0">
                                     <h3 class="text-base font-bold text-slate-900 truncate">{{ $employee->full_name }}</h3>
-                                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-tight truncate">{{ $employee->position }}</p>
+                                    <p class="text-[10px] font-bold text-blue-600 uppercase tracking-tight truncate">NIP. {{ $employee->nip }}</p>
                                 </div>
                             </div>
                             <a href="{{ route('documents.employee', $employee->id) }}" 
