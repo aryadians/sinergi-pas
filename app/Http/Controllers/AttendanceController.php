@@ -19,7 +19,8 @@ class AttendanceController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Attendance::with('employee.work_unit');
+        // Eager Loading for performance
+        $query = Attendance::with(['employee.work_unit']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -33,15 +34,20 @@ class AttendanceController extends Controller
         $date = Carbon::parse($monthStr);
         $query->whereMonth('date', $date->month)->whereYear('date', $date->year);
 
-        $attendances = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
+        // Fast Paginate
+        $attendances = $query->orderBy('date', 'desc')->paginate(50)->withQueryString();
         
-        $summary = [
-            'total_present' => Attendance::whereMonth('date', $date->month)->whereYear('date', $date->year)->where('status', 'present')->count(),
-            'total_late' => Attendance::whereMonth('date', $date->month)->whereYear('date', $date->year)->where('late_minutes', '>', 0)->count(),
-            'total_allowance' => Attendance::whereMonth('date', $date->month)->whereYear('date', $date->year)->sum('allowance_amount'),
-        ];
+        // Optimized Summary Calculation
+        $summary = DB::table('attendances')
+            ->whereMonth('date', $date->month)
+            ->whereYear('date', $date->year)
+            ->selectRaw('
+                COUNT(CASE WHEN status = "present" THEN 1 END) as total_present,
+                COUNT(CASE WHEN late_minutes > 0 THEN 1 END) as total_late,
+                SUM(allowance_amount) as total_allowance
+            ')->first();
 
-        return view('admin.attendance.index', compact('attendances', 'summary'));
+        return view('admin.attendance.index', compact('attendances', 'summary', 'monthStr'));
     }
 
     public function import(Request $request)
@@ -52,106 +58,91 @@ class AttendanceController extends Controller
             $file = $request->file('file');
             $path = $file->getRealPath();
 
-            // STEP 1: Identify file type explicitly
             $inputFileType = IOFactory::identify($path);
             $reader = IOFactory::createReader($inputFileType);
-            
-            // Allow reading HTML even if disguised as XLS
-            if ($inputFileType === 'Html') {
-                $reader->setReadDataOnly(true);
-            }
+            if ($inputFileType === 'Html') $reader->setReadDataOnly(true);
             
             $spreadsheet = $reader->load($path);
             $data = $spreadsheet->getActiveSheet()->toArray();
 
-            if (count($data) < 2) {
-                return back()->with('error', 'File terbaca namun tidak ada baris data di dalamnya.');
-            }
+            if (count($data) < 2) return back()->with('error', 'File terbaca namun kosong.');
 
-            // STEP 2: Logic process data
             $importedCount = 0;
-            $skippedCount = 0;
             $employees = Employee::all()->keyBy('nip');
-
-            DB::beginTransaction();
             
-            // Finding the start of data (skipping headers)
-            $startRow = 0;
-            foreach ($data as $index => $row) {
-                // If column index 4 (NIP) contains a digit or numeric-like string, it's likely our data start
-                if (isset($row[4]) && preg_match('/[0-9]/', (string)$row[4])) {
-                    $startRow = $index;
-                    break;
-                }
-            }
+            // Collect rows to process by employee and date to handle MIN/MAX logic
+            $groupedData = [];
 
-            for ($i = $startRow; $i < count($data); $i++) {
-                $row = $data[$i];
-                
-                // Column Mapping (Based on machine format):
-                // Tanggal scan (0), Tanggal (1), Jam (2), PIN (3), NIP (4)
-                if (!isset($row[4]) || empty(trim((string)$row[4]))) continue;
+            foreach ($data as $index => $row) {
+                if ($index === 0 || !isset($row[4]) || !is_numeric($row[4])) {
+                    if (isset($row[4]) && strtolower((string)$row[4]) === 'nip') continue;
+                    if ($index < 5) continue;
+                }
 
                 $nip = trim((string)$row[4]);
-                if (!isset($employees[$nip])) {
-                    $skippedCount++;
-                    continue;
-                }
+                if (empty($nip) || !isset($employees[$nip])) continue;
 
-                $emp = $employees[$nip];
-                
                 try {
-                    // Normalize date & time strings
-                    $rawDate = trim((string)$row[1]);
-                    $rawTime = trim((string)$row[2]);
-                    
-                    $date = Carbon::parse($rawDate)->format('Y-m-d');
-                    $time = Carbon::parse($rawTime)->format('H:i:s');
-                } catch (\Exception $e) {
-                    continue;
-                }
+                    $date = Carbon::parse($row[1])->format('Y-m-d');
+                    $time = Carbon::parse($row[2])->format('H:i:s');
+                    $key = $nip . '_' . $date;
 
-                $attendance = Attendance::firstOrNew(['employee_id' => $emp->id, 'date' => $date]);
+                    if (!isset($groupedData[$key])) {
+                        $groupedData[$key] = ['emp' => $employees[$nip], 'date' => $date, 'times' => []];
+                    }
+                    $groupedData[$key]['times'][] = $time;
+                } catch (\Exception $e) { continue; }
+            }
 
-                if (!$attendance->exists) {
-                    $attendance->check_in = $time;
-                    $attendance->check_out = $time;
-                    $attendance->status = 'present';
-                } else {
-                    if ($time < $attendance->check_in) $attendance->check_in = $time;
-                    if ($time > $attendance->check_out) $attendance->check_out = $time;
-                }
+            DB::beginTransaction();
+            foreach ($groupedData as $entry) {
+                $emp = $entry['emp'];
+                $date = $entry['date'];
+                $times = $entry['times'];
+
+                $minTime = min($times);
+                $maxTime = max($times);
+
+                $attendance = Attendance::updateOrCreate(
+                    ['employee_id' => $emp->id, 'date' => $date],
+                    [
+                        'check_in' => $minTime,
+                        'check_out' => $maxTime,
+                        'status' => 'present'
+                    ]
+                );
 
                 $this->calculateAttendanceMetrics($attendance, $emp);
                 $attendance->save();
                 $importedCount++;
             }
-
             DB::commit();
 
-            AuditLog::create([
-                'user_id' => auth()->id(),
-                'activity' => 'import_attendance',
-                'ip_address' => $request->ip(),
-                'details' => "Sinkronisasi fingerprint ($inputFileType): $importedCount data"
-            ]);
-
-            if ($importedCount === 0) {
-                return back()->with('error', 'Gagal: Tidak ada NIP di file Excel yang cocok dengan data pegawai di sistem.');
-            }
-
-            return back()->with('success', "Sinkronisasi Berhasil! $importedCount baris data telah diproses.");
+            return back()->with('success', "Berhasil memproses $importedCount data absensi.");
 
         } catch (\Exception $e) {
-            if (isset($db_started)) DB::rollBack();
-            return back()->with('error', 'Gagal memproses file: ' . $e->getMessage() . ' (Format: ' . ($inputFileType ?? 'Unknown') . ')');
+            DB::rollBack();
+            return back()->with('error', 'Gagal: ' . $e->getMessage());
         }
     }
 
     private function calculateAttendanceMetrics($attendance, $employee)
     {
         $schedule = Schedule::where('employee_id', $employee->id)->where('date', $attendance->date)->first();
-        $shift = $schedule ? $schedule->shift : ($employee->employee_type === 'non_regu_jaga' ? Shift::where('name', 'Kantor')->first() : null);
+        
+        // AUTO-SHIFT LOGIC:
+        // Default to Office (Kantor) if not a Guard/Commander
+        $shift = null;
+        if ($schedule) {
+            $shift = $schedule->shift;
+        } else {
+            $pos = strtoupper((string)$employee->position);
+            $isGuard = str_contains($pos, 'JAGA') || str_contains($pos, 'PENGAMANAN') || str_contains($pos, 'KOMANDAN');
+            
+            if (!$isGuard) {
+                $shift = Shift::where('name', 'Kantor')->first();
+            }
+        }
 
         if ($shift) {
             $startTime = Carbon::parse($shift->start_time);
@@ -166,6 +157,7 @@ class AttendanceController extends Controller
             }
         }
 
+        // Meal Allowance from Settings
         $class = strtoupper((string)$employee->rank_class);
         $rate = 0;
         if (str_contains($class, 'IV')) $rate = Setting::getValue('meal_allowance_iv', 41000);
@@ -177,23 +169,32 @@ class AttendanceController extends Controller
 
     public function export(Request $request)
     {
-        $monthStr = $request->month ?? now()->format('Y-m');
-        $date = Carbon::parse($monthStr);
-        $attendances = Attendance::with('employee.work_unit')
-            ->whereMonth('date', $date->month)->whereYear('date', $date->year)
-            ->orderBy('date', 'asc')->get();
+        $filter = $request->filter ?? 'monthly';
+        $date = Carbon::parse($request->month ?? now());
+        
+        $query = Attendance::with(['employee.work_unit'])->orderBy('date', 'asc');
 
-        if ($request->type === 'excel') return $this->exportExcel($attendances, $date);
+        if ($filter === 'daily') {
+            $query->whereDate('date', now());
+        } elseif ($filter === 'weekly') {
+            $query->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()]);
+        } else {
+            $query->whereMonth('date', $date->month)->whereYear('date', $date->year);
+        }
 
-        $pdf = Pdf::loadView('admin.attendance.pdf', compact('attendances', 'date'));
-        return $pdf->download("rekap-absensi-{$monthStr}.pdf");
+        $attendances = $query->get();
+
+        if ($request->type === 'excel') return $this->exportExcel($attendances, $date, $filter);
+
+        $pdf = Pdf::loadView('admin.attendance.pdf', compact('attendances', 'date', 'filter'));
+        return $pdf->download("rekap-absensi-{$filter}.pdf");
     }
 
-    private function exportExcel($attendances, $date)
+    private function exportExcel($attendances, $date, $filter)
     {
-        return Excel::download(new class($attendances, $date) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles, \Maatwebsite\Excel\Concerns\WithDrawings, \Maatwebsite\Excel\Concerns\WithCustomStartCell {
-            protected $data, $date;
-            public function __construct($data, $date) { $this->data = $data; $this->date = $date; }
+        return Excel::download(new class($attendances, $date, $filter) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles, \Maatwebsite\Excel\Concerns\WithDrawings, \Maatwebsite\Excel\Concerns\WithCustomStartCell {
+            protected $data, $date, $filter;
+            public function __construct($data, $date, $filter) { $this->data = $data; $this->date = $date; $this->filter = $filter; }
             public function collection() {
                 return $this->data->map(fn($a, $i) => [$i+1, $a->date, $a->employee->full_name, $a->employee->nip, $a->check_in, $a->check_out, $a->status, $a->allowance_amount]);
             }
@@ -207,14 +208,13 @@ class AttendanceController extends Controller
             public function styles($sheet) {
                 $sheet->mergeCells('B1:H1'); $sheet->setCellValue('B1', Setting::getValue('kop_line_1'));
                 $sheet->mergeCells('B2:H2'); $sheet->setCellValue('B2', Setting::getValue('kop_line_2'));
-                $sheet->getStyle('B1:B2')->getFont()->setBold(true)->setSize(12);
-                $sheet->mergeCells('A5:H5'); $sheet->setCellValue('A5', 'REKAPITULASI ABSENSI PERIODE ' . strtoupper($this->date->translatedFormat('F Y')));
-                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
+                $sheet->mergeCells('A5:H5'); $sheet->setCellValue('A5', "LAPORAN ABSENSI (" . strtoupper($this->filter) . ") - " . $this->date->translatedFormat('F Y'));
+                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14);
                 $sheet->getStyle('A7:H7')->getFont()->setBold(true);
                 $lastRow = $sheet->getHighestRow();
                 $sheet->getStyle("A7:H$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
                 return [];
             }
-        }, "rekap-absensi-{$date->format('Y-m')}.xlsx");
+        }, "rekap-absensi-{$filter}.xlsx");
     }
 }

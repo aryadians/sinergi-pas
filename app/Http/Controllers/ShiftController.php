@@ -39,6 +39,31 @@ class ShiftController extends Controller
         return back()->with('success', 'Shift berhasil ditambahkan.');
     }
 
+    public function update(Request $request, Shift $shift)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'start_time' => 'required',
+            'end_time' => 'required',
+        ]);
+
+        $shift->update([
+            'name' => $request->name,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'is_next_day' => $request->has('is_next_day'),
+        ]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'update_shift',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . " memperbarui konfigurasi shift: $shift->name"
+        ]);
+
+        return back()->with('success', 'Konfigurasi shift berhasil diperbarui.');
+    }
+
     public function destroy(Shift $shift)
     {
         $name = $shift->name;

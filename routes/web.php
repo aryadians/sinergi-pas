@@ -98,6 +98,7 @@ Route::middleware('auth')->group(function () {
         Route::prefix('admin/shifts')->name('admin.shifts.')->group(function () {
             Route::get('/', [ShiftController::class, 'index'])->name('index');
             Route::post('/', [ShiftController::class, 'store'])->name('store');
+            Route::put('/{shift}', [ShiftController::class, 'update'])->name('update');
             Route::delete('/{shift}', [ShiftController::class, 'destroy'])->name('destroy');
         });
 

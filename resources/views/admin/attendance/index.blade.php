@@ -16,11 +16,6 @@
         </div>
         <h3 class="text-xl font-bold text-slate-900 mb-2">Sinkronisasi Data</h3>
         <p class="text-sm text-slate-500 font-medium leading-relaxed">Mohon tunggu sebentar, sistem sedang memproses data absensi dari mesin...</p>
-        <div class="mt-8 flex justify-center gap-1">
-            <span class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
-            <span class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
-            <span class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
-        </div>
     </div>
 </div>
 
@@ -32,8 +27,8 @@
                 <i data-lucide="user-check" class="w-7 h-7"></i>
             </div>
             <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Hadir (Bulan Ini)</p>
-                <h3 class="text-2xl font-bold text-slate-900">{{ number_format($summary['total_present']) }}</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kehadiran ({{ \Carbon\Carbon::parse($monthStr)->translatedFormat('F') }})</p>
+                <h3 class="text-2xl font-bold text-slate-900">{{ number_format($summary->total_present) }}</h3>
             </div>
         </div>
         <div class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm card-3d flex items-center gap-5 border-l-4 border-l-amber-500">
@@ -41,8 +36,8 @@
                 <i data-lucide="clock-alert" class="w-7 h-7"></i>
             </div>
             <div>
-                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Keterlambatan</p>
-                <h3 class="text-2xl font-bold text-slate-900">{{ number_format($summary['total_late']) }} Kali</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Keterlambatan</p>
+                <h3 class="text-2xl font-bold text-slate-900">{{ number_format($summary->total_late) }} Kali</h3>
             </div>
         </div>
         <div class="bg-slate-900 rounded-3xl p-6 text-white shadow-xl card-3d flex items-center gap-5 relative overflow-hidden">
@@ -53,8 +48,8 @@
                 <i data-lucide="wallet" class="w-7 h-7"></i>
             </div>
             <div class="relative z-10">
-                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Total Uang Makan</p>
-                <h3 class="text-2xl font-bold text-white">Rp {{ number_format($summary['total_allowance'], 0, ',', '.') }}</h3>
+                <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Estimasi Uang Makan</p>
+                <h3 class="text-2xl font-bold text-white">Rp {{ number_format($summary->total_allowance, 0, ',', '.') }}</h3>
             </div>
         </div>
     </div>
@@ -65,7 +60,7 @@
             <form action="{{ route('admin.attendance.index') }}" method="GET" class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div class="relative">
                     <i data-lucide="calendar" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                    <input type="month" name="month" value="{{ request('month', date('Y-m')) }}" onchange="this.form.submit()" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-transparent bg-slate-50 text-sm font-semibold outline-none focus:bg-white focus:border-blue-500 transition-all">
+                    <input type="month" name="month" value="{{ $monthStr }}" onchange="this.form.submit()" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-transparent bg-slate-50 text-sm font-semibold outline-none focus:bg-white focus:border-blue-500 transition-all">
                 </div>
                 <div class="relative">
                     <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
@@ -74,20 +69,17 @@
             </form>
         </div>
 
-        <div class="flex items-center gap-3 w-full lg:w-auto">
-            <div class="flex bg-white/50 p-1 rounded-2xl border border-slate-200 shadow-sm backdrop-blur-sm">
-                <a href="{{ route('admin.attendance.export', ['month' => request('month'), 'type' => 'pdf']) }}" class="px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-2 no-loader">
-                    <i data-lucide="file-text" class="w-4 h-4 text-red-500"></i> PDF
-                </a>
-                <a href="{{ route('admin.attendance.export', ['month' => request('month'), 'type' => 'excel']) }}" class="px-5 py-2 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-2 no-loader">
-                    <i data-lucide="file-spreadsheet" class="w-4 h-4 text-green-500"></i> EXCEL
-                </a>
+        <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+            <div class="flex bg-white p-1 rounded-2xl border border-slate-200 shadow-sm">
+                <button onclick="openExportModal()" class="px-5 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2">
+                    <i data-lucide="download" class="w-4 h-4 text-blue-600"></i> Ekspor Laporan
+                </button>
             </div>
-            <a href="{{ route('admin.shifts.index') }}" class="flex-1 lg:flex-none px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-[10px] uppercase tracking-wider hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+            <a href="{{ route('admin.shifts.index') }}" class="px-5 py-3 rounded-xl bg-white border border-slate-200 text-slate-700 font-bold text-[10px] uppercase tracking-wider hover:bg-slate-50 transition-all flex items-center justify-center gap-2 shadow-sm">
                 <i data-lucide="clock" class="w-4 h-4 text-blue-500"></i> Master Shift
             </a>
-            <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="flex-1 lg:flex-none px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-blue-600 transition-all shadow-lg btn-3d flex items-center justify-center gap-2">
-                <i data-lucide="upload-cloud" class="w-4 h-4"></i> Import Fingerprint
+            <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-blue-600 transition-all shadow-lg btn-3d flex items-center justify-center gap-2">
+                <i data-lucide="upload-cloud" class="w-4 h-4 text-amber-400"></i> Import Fingerprint
             </button>
         </div>
     </div>
@@ -100,8 +92,8 @@
                     <tr class="bg-slate-50 border-b border-slate-100">
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pegawai</th>
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Tanggal</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Jam Masuk</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Jam Pulang</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Scan Masuk</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Scan Keluar</th>
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Status</th>
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Uang Makan</th>
                     </tr>
@@ -137,7 +129,7 @@
                         </td>
                         <td class="px-6 py-4 text-center">
                             <span class="text-sm font-bold text-slate-900">
-                                {{ $att->check_out ? \Carbon\Carbon::parse($att->check_out)->format('H:i') : '--:--' }}
+                                {{ $att->check_out && $att->check_out != $att->check_in ? \Carbon\Carbon::parse($att->check_out)->format('H:i') : '--:--' }}
                             </span>
                         </td>
                         <td class="px-6 py-4 text-center">
@@ -189,7 +181,7 @@
             <div class="mb-8 p-5 bg-amber-50 rounded-2xl border border-amber-100">
                 <h4 class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-2">Petunjuk Header Excel:</h4>
                 <p class="text-[10px] font-semibold text-amber-700 leading-relaxed italic">
-                    Sistem akan membaca kolom ke-5 (NIP), kolom ke-2 (Tanggal), dan kolom ke-3 (Jam). Dukungan format .xls dan .xlsx dari mesin.
+                    Sistem akan otomatis mendeteksi baris data. Pastikan kolom NIP berada di index ke-5 (Kolom E) dan Waktu Scan di kolom ke-3 (Kolom C).
                 </p>
             </div>
 
@@ -208,12 +200,47 @@
     </div>
 </div>
 
+<!-- Export Modal -->
+<div id="exportModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
+        <h3 class="text-xl font-bold text-slate-900 mb-6">Ekspor Laporan</h3>
+        <form action="{{ route('admin.attendance.export') }}" method="GET" class="space-y-6">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Filter Periode</label>
+                    <select name="filter" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                        <option value="monthly">Bulanan (Sesuai Bulan Terpilih)</option>
+                        <option value="weekly">Minggu Ini (7 Hari Terakhir)</option>
+                        <option value="daily">Hari Ini</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Format File</label>
+                    <select name="type" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                        <option value="pdf">Dokumen PDF (Resmi)</option>
+                        <option value="excel">Microsoft Excel (.xlsx)</option>
+                    </select>
+                </div>
+                <input type="hidden" name="month" value="{{ $monthStr }}">
+            </div>
+            <button type="submit" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg btn-3d">
+                Download Laporan
+            </button>
+            <button type="button" onclick="document.getElementById('exportModal').classList.add('hidden')" class="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-2">Batal</button>
+        </form>
+    </div>
+</div>
+
 <script>
     function updateFileName(input) {
         if (input.files && input.files[0]) {
             document.getElementById('fileName').textContent = input.files[0].name;
             document.getElementById('fileName').classList.add('text-blue-600');
         }
+    }
+
+    function openExportModal() {
+        document.getElementById('exportModal').classList.remove('hidden');
     }
 
     document.getElementById('importForm').addEventListener('submit', function() {
