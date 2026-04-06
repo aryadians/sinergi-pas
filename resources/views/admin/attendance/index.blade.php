@@ -222,4 +222,20 @@
         document.getElementById('importLoading').classList.add('flex');
     });
 </script>
+
+@if(session('success'))
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: "{{ session('success') }}", confirmButtonColor: '#0F172A', customClass: { popup: 'rounded-2xl' } });
+    });
+</script>
+@endif
+
+@if(session('error'))
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: "{{ session('error') }}", confirmButtonColor: '#EF4444', customClass: { popup: 'rounded-2xl' } });
+    });
+</script>
+@endif
 @endsection
