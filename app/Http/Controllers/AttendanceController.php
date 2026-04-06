@@ -52,33 +52,59 @@ class AttendanceController extends Controller
         $path = $file->getRealPath();
 
         try {
-            $spreadsheet = IOFactory::load($path);
+            // Enhanced reader selection for machine-generated files
+            $reader = IOFactory::createReaderForFile($path);
+            $spreadsheet = $reader->load($path);
             $data = $spreadsheet->getActiveSheet()->toArray();
 
             if (count($data) < 2) {
-                return back()->with('error', 'File Excel kosong atau format tidak dikenali.');
+                return back()->with('error', 'File Excel kosong atau header tidak ditemukan.');
             }
 
-            array_shift($data); // Remove header
+            // Detect Header Index (sometimes there are blank rows at top)
+            $headerRowIndex = 0;
+            foreach($data as $index => $row) {
+                if (isset($row[4]) && (str_contains(strtolower((string)$row[4]), 'nip') || is_numeric($row[4]))) {
+                    $headerRowIndex = $index;
+                    // If it's the actual header string 'NIP', we skip this row
+                    if (str_contains(strtolower((string)$row[4]), 'nip')) {
+                        $headerRowIndex = $index + 1;
+                    }
+                    break;
+                }
+            }
 
             $importedCount = 0;
             $skippedCount = 0;
+            $invalidNips = [];
 
             DB::beginTransaction();
             $employees = Employee::all()->keyBy('nip');
             
-            foreach ($data as $row) {
-                if (empty($row[4])) continue;
+            // Start from detected data row
+            for ($i = $headerRowIndex; $i < count($data); $i++) {
+                $row = $data[$i];
+                
+                // User Column Mapping: Index 4 is NIP
+                if (!isset($row[4]) || empty(trim((string)$row[4]))) continue;
 
-                $nip = trim($row[4]);
+                $nip = trim((string)$row[4]);
                 if (!isset($employees[$nip])) {
+                    $invalidNips[] = $nip;
                     $skippedCount++;
                     continue;
                 }
 
                 $emp = $employees[$nip];
-                $date = Carbon::parse($row[1])->format('Y-m-d');
-                $time = Carbon::parse($row[2])->format('H:i:s');
+                
+                // Index 1: Tanggal, Index 2: Jam
+                try {
+                    $date = Carbon::parse($row[1])->format('Y-m-d');
+                    $time = Carbon::parse($row[2])->format('H:i:s');
+                } catch (\Exception $e) {
+                    $skippedCount++;
+                    continue;
+                }
 
                 $attendance = Attendance::firstOrNew(['employee_id' => $emp->id, 'date' => $date]);
 
@@ -102,16 +128,23 @@ class AttendanceController extends Controller
                 'user_id' => auth()->id(),
                 'activity' => 'import_attendance',
                 'ip_address' => $request->ip(),
-                'details' => auth()->user()->name . " mengimpor $importedCount data absensi fingerprint"
+                'details' => auth()->user()->name . " mengimpor $importedCount data fingerprint"
             ]);
 
-            // Success Flash Session
-            session()->flash('success', "Sinkronisasi Berhasil! $importedCount data diproses, $skippedCount dilewati.");
-            return redirect()->route('admin.attendance.index');
+            if ($importedCount === 0) {
+                return back()->with('error', 'Tidak ada data yang cocok dengan NIP pegawai di sistem. Periksa kembali file Anda.');
+            }
+
+            $msg = "Sinkronisasi Selesai! $importedCount baris berhasil diproses.";
+            if ($skippedCount > 0) {
+                $msg .= " ($skippedCount data dilewati karena NIP tidak terdaftar).";
+            }
+
+            return redirect()->route('admin.attendance.index')->with('success', $msg);
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', 'Error: ' . $e->getMessage());
+            return back()->with('error', 'Gagal memproses file: ' . $e->getMessage());
         }
     }
 

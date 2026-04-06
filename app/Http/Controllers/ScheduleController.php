@@ -6,8 +6,11 @@ use App\Models\Employee;
 use App\Models\Shift;
 use App\Models\Schedule;
 use App\Models\AuditLog;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ScheduleController extends Controller
 {
@@ -48,7 +51,7 @@ class ScheduleController extends Controller
         $request->validate([
             'regu' => 'required|string',
             'month' => 'required|string',
-            'pattern' => 'required|array', // Array of shift IDs: [Pagi, Siang, Malam, Libur]
+            'pattern' => 'required|array',
         ]);
 
         $month = Carbon::parse($request->month);
@@ -59,18 +62,15 @@ class ScheduleController extends Controller
         foreach ($employees as $employee) {
             for ($day = 1; $day <= $month->daysInMonth; $day++) {
                 $date = $month->copy()->day($day);
-                
-                // Simple rotating pattern based on day of month
                 $patternIndex = ($day - 1) % $patternCount;
                 $shiftId = $pattern[$patternIndex];
 
-                if ($shiftId) { // If not 'Libur' (null/0)
+                if ($shiftId) {
                     Schedule::updateOrCreate(
                         ['employee_id' => $employee->id, 'date' => $date->format('Y-m-d')],
                         ['shift_id' => $shiftId]
                     );
                 } else {
-                    // If Libur, delete existing schedule for that day
                     Schedule::where('employee_id', $employee->id)->where('date', $date->format('Y-m-d'))->delete();
                 }
             }
@@ -84,5 +84,78 @@ class ScheduleController extends Controller
         ]);
 
         return back()->with('success', "Roster untuk Regu $request->regu berhasil di-generate.");
+    }
+
+    public function export(Request $request)
+    {
+        $monthStr = $request->month ?? now()->format('Y-m');
+        $date = Carbon::parse($monthStr);
+        $type = $request->type ?? 'pdf';
+
+        $employees = Employee::with('work_unit')->orderBy('full_name')->get();
+        $daysInMonth = $date->daysInMonth;
+        $schedules = Schedule::with('shift')
+            ->whereMonth('date', $date->month)
+            ->whereYear('date', $date->year)
+            ->get()
+            ->groupBy('employee_id');
+
+        if ($type === 'excel') {
+            return $this->exportExcel($employees, $schedules, $date, $daysInMonth);
+        }
+
+        $pdf = Pdf::loadView('admin.schedules.pdf', compact('employees', 'schedules', 'date', 'daysInMonth'))->setPaper('a4', 'landscape');
+        return $pdf->download("jadwal-dinas-{$monthStr}.pdf");
+    }
+
+    private function exportExcel($employees, $schedules, $date, $daysInMonth)
+    {
+        return Excel::download(new class($employees, $schedules, $date, $daysInMonth) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles, \Maatwebsite\Excel\Concerns\WithDrawings, \Maatwebsite\Excel\Concerns\WithCustomStartCell {
+            protected $employees, $schedules, $date, $days;
+            public function __construct($e, $s, $d, $days) { 
+                $this->employees = $e; $this->schedules = $s; $this->date = $d; $this->days = $days; 
+            }
+            public function collection() {
+                return $this->employees->map(function($emp, $index) {
+                    $row = [$index + 1, $emp->full_name, $emp->nip];
+                    for($d = 1; $d <= $this->days; $d++) {
+                        $dateStr = $this->date->copy()->day($d)->format('Y-m-d');
+                        $sched = $this->schedules->get($emp->id)?->firstWhere('date', $dateStr);
+                        $row[] = $sched?->shift?->name ? substr($sched->shift->name, 0, 1) : '-';
+                    }
+                    return $row;
+                });
+            }
+            public function headings(): array {
+                $h = ['NO', 'NAMA PEGAWAI', 'NIP'];
+                for($d = 1; $d <= $this->days; $d++) $h[] = $d;
+                return $h;
+            }
+            public function startCell(): string { return 'A7'; }
+            public function drawings() {
+                $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+                $drawing->setName('Logo');
+                $drawing->setPath(public_path('logo1.png'));
+                $drawing->setHeight(80);
+                $drawing->setCoordinates('A1');
+                return $drawing;
+            }
+            public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet) {
+                $kop1 = Setting::getValue('kop_line_1', 'KEMENTERIAN HUKUM DAN HAM RI');
+                $kop2 = Setting::getValue('kop_line_2', 'LAPAS KELAS IIB JOMBANG');
+                $sheet->mergeCells('B1:AF1'); $sheet->setCellValue('B1', $kop1);
+                $sheet->mergeCells('B2:AF2'); $sheet->setCellValue('B2', $kop2);
+                $sheet->getStyle('B1:B2')->getFont()->setBold(true)->setSize(12);
+                $sheet->mergeCells('A5:AF5');
+                $sheet->setCellValue('A5', 'JADWAL DINAS PEGAWAI PERIODE ' . strtoupper($this->date->translatedFormat('F Y')));
+                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14)->setUnderline(true)->setUnderline(true);
+                $sheet->getStyle('A5')->getAlignment()->setHorizontal('center');
+                $sheet->getStyle('A7:AF7')->getFont()->setBold(true);
+                $sheet->getStyle('A7:AF7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F1F5F9');
+                $lastRow = $sheet->getHighestRow();
+                $sheet->getStyle("A7:AF$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                return [];
+            }
+        }, "jadwal-dinas-{$date->format('Y-m')}.xlsx");
     }
 }
