@@ -68,7 +68,7 @@
                         </th>
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Identitas Pegawai</th>
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Unit & Jabatan</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Status Akses</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Tipe & Gol</th>
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -99,8 +99,11 @@
                         </td>
                         <td class="px-6 py-4 text-center">
                             <div class="flex flex-col items-center">
-                                <span class="text-[10px] font-bold text-slate-700">{{ $employee->user->email }}</span>
-                                <span class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Role: {{ $employee->user->role }}</span>
+                                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[9px] font-bold border border-slate-200 uppercase mb-1">{{ str_replace('_', ' ', $employee->employee_type) }}</span>
+                                <span class="text-[9px] font-bold text-amber-600 uppercase">Gol. {{ $employee->rank_class ?? '-' }}</span>
+                                @if($employee->picket_regu)
+                                    <span class="text-[8px] font-extrabold text-blue-500 mt-1 uppercase">Regu {{ $employee->picket_regu }}</span>
+                                @endif
                             </div>
                         </td>
                         <td class="px-6 py-4">
@@ -164,9 +167,38 @@
                         <input type="text" name="nip" required placeholder="Nomor Induk Pegawai..." class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                     </div>
                 </div>
-                <div class="space-y-1.5">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email Kedinasan</label>
-                    <input type="email" name="email" required placeholder="pegawai@sinergipas.id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
+                        <input type="email" name="email" required placeholder="pegawai@sinergipas.id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Golongan (II, III, IV)</label>
+                        <select name="rank_class" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="II">Golongan II</option>
+                            <option value="III">Golongan III</option>
+                            <option value="IV">Golongan IV</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tipe Pegawai</label>
+                        <select name="employee_type" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer" onchange="toggleRegu(this, 'add')">
+                            <option value="non_regu_jaga">Non-Regu (Kantor)</option>
+                            <option value="regu_jaga">Regu Jaga (Shift)</option>
+                        </select>
+                    </div>
+                    <div id="regu_container_add" class="space-y-1.5 hidden">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Regu</label>
+                        <select name="picket_regu" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Tanpa Regu --</option>
+                            <option value="A">Regu A</option>
+                            <option value="B">Regu B</option>
+                            <option value="C">Regu C</option>
+                            <option value="D">Regu D</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
@@ -224,9 +256,38 @@
                         <input type="text" name="nip" id="edit_nip" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                     </div>
                 </div>
-                <div class="space-y-1.5">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
-                    <input type="email" name="email" id="edit_email" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
+                        <input type="email" name="email" id="edit_email" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Golongan</label>
+                        <select name="rank_class" id="edit_rank_class" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none">
+                            <option value="II">Golongan II</option>
+                            <option value="III">Golongan III</option>
+                            <option value="IV">Golongan IV</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tipe Pegawai</label>
+                        <select name="employee_type" id="edit_employee_type" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none" onchange="toggleRegu(this, 'edit')">
+                            <option value="non_regu_jaga">Non-Regu (Kantor)</option>
+                            <option value="regu_jaga">Regu Jaga (Shift)</option>
+                        </select>
+                    </div>
+                    <div id="regu_container_edit" class="space-y-1.5 hidden">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Regu</label>
+                        <select name="picket_regu" id="edit_picket_regu" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none">
+                            <option value="">-- Tanpa Regu --</option>
+                            <option value="A">Regu A</option>
+                            <option value="B">Regu B</option>
+                            <option value="C">Regu C</option>
+                            <option value="D">Regu D</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
@@ -245,12 +306,6 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
-                <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
-                    <p class="text-[9px] font-bold text-blue-600 uppercase tracking-widest mb-1 flex items-center gap-2">
-                        <i data-lucide="info" class="w-3.5 h-3.5"></i> Informasi Keamanan
-                    </p>
-                    <p class="text-[10px] text-blue-500 font-medium italic">Biarkan kosong jika tidak ingin mengubah kata sandi pegawai.</p>
                 </div>
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Password Baru (Opsional)</label>
@@ -284,12 +339,12 @@
             <div class="space-y-3 relative z-10">
                 <p class="text-[11px] font-medium text-slate-300">Gunakan format kolom berikut pada baris pertama:</p>
                 <div class="bg-white/5 p-3 rounded-xl border border-white/10 font-mono text-[10px] text-amber-200 text-center select-all">
-                    nip, full_name, position, work_unit, email
+                    nip, full_name, position, work_unit, email, rank_class, employee_type, picket_regu
                 </div>
                 <ul class="text-[9px] text-slate-400 space-y-1 pl-4 list-disc">
-                    <li>NIP unik untuk setiap pegawai.</li>
-                    <li>Unit & Jabatan harus sesuai data master.</li>
-                    <li>Password default diatur sama dengan NIP.</li>
+                    <li>Rank Class: II, III, atau IV</li>
+                    <li>Type: regu_jaga atau non_regu_jaga</li>
+                    <li>Regu: A, B, C, atau D (opsional)</li>
                 </ul>
             </div>
         </div>
@@ -301,7 +356,7 @@
                 <i data-lucide="upload-cloud" class="w-10 h-10 text-slate-300 mx-auto mb-3 group-hover:text-blue-500 group-hover:scale-110 transition-all"></i>
                 <p id="fileName" class="text-xs font-bold text-slate-500 group-hover:text-blue-600">Klik atau seret file .xlsx</p>
             </div>
-            <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d">
+            <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d">
                 Proses Impor Data
             </button>
         </form>
@@ -313,6 +368,15 @@
 </form>
 
 <script>
+    function toggleRegu(select, mode) {
+        const container = document.getElementById(`regu_container_${mode}`);
+        if (select.value === 'regu_jaga') {
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
     const selectAll = document.getElementById('selectAll');
     const checkboxes = Array.from(document.querySelectorAll('.emp-checkbox'));
     const bulkActionBar = document.getElementById('bulkActionBar');
@@ -326,10 +390,12 @@
         selectAll.indeterminate = checked.length > 0 && checked.length < checkboxes.length;
     }
 
-    selectAll.addEventListener('change', function() {
-        checkboxes.forEach(c => c.checked = this.checked);
-        syncSelection();
-    });
+    if(selectAll) {
+        selectAll.addEventListener('change', function() {
+            checkboxes.forEach(c => c.checked = this.checked);
+            syncSelection();
+        });
+    }
 
     checkboxes.forEach(c => c.addEventListener('change', syncSelection));
 
@@ -365,8 +431,14 @@
         document.getElementById('edit_full_name').value = employee.full_name;
         document.getElementById('edit_nip').value = employee.nip;
         document.getElementById('edit_email').value = email;
+        document.getElementById('edit_rank_class').value = employee.rank_class || 'II';
+        document.getElementById('edit_employee_type').value = employee.employee_type || 'non_regu_jaga';
+        document.getElementById('edit_picket_regu').value = employee.picket_regu || '';
         document.getElementById('edit_position_id').value = employee.position_id;
         document.getElementById('edit_work_unit_id').value = employee.work_unit_id;
+        
+        toggleRegu(document.getElementById('edit_employee_type'), 'edit');
+        
         modal.classList.remove('hidden');
         lucide.createIcons();
     }

@@ -4,6 +4,26 @@
 @section('header-title', 'Absensi & Uang Makan')
 
 @section('content')
+<!-- Custom Loading Overlay for Import -->
+<div id="importLoading" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-md">
+    <div class="bg-white rounded-[32px] p-10 shadow-2xl max-w-sm w-full text-center animate-in zoom-in duration-300">
+        <div class="relative w-24 h-24 mx-auto mb-6">
+            <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-blue-600 rounded-full border-t-transparent animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <i data-lucide="fingerprint" class="w-10 h-10 text-blue-600 animate-pulse"></i>
+            </div>
+        </div>
+        <h3 class="text-xl font-bold text-slate-900 mb-2">Sinkronisasi Data</h3>
+        <p class="text-sm text-slate-500 font-medium leading-relaxed">Mohon tunggu sebentar, sistem sedang memproses data absensi dari mesin...</p>
+        <div class="mt-8 flex justify-center gap-1">
+            <span class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.1s"></span>
+            <span class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.2s"></span>
+            <span class="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style="animation-delay: 0.3s"></span>
+        </div>
+    </div>
+</div>
+
 <div class="space-y-8 page-fade">
     <!-- Stats Row -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -45,14 +65,13 @@
             <form action="{{ route('admin.attendance.index') }}" method="GET" class="flex-1 grid grid-cols-1 md:grid-cols-2 gap-2">
                 <div class="relative">
                     <i data-lucide="calendar" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                    <input type="month" name="month" value="{{ request('month', date('Y-m')) }}" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-transparent bg-slate-50 text-sm font-semibold outline-none focus:bg-white focus:border-blue-500 transition-all">
+                    <input type="month" name="month" value="{{ request('month', date('Y-m')) }}" onchange="this.form.submit()" class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-transparent bg-slate-50 text-sm font-semibold outline-none focus:bg-white focus:border-blue-500 transition-all">
                 </div>
                 <div class="relative">
                     <i data-lucide="search" class="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
                     <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari NIP atau Nama..." class="w-full pl-10 pr-4 py-2.5 rounded-xl border border-transparent bg-slate-50 text-sm font-semibold outline-none focus:bg-white focus:border-blue-500 transition-all">
                 </div>
             </form>
-            <button type="submit" form="filterForm" class="hidden"></button>
         </div>
 
         <div class="flex items-center gap-3 w-full lg:w-auto">
@@ -84,8 +103,12 @@
                     <tr class="hover:bg-slate-50/50 transition-colors group">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold border border-slate-200 shrink-0">
-                                    {{ substr($att->employee->full_name, 0, 1) }}
+                                <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold border border-slate-200 shrink-0 overflow-hidden">
+                                    @if($att->employee->photo)
+                                        <img src="{{ $att->employee->photo }}" class="w-full h-full object-cover">
+                                    @else
+                                        {{ substr($att->employee->full_name, 0, 1) }}
+                                    @endif
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $att->employee->full_name }}</p>
@@ -158,11 +181,11 @@
             <div class="mb-8 p-5 bg-amber-50 rounded-2xl border border-amber-100">
                 <h4 class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-2">Petunjuk Header Excel:</h4>
                 <p class="text-[10px] font-semibold text-amber-700 leading-relaxed italic">
-                    Sistem akan membaca kolom ke-5 (Index 4) sebagai NIP, kolom ke-2 (Index 1) sebagai Tanggal, dan kolom ke-3 (Index 2) sebagai Jam Scan.
+                    Sistem akan membaca kolom ke-5 (NIP), kolom ke-2 (Tanggal), dan kolom ke-3 (Jam). Dukungan format .xls dan .xlsx dari mesin.
                 </p>
             </div>
 
-            <form action="{{ route('admin.attendance.import') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
+            <form id="importForm" action="{{ route('admin.attendance.import') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf
                 <div class="p-8 rounded-2xl bg-slate-50 border-2 border-dashed border-slate-200 text-center group hover:bg-white hover:border-blue-400 transition-all cursor-pointer relative">
                     <input type="file" name="file" required class="absolute inset-0 opacity-0 cursor-pointer" onchange="updateFileName(this)">
@@ -184,5 +207,11 @@
             document.getElementById('fileName').classList.add('text-blue-600');
         }
     }
+
+    document.getElementById('importForm').addEventListener('submit', function() {
+        document.getElementById('importModal').classList.add('hidden');
+        document.getElementById('importLoading').classList.remove('hidden');
+        document.getElementById('importLoading').classList.add('flex');
+    });
 </script>
 @endsection

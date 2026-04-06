@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use PhpOffice\PhpSpreadsheet\IOFactory;
 
 class AttendanceController extends Controller
 {
@@ -36,146 +37,134 @@ class AttendanceController extends Controller
 
         $attendances = $query->orderBy('date', 'desc')->paginate(20)->withQueryString();
         
-        // Summary Data for Dashboard
         $summary = [
             'total_present' => Attendance::whereMonth('date', now()->month)->where('status', 'present')->count(),
             'total_late' => Attendance::whereMonth('date', now()->month)->where('late_minutes', '>', 0)->count(),
             'total_allowance' => Attendance::whereMonth('date', now()->month)->sum('allowance_amount'),
         ];
 
-        return view('admin.attendance.index', compact('attendances', 'summary'));
+        return view('admin.attendance.index', compact('attendances', $summary ? 'summary' : []));
     }
 
     public function import(Request $request)
     {
-        $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
+        $request->validate(['file' => 'required']);
 
         $file = $request->file('file');
-        $data = Excel::toArray([], $file)[0];
+        $path = $file->getRealPath();
 
-        // Header mapping check
-        // Format: Tanggal scan, Tanggal, Jam, PIN, NIP, Nama, ...
-        // We assume NIP is at index 4, Date at index 1, Time at index 2
-        
-        $importedCount = 0;
-        $skippedCount = 0;
-
-        // Skip header row
-        array_shift($data);
-
-        DB::beginTransaction();
         try {
+            // Force load the file even if it has wrong extension (common in fingerprint machines)
+            $spreadsheet = IOFactory::load($path);
+            $data = $spreadsheet->getActiveSheet()->toArray();
+
+            if (count($data) < 2) {
+                return back()->with('error', 'File Excel kosong atau format tidak dikenali.');
+            }
+
+            // Remove header
+            array_shift($data);
+
+            $importedCount = 0;
+            $skippedCount = 0;
+            $processedNips = [];
+
+            DB::beginTransaction();
+            
+            // Pre-load employees to speed up lookup
+            $employees = Employee::all()->keyBy('nip');
+            
             foreach ($data as $row) {
-                if (empty($row[4])) continue; // Skip if NIP is empty
+                // Header Mapping: NIP at index 4, Date at index 1, Time at index 2
+                if (empty($row[4])) continue;
 
                 $nip = trim($row[4]);
-                $dateString = $row[1]; // Tanggal
-                $timeString = $row[2]; // Jam
-
-                $employee = Employee::where('nip', $nip)->first();
-                if (!$employee) {
+                if (!isset($employees[$nip])) {
                     $skippedCount++;
                     continue;
                 }
 
-                $date = Carbon::parse($dateString)->format('Y-m-d');
-                $time = Carbon::parse($timeString)->format('H:i:s');
+                $emp = $employees[$nip];
+                $date = Carbon::parse($row[1])->format('Y-m-d');
+                $time = Carbon::parse($row[2])->format('H:i:s');
 
-                $attendance = Attendance::firstOrCreate(
-                    ['employee_id' => $employee->id, 'date' => $date],
-                    ['status' => 'present']
-                );
+                // Logic: Find or create record for this employee on this date
+                $attendance = Attendance::firstOrNew(['employee_id' => $emp->id, 'date' => $date]);
 
-                // Update check-in (earliest time) and check-out (latest time)
-                if (!$attendance->check_in || $time < $attendance->check_in) {
+                // Set earliest time as check_in, latest as check_out
+                if (!$attendance->exists) {
                     $attendance->check_in = $time;
-                }
-                
-                if (!$attendance->check_out || $time > $attendance->check_out) {
                     $attendance->check_out = $time;
+                    $attendance->status = 'present';
+                } else {
+                    if ($time < $attendance->check_in) $attendance->check_in = $time;
+                    if ($time > $attendance->check_out) $attendance->check_out = $time;
                 }
 
-                // Recalculate late minutes & allowance
-                $this->calculateAttendanceMetrics($attendance, $employee);
+                // Initial calculation
+                $this->calculateAttendanceMetrics($attendance, $emp);
                 $attendance->save();
                 
                 $importedCount++;
             }
+
             DB::commit();
 
             AuditLog::create([
                 'user_id' => auth()->id(),
                 'activity' => 'import_attendance',
                 'ip_address' => $request->ip(),
-                'details' => auth()->user()->name . " mengimpor $importedCount data absensi dari mesin fingerprint"
+                'details' => auth()->user()->name . " mengimpor $importedCount data absensi"
             ]);
 
-            return back()->with('success', "Berhasil mengimpor $importedCount data. (Skipped: $skippedCount)");
+            return back()->with('success', "Sinkronisasi Selesai! $importedCount data berhasil diproses.");
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()->with('error', "Gagal mengimpor data: " . $e->getMessage());
+            return back()->with('error', 'Format file tidak didukung: ' . $e->getMessage());
         }
     }
 
     private function calculateAttendanceMetrics($attendance, $employee)
     {
-        // 1. Get Schedule for this date
         $schedule = Schedule::where('employee_id', $employee->id)->where('date', $attendance->date)->first();
         
-        // 2. Fallback to default if no schedule
         if (!$schedule) {
-            if ($employee->employee_type === 'non_regu_jaga') {
-                $shift = Shift::where('name', 'Kantor')->first();
-            } else {
-                // If regu jaga but no schedule, we can't calculate properly, just set as present
-                $attendance->allowance_amount = $this->getMealAllowance($employee->rank_class);
-                return;
-            }
+            $shift = ($employee->employee_type === 'non_regu_jaga') 
+                ? Shift::where('name', 'Kantor')->first() 
+                : null;
         } else {
             $shift = $schedule->shift;
         }
 
-        if (!$shift) {
-            $attendance->allowance_amount = $this->getMealAllowance($employee->rank_class);
-            return;
+        if ($shift) {
+            $startTime = Carbon::parse($shift->start_time);
+            $checkIn = Carbon::parse($attendance->check_in);
+            
+            if ($checkIn->gt($startTime)) {
+                $attendance->late_minutes = $checkIn->diffInMinutes($startTime);
+                $attendance->status = 'late';
+            } else {
+                $attendance->late_minutes = 0;
+                $attendance->status = 'present';
+            }
         }
 
-        // 3. Calculate Lateness
-        $startTime = Carbon::parse($shift->start_time);
-        $checkIn = Carbon::parse($attendance->check_in);
-        
-        if ($checkIn->gt($startTime)) {
-            $attendance->late_minutes = $checkIn->diffInMinutes($startTime);
-            $attendance->status = 'late';
-        } else {
-            $attendance->late_minutes = 0;
-            $attendance->status = 'present';
-        }
-
-        // 4. Calculate Meal Allowance
-        // Allowance is given if they checked in
-        if ($attendance->check_in) {
-            $attendance->allowance_amount = $this->getMealAllowance($employee->rank_class);
-        }
+        // Meal Allowance
+        $attendance->allowance_amount = $this->getMealAllowance($employee->rank_class);
     }
 
     private function getMealAllowance($rankClass)
     {
         $class = strtoupper($rankClass);
-        if (str_contains($class, 'IV')) {
-            return (float) Setting::getValue('meal_allowance_iv', 41000);
-        } elseif (str_contains($class, 'III')) {
-            return (float) Setting::getValue('meal_allowance_iii', 37000);
-        } elseif (str_contains($class, 'II')) {
-            return (float) Setting::getValue('meal_allowance_ii', 35000);
-        }
+        if (str_contains($class, 'IV')) return (float) Setting::getValue('meal_allowance_iv', 41000);
+        if (str_contains($class, 'III')) return (float) Setting::getValue('meal_allowance_iii', 37000);
+        if (str_contains($class, 'II')) return (float) Setting::getValue('meal_allowance_ii', 35000);
         return 0;
     }
 
     public function export(Request $request)
     {
-        // Logic for exporting recap to Excel
-        // For now, we'll return back. Implementation will follow in Step 3.
         return back()->with('info', 'Fitur ekspor rekapan sedang disiapkan.');
     }
 }
