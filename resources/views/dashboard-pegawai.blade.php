@@ -134,9 +134,6 @@
                                 <span class="px-2 py-0.5 rounded-lg text-[8px] font-bold uppercase tracking-wider border {{ $doc->status === 'verified' ? 'bg-green-50 text-green-600 border-green-100' : ($doc->status === 'pending' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-100 text-slate-500 border-slate-200') }}">
                                     {{ $doc->status }}
                                 </span>
-                                <button onclick="window.open('{{ route('documents.preview', $doc->id) }}', '_blank')" class="p-2 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-white border border-transparent hover:border-slate-200 transition-all">
-                                    <i data-lucide="external-link" class="w-4 h-4"></i>
-                                </button>
                             </div>
                         </div>
                     @empty

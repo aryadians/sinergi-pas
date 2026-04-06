@@ -72,9 +72,6 @@
 
             <div class="flex items-center justify-between mt-8 pt-5 border-t border-slate-50">
                 <div class="flex gap-2">
-                    <button onclick="window.open('{{ route('documents.preview', $doc->id) }}', '_blank')" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-slate-400 hover:bg-slate-900 hover:text-white transition-all border border-slate-100" title="Pratinjau">
-                        <i data-lucide="eye" class="w-4 h-4"></i>
-                    </button>
                     <button onclick="openRevisionModal({{ $doc->id }}, '{{ $doc->title }}')" class="w-10 h-10 bg-slate-50 flex items-center justify-center rounded-xl text-blue-600 hover:bg-blue-600 hover:text-white transition-all border border-slate-100" title="Revisi">
                         <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                     </button>

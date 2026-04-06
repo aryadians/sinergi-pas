@@ -50,31 +50,47 @@ class AttendanceController extends Controller
 
         try {
             $file = $request->file('file');
-            $spreadsheet = IOFactory::load($file->getRealPath());
+            $path = $file->getRealPath();
+
+            // Robust reader detection
+            $spreadsheet = null;
+            $readers = ['Xlsx', 'Xls', 'Html', 'Csv'];
+            
+            foreach ($readers as $readerName) {
+                try {
+                    $reader = IOFactory::createReader($readerName);
+                    if ($reader->canRead($path)) {
+                        $spreadsheet = $reader->load($path);
+                        break;
+                    }
+                } catch (\Exception $e) {
+                    continue;
+                }
+            }
+
+            if (!$spreadsheet) {
+                // Last ditch effort: Try auto-detection again with different approach
+                $spreadsheet = IOFactory::load($path);
+            }
+
             $data = $spreadsheet->getActiveSheet()->toArray();
 
-            if (count($data) < 2) return back()->with('error', 'File Excel kosong.');
+            if (count($data) < 2) return back()->with('error', 'File Excel kosong atau format tidak didukung.');
 
-            // Column Mapping (Based on user request):
-            // Tanggal scan (0), Tanggal (1), Jam (2), PIN (3), NIP (4), Nama (5)
-            
             $importedCount = 0;
-            $skippedCount = 0;
             $employees = Employee::all()->keyBy('nip');
 
             DB::beginTransaction();
             
             foreach ($data as $index => $row) {
-                // Skip header (detect by "NIP" string or numeric PIN)
-                if ($index === 0 || !isset($row[4]) || $row[4] == 'NIP') continue;
+                // Skip header logic: Look for NIP at index 4
+                if ($index === 0 || !isset($row[4]) || !is_numeric($row[4])) {
+                    if (isset($row[4]) && strtolower((string)$row[4]) === 'nip') continue;
+                    if ($index < 5) continue; // Safety skip for some machine formats with long headers
+                }
 
                 $nip = trim((string)$row[4]);
-                if (empty($nip)) continue;
-
-                if (!isset($employees[$nip])) {
-                    $skippedCount++;
-                    continue;
-                }
+                if (empty($nip) || !isset($employees[$nip])) continue;
 
                 $emp = $employees[$nip];
                 
@@ -107,10 +123,10 @@ class AttendanceController extends Controller
                 'user_id' => auth()->id(),
                 'activity' => 'import_attendance',
                 'ip_address' => $request->ip(),
-                'details' => "Impor $importedCount data absensi"
+                'details' => "Sinkronisasi fingerprint: $importedCount data"
             ]);
 
-            return back()->with('success', "Sinkronisasi Selesai! $importedCount data diproses.");
+            return back()->with('success', "Berhasil! $importedCount data absensi telah disinkronkan.");
 
         } catch (\Exception $e) {
             DB::rollBack();

@@ -104,7 +104,7 @@
                             </div>
                             <a href="{{ route('documents.employee', $employee->id) }}" 
                                 class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg btn-3d shrink-0">
-                                <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                                <i data-lucide="folder-open" class="w-5 h-5"></i>
                             </a>
                         </div>
                         

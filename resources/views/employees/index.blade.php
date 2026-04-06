@@ -143,19 +143,23 @@
 </div>
 
 <!-- Modal Add -->
-<div id="addModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-xl rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden">
+<div id="addModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 sm:p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden flex flex-col max-h-[90vh]">
         <div class="absolute top-0 right-0 w-32 h-32 bg-blue-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
-        <div class="relative z-10">
-            <div class="flex justify-between items-center mb-10">
-                <div>
-                    <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Registrasi Pegawai</h3>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Penambahan Entitas Kepegawaian Baru</p>
-                </div>
-                <button onclick="document.getElementById('addModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
+        
+        <!-- Modal Header -->
+        <div class="relative z-10 px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+            <div>
+                <h3 class="text-xl font-bold text-slate-900 tracking-tight">Registrasi Pegawai</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Penambahan Entitas Kepegawaian Baru</p>
             </div>
+            <button onclick="document.getElementById('addModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Form Area -->
+        <div class="overflow-y-auto custom-scrollbar p-8">
             <form action="{{ route('employees.store') }}" method="POST" class="space-y-6">
                 @csrf
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -233,7 +237,7 @@
                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kata Sandi Awal</label>
                     <input type="password" name="password" required placeholder="Minimal 8 karakter..." class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                 </div>
-                <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d mt-4">
+                <button type="submit" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d mt-4 shrink-0">
                     Simpan Data Pegawai
                 </button>
             </form>
@@ -242,19 +246,23 @@
 </div>
 
 <!-- Edit Modal -->
-<div id="editModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-xl rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden">
+<div id="editModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-4 sm:p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden flex flex-col max-h-[90vh]">
         <div class="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
-        <div class="relative z-10">
-            <div class="flex justify-between items-center mb-10">
-                <div>
-                    <h3 class="text-2xl font-bold text-slate-900 italic tracking-tight">Edit Profil Pegawai</h3>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Pembaruan Informasi Entitas</p>
-                </div>
-                <button onclick="document.getElementById('editModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
-                    <i data-lucide="x" class="w-6 h-6"></i>
-                </button>
+        
+        <!-- Modal Header -->
+        <div class="relative z-10 px-8 py-6 border-b border-slate-100 flex justify-between items-center bg-white shrink-0">
+            <div>
+                <h3 class="text-2xl font-bold text-slate-900 italic tracking-tight">Edit Profil Pegawai</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Pembaruan Informasi Entitas</p>
             </div>
+            <button onclick="document.getElementById('editModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <!-- Scrollable Form Area -->
+        <div class="overflow-y-auto custom-scrollbar p-8">
             <form id="editForm" method="POST" enctype="multipart/form-data" class="space-y-6">
                 @csrf @method('PUT')
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -328,11 +336,17 @@
                         </select>
                     </div>
                 </div>
+                <div class="p-4 bg-blue-50 rounded-2xl border border-blue-100">
+                    <p class="text-[9px] font-bold text-blue-600 uppercase tracking-widest mb-1 flex items-center gap-2">
+                        <i data-lucide="info" class="w-3.5 h-3.5"></i> Informasi Keamanan
+                    </p>
+                    <p class="text-[10px] text-blue-500 font-medium italic">Biarkan kosong jika tidak ingin mengubah kata sandi pegawai.</p>
+                </div>
                 <div class="space-y-1.5">
                     <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Password Baru (Opsional)</label>
                     <input type="password" name="password" placeholder="Minimal 8 karakter..." class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                 </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl btn-3d">
+                <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-sm uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl btn-3d mt-4 shrink-0">
                     Update Informasi Pegawai
                 </button>
             </form>
