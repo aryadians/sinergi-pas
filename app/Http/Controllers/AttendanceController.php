@@ -52,51 +52,61 @@ class AttendanceController extends Controller
             $file = $request->file('file');
             $path = $file->getRealPath();
 
-            // Robust reader detection
-            $spreadsheet = null;
-            $readers = ['Xlsx', 'Xls', 'Html', 'Csv'];
+            // STEP 1: Identify file type explicitly
+            $inputFileType = IOFactory::identify($path);
+            $reader = IOFactory::createReader($inputFileType);
             
-            foreach ($readers as $readerName) {
-                try {
-                    $reader = IOFactory::createReader($readerName);
-                    if ($reader->canRead($path)) {
-                        $spreadsheet = $reader->load($path);
-                        break;
-                    }
-                } catch (\Exception $e) {
-                    continue;
-                }
+            // Allow reading HTML even if disguised as XLS
+            if ($inputFileType === 'Html') {
+                $reader->setReadDataOnly(true);
             }
-
-            if (!$spreadsheet) {
-                // Last ditch effort: Try auto-detection again with different approach
-                $spreadsheet = IOFactory::load($path);
-            }
-
+            
+            $spreadsheet = $reader->load($path);
             $data = $spreadsheet->getActiveSheet()->toArray();
 
-            if (count($data) < 2) return back()->with('error', 'File Excel kosong atau format tidak didukung.');
+            if (count($data) < 2) {
+                return back()->with('error', 'File terbaca namun tidak ada baris data di dalamnya.');
+            }
 
+            // STEP 2: Logic process data
             $importedCount = 0;
+            $skippedCount = 0;
             $employees = Employee::all()->keyBy('nip');
 
             DB::beginTransaction();
             
+            // Finding the start of data (skipping headers)
+            $startRow = 0;
             foreach ($data as $index => $row) {
-                // Skip header logic: Look for NIP at index 4
-                if ($index === 0 || !isset($row[4]) || !is_numeric($row[4])) {
-                    if (isset($row[4]) && strtolower((string)$row[4]) === 'nip') continue;
-                    if ($index < 5) continue; // Safety skip for some machine formats with long headers
+                // If column index 4 (NIP) contains a digit or numeric-like string, it's likely our data start
+                if (isset($row[4]) && preg_match('/[0-9]/', (string)$row[4])) {
+                    $startRow = $index;
+                    break;
                 }
+            }
+
+            for ($i = $startRow; $i < count($data); $i++) {
+                $row = $data[$i];
+                
+                // Column Mapping (Based on machine format):
+                // Tanggal scan (0), Tanggal (1), Jam (2), PIN (3), NIP (4)
+                if (!isset($row[4]) || empty(trim((string)$row[4]))) continue;
 
                 $nip = trim((string)$row[4]);
-                if (empty($nip) || !isset($employees[$nip])) continue;
+                if (!isset($employees[$nip])) {
+                    $skippedCount++;
+                    continue;
+                }
 
                 $emp = $employees[$nip];
                 
                 try {
-                    $date = Carbon::parse($row[1])->format('Y-m-d');
-                    $time = Carbon::parse($row[2])->format('H:i:s');
+                    // Normalize date & time strings
+                    $rawDate = trim((string)$row[1]);
+                    $rawTime = trim((string)$row[2]);
+                    
+                    $date = Carbon::parse($rawDate)->format('Y-m-d');
+                    $time = Carbon::parse($rawTime)->format('H:i:s');
                 } catch (\Exception $e) {
                     continue;
                 }
@@ -123,14 +133,18 @@ class AttendanceController extends Controller
                 'user_id' => auth()->id(),
                 'activity' => 'import_attendance',
                 'ip_address' => $request->ip(),
-                'details' => "Sinkronisasi fingerprint: $importedCount data"
+                'details' => "Sinkronisasi fingerprint ($inputFileType): $importedCount data"
             ]);
 
-            return back()->with('success', "Berhasil! $importedCount data absensi telah disinkronkan.");
+            if ($importedCount === 0) {
+                return back()->with('error', 'Gagal: Tidak ada NIP di file Excel yang cocok dengan data pegawai di sistem.');
+            }
+
+            return back()->with('success', "Sinkronisasi Berhasil! $importedCount baris data telah diproses.");
 
         } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Gagal memproses file: ' . $e->getMessage());
+            if (isset($db_started)) DB::rollBack();
+            return back()->with('error', 'Gagal memproses file: ' . $e->getMessage() . ' (Format: ' . ($inputFileType ?? 'Unknown') . ')');
         }
     }
 
