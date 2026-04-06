@@ -19,9 +19,12 @@ class EmployeesImport implements ToModel, WithHeadingRow, WithBatchInserts, With
     {
         $nip = $row['nip'] ?? null;
         $email = $row['email'] ?? null;
-        $nama = $row['nama_lengkap'] ?? $row['nama'] ?? null;
-        $jabatanName = $row['jabatan'] ?? $row['position'] ?? null;
-        $unitName = $row['unit_kerja'] ?? $row['work_unit'] ?? null;
+        $nama = $row['full_name'] ?? $row['nama_lengkap'] ?? $row['nama'] ?? null;
+        $jabatanName = $row['position'] ?? $row['jabatan'] ?? null;
+        $unitName = $row['work_unit'] ?? $row['unit_kerja'] ?? null;
+        $rankClass = $row['rank_class'] ?? $row['golongan'] ?? null;
+        $type = $row['employee_type'] ?? 'non_regu_jaga';
+        $regu = $row['picket_regu'] ?? $row['regu'] ?? null;
 
         if (empty($nip) || empty($email)) return null;
 
@@ -45,17 +48,17 @@ class EmployeesImport implements ToModel, WithHeadingRow, WithBatchInserts, With
             $workUnitId = $unit->id;
         }
 
-        // 1. Update atau Create User (Berdasarkan Email)
+        // 1. Update atau Create User
         $user = User::updateOrCreate(
             ['email' => $email],
             [
                 'name' => $nama ?? 'Pegawai Baru',
-                'password' => Hash::make('password'),
+                'password' => Hash::make($nip), // Default password is NIP
                 'role' => 'pegawai'
             ]
         );
 
-        // 2. Update atau Create Employee (Berdasarkan NIP)
+        // 2. Update atau Create Employee
         Employee::updateOrCreate(
             ['nip' => (string)$nip],
             [
@@ -64,6 +67,9 @@ class EmployeesImport implements ToModel, WithHeadingRow, WithBatchInserts, With
                 'position' => $jabatanName ?? 'Staf',
                 'position_id' => $positionId,
                 'work_unit_id' => $workUnitId,
+                'rank_class' => $rankClass,
+                'employee_type' => $type,
+                'picket_regu' => $regu,
             ]
         );
 

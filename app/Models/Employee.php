@@ -17,6 +17,9 @@ class Employee extends Model
         'full_name',
         'position',
         'rank',
+        'rank_class',
+        'employee_type',
+        'picket_regu',
         'photo',
         'position_id',
         'work_unit_id',
@@ -35,6 +38,16 @@ class Employee extends Model
     public function work_unit(): BelongsTo
     {
         return $this->belongsTo(WorkUnit::class, 'work_unit_id');
+    }
+
+    public function schedules(): HasMany
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class);
     }
 
     public function getPhotoAttribute($value)

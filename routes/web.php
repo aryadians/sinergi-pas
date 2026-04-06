@@ -8,6 +8,9 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ForgotPasswordController;
+use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\ScheduleController;
 use Illuminate\Support\Facades\Route;
 
 // Guest Routes
@@ -16,26 +19,6 @@ Route::middleware('guest')->group(function () {
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
     Route::get('/forgot-password', [ForgotPasswordController::class, 'showLinkRequestForm'])->name('password.request');
     Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
-});
-
-// PWA Manifest
-Route::get('/manifest.json', function() {
-    return response()->json([
-        "name" => "Sinergi PAS Jombang",
-        "short_name" => "SinergiPAS",
-        "start_url" => "/",
-        "display" => "standalone",
-        "background_color" => "#FCFBF9",
-        "theme_color" => "#E85A4F",
-        "icons" => [
-            [
-                "src" => asset('logo1.png'),
-                "sizes" => "512x512",
-                "type" => "image/png",
-                "purpose" => "any maskable"
-            ]
-        ]
-    ]);
 });
 
 // Authenticated Routes
@@ -47,25 +30,20 @@ Route::middleware('auth')->group(function () {
     // Announcements
     Route::post('/announcements', [\App\Http\Controllers\AnnouncementController::class, 'store'])->name('announcements.store');
     Route::delete('/announcements/{announcement}', [\App\Http\Controllers\AnnouncementController::class, 'destroy'])->name('announcements.destroy');
-    Route::post('/announcements/{announcement}/toggle', [\App\Http\Controllers\AnnouncementController::class, 'toggle'])->name('announcements.toggle');
     Route::patch('/announcements/{announcement}/toggle', [\App\Http\Controllers\AnnouncementController::class, 'toggle'])->name('announcements.toggle');
 
     // Document Management
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::get('/documents/employee/{employee}', [DocumentController::class, 'showEmployeeFolders'])->name('documents.employee');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
-    Route::post('/documents/bulk-store', [DocumentController::class, 'bulkStore'])->name('documents.bulk-store');
     Route::post('/documents/category', [DocumentController::class, 'storeCategory'])->name('documents.category.store');
     Route::delete('/documents/category/{category}', [DocumentController::class, 'destroyCategory'])->name('documents.category.destroy');
-    Route::post('/documents/bulk-action', [DocumentController::class, 'bulkAction'])->name('documents.bulk-action');
     Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
-    Route::get('/documents/preview-version/{version}', [DocumentController::class, 'previewVersion'])->name('documents.preview-version');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::post('/documents/{document}/verify', [DocumentController::class, 'verify'])->name('documents.verify');
     Route::post('/documents/{document}/reject', [DocumentController::class, 'reject'])->name('documents.reject');
     Route::post('/documents/{document}/revision', [DocumentController::class, 'storeRevision'])->name('documents.revision');
     Route::post('/documents/{document}/toggle-lock', [DocumentController::class, 'toggleLock'])->name('documents.toggle-lock');
-
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
     
     // Profile Settings
@@ -88,9 +66,7 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/employees/import/excel', [EmployeeController::class, 'importExcel'])->name('employees.import.excel');
         Route::get('/employees/export/excel', [EmployeeController::class, 'exportExcel'])->name('employees.export.excel');
-        Route::get('/employees/export/pdf', [EmployeeController::class, 'exportPdf'])->name('employees.export.pdf');
         Route::delete('/employees/bulk-destroy', [EmployeeController::class, 'bulkDestroy'])->name('employees.bulk-destroy');
-        Route::delete('/employees/{employee}/photo', [EmployeeController::class, 'deletePhoto'])->name('employees.photo.destroy');
         Route::resource('employees', EmployeeController::class);
 
         Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');
@@ -107,9 +83,27 @@ Route::middleware('auth')->group(function () {
 
         // Report Issues Management
         Route::get('/admin/report-issues', [\App\Http\Controllers\Admin\ReportIssueController::class, 'index'])->name('admin.report-issues.index');
-        Route::delete('/admin/report-issues/bulk-destroy', [\App\Http\Controllers\Admin\ReportIssueController::class, 'bulkDestroy'])->name('admin.report-issues.bulk-destroy');
         Route::delete('/admin/report-issues/destroy-all', [\App\Http\Controllers\Admin\ReportIssueController::class, 'destroyAll'])->name('admin.report-issues.destroy-all');
         Route::put('/admin/report-issues/{issue}', [\App\Http\Controllers\Admin\ReportIssueController::class, 'update'])->name('admin.report-issues.update');
         Route::delete('/admin/report-issues/{issue}', [\App\Http\Controllers\Admin\ReportIssueController::class, 'destroy'])->name('admin.report-issues.destroy');
+
+        // --- HRIS & Attendance ---
+        Route::prefix('admin/attendance')->name('admin.attendance.')->group(function () {
+            Route::get('/', [AttendanceController::class, 'index'])->name('index');
+            Route::post('/import', [AttendanceController::class, 'import'])->name('import');
+            Route::get('/export', [AttendanceController::class, 'export'])->name('export');
+        });
+
+        Route::prefix('admin/shifts')->name('admin.shifts.')->group(function () {
+            Route::get('/', [ShiftController::class, 'index'])->name('index');
+            Route::post('/', [ShiftController::class, 'store'])->name('store');
+            Route::delete('/{shift}', [ShiftController::class, 'destroy'])->name('destroy');
+        });
+
+        Route::prefix('admin/schedules')->name('admin.schedules.')->group(function () {
+            Route::get('/', [ScheduleController::class, 'index'])->name('index');
+            Route::post('/', [ScheduleController::class, 'store'])->name('store');
+            Route::post('/generate', [ScheduleController::class, 'generateRoster'])->name('generate');
+        });
     });
 });

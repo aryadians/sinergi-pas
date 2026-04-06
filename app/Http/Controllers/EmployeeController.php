@@ -10,23 +10,23 @@ use App\Models\WorkUnit;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\EmployeesImport;
 use App\Exports\EmployeesExport;
-use Maatwebsite\Excel\Facades\Excel;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Employee::with(['user', 'position_relation', 'work_unit']);
+        $query = Employee::with(['user', 'work_unit', 'position_relation']);
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('full_name', 'like', "%$search%")
-                  ->orWhere('nip', 'like', "%$search%")
-                  ->orWhere('position', 'like', "%$search%");
+                  ->orWhere('nip', 'like', "%$search%");
             });
         }
 
@@ -41,21 +41,18 @@ class EmployeeController extends Controller
         return view('employees.index', compact('employees', 'positions', 'workUnits'));
     }
 
-    public function show(Employee $employee)
-    {
-        return redirect()->route('documents.employee', $employee->id);
-    }
-
     public function store(Request $request)
     {
         $request->validate([
-            'nip' => 'required|unique:employees,nip',
             'full_name' => 'required|string|max:255',
+            'nip' => 'required|string|unique:employees,nip',
+            'email' => 'required|email|unique:users,email',
             'position_id' => 'required|exists:positions,id',
             'work_unit_id' => 'required|exists:work_units,id',
-            'email' => 'required|email|unique:users,email',
             'password' => 'required|min:8',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'rank_class' => 'nullable|string',
+            'employee_type' => 'required|in:regu_jaga,non_regu_jaga',
+            'picket_regu' => 'nullable|string',
         ]);
 
         $user = User::create([
@@ -66,21 +63,18 @@ class EmployeeController extends Controller
         ]);
 
         $position = Position::find($request->position_id);
-        
-        $employeeData = [
+
+        Employee::create([
             'user_id' => $user->id,
             'nip' => $request->nip,
             'full_name' => $request->full_name,
             'position' => $position->name,
             'position_id' => $request->position_id,
             'work_unit_id' => $request->work_unit_id,
-        ];
-
-        if ($request->hasFile('photo')) {
-            $employeeData['photo'] = $request->file('photo')->store('photos', 'public');
-        }
-
-        Employee::create($employeeData);
+            'rank_class' => $request->rank_class,
+            'employee_type' => $request->employee_type,
+            'picket_regu' => $request->picket_regu,
+        ]);
 
         AuditLog::create([
             'user_id' => auth()->id(),
@@ -89,75 +83,119 @@ class EmployeeController extends Controller
             'details' => auth()->user()->name . ' mendaftarkan pegawai baru: ' . $request->full_name
         ]);
 
-        return back()->with('success', 'Pegawai berhasil ditambahkan.');
+        return back()->with('success', 'Pegawai berhasil didaftarkan.');
     }
 
     public function update(Request $request, Employee $employee)
     {
         $request->validate([
-            'nip' => 'required|unique:employees,nip,' . $employee->id,
             'full_name' => 'required|string|max:255',
+            'nip' => 'required|string|unique:employees,nip,' . $employee->id,
+            'email' => 'required|email|unique:users,email,' . $employee->user_id,
             'position_id' => 'required|exists:positions,id',
             'work_unit_id' => 'required|exists:work_units,id',
-            'email' => 'required|email|unique:users,email,' . $employee->user_id,
             'password' => 'nullable|min:8',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'rank_class' => 'nullable|string',
+            'employee_type' => 'required|in:regu_jaga,non_regu_jaga',
+            'picket_regu' => 'nullable|string',
         ]);
 
-        $userData = [
+        $employee->user->update([
             'name' => $request->full_name,
             'email' => $request->email,
-        ];
+        ]);
 
         if ($request->filled('password')) {
-            $userData['password'] = Hash::make($request->password);
+            $employee->user->update(['password' => Hash::make($request->password)]);
         }
-
-        $employee->user->update($userData);
 
         $position = Position::find($request->position_id);
 
-        $employeeData = [
+        $employee->update([
             'nip' => $request->nip,
             'full_name' => $request->full_name,
             'position' => $position->name,
             'position_id' => $request->position_id,
             'work_unit_id' => $request->work_unit_id,
-        ];
-
-        if ($request->hasFile('photo')) {
-            if ($employee->getRawOriginal('photo') && !str_starts_with($employee->getRawOriginal('photo'), 'data:image')) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->getRawOriginal('photo'));
-            }
-            $employeeData['photo'] = $request->file('photo')->store('photos', 'public');
-        }
-
-        $employee->update($employeeData);
+            'rank_class' => $request->rank_class,
+            'employee_type' => $request->employee_type,
+            'picket_regu' => $request->picket_regu,
+        ]);
 
         AuditLog::create([
             'user_id' => auth()->id(),
             'activity' => 'update_employee',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . ' memperbarui data pegawai: ' . $employee->full_name
+            'details' => auth()->user()->name . ' memperbarui data pegawai: ' . $request->full_name
         ]);
 
         return back()->with('success', 'Data pegawai berhasil diperbarui.');
     }
 
-    public function importExcel(Request $request)
+    public function destroy(Employee $employee)
     {
-        set_time_limit(300);
-        $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
-        Excel::import(new EmployeesImport, $request->file('file'));
+        $name = $employee->full_name;
+        $user = $employee->user;
+        
+        if ($employee->getRawOriginal('photo')) {
+            Storage::disk('public')->delete($employee->getRawOriginal('photo'));
+        }
+
+        $employee->delete();
+        if ($user) $user->delete();
 
         AuditLog::create([
             'user_id' => auth()->id(),
-            'activity' => 'import_employees',
-            'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . ' melakukan impor data pegawai massal'
+            'activity' => 'delete_employee',
+            'ip_address' => request()->ip(),
+            'details' => auth()->user()->name . ' menghapus data pegawai: ' . $name
         ]);
 
-        return back()->with('success', 'Data pegawai berhasil diimpor.');
+        return back()->with('success', 'Data pegawai berhasil dihapus.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids) return back()->with('error', 'Pilih data yang ingin dihapus.');
+
+        $employees = Employee::whereIn('id', $ids)->get();
+        foreach ($employees as $emp) {
+            if ($emp->getRawOriginal('photo')) {
+                Storage::disk('public')->delete($emp->getRawOriginal('photo'));
+            }
+            if ($emp->user) $emp->user->delete();
+            $emp->delete();
+        }
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'bulk_delete_employee',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . ' menghapus ' . count($ids) . ' data pegawai secara massal'
+        ]);
+
+        return back()->with('success', count($ids) . ' data pegawai berhasil dihapus.');
+    }
+
+    public function importExcel(Request $request)
+    {
+        $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
+        
+        try {
+            Excel::import(new EmployeesImport, $request->file('file'));
+            
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'activity' => 'import_employees',
+                'ip_address' => $request->ip(),
+                'details' => auth()->user()->name . ' mengimpor data pegawai via Excel'
+            ]);
+
+            return back()->with('success', 'Data pegawai berhasil diimpor.');
+        } catch (\Exception $e) {
+            return back()->with('error', 'Gagal impor: ' . $e->getMessage());
+        }
     }
 
     public function exportExcel(Request $request)
@@ -166,83 +204,24 @@ class EmployeeController extends Controller
             'user_id' => auth()->id(),
             'activity' => 'export_employees_excel',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . ' mengekspor data pegawai ke Excel',
+            'details' => auth()->user()->name . ' mengekspor data pegawai ke Excel'
         ]);
 
-        return Excel::download(new EmployeesExport, 'daftar-pegawai.xlsx');
+        return Excel::download(new EmployeesExport, 'daftar-pegawai-jombang.xlsx');
     }
-    
-    public function exportPdf(Request $request) {
-        $employees = Employee::with(['position_relation', 'work_unit'])->get();
 
+    public function exportPdf(Request $request)
+    {
+        $employees = Employee::with('work_unit')->get();
+        
         AuditLog::create([
             'user_id' => auth()->id(),
             'activity' => 'export_employees_pdf',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . ' mengekspor data pegawai ke PDF',
+            'details' => auth()->user()->name . ' mengekspor data pegawai ke PDF'
         ]);
 
         $pdf = Pdf::loadView('employees.pdf', compact('employees'));
-        return $pdf->download('daftar-pegawai.pdf');
-    }
-
-    public function destroy(Employee $employee)
-    {
-        $name = $employee->full_name;
-        $employee->user->delete();
-
-        AuditLog::create([
-            'user_id' => auth()->id(),
-            'activity' => 'delete_employee',
-            'ip_address' => request()->ip(),
-            'details' => auth()->user()->name . ' menghapus pegawai: ' . $name
-        ]);
-
-        return back()->with('success', 'Pegawai berhasil dihapus.');
-    }
-
-    public function deletePhoto(Employee $employee)
-    {
-        if ($employee->getRawOriginal('photo')) {
-            $name = $employee->full_name;
-            if (!str_starts_with($employee->getRawOriginal('photo'), 'data:image')) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($employee->getRawOriginal('photo'));
-            }
-            $employee->update(['photo' => null]);
-
-            AuditLog::create([
-                'user_id' => auth()->id(),
-                'activity' => 'delete_employee_photo',
-                'ip_address' => request()->ip(),
-                'details' => auth()->user()->name . ' menghapus foto profil pegawai: ' . $name
-            ]);
-
-            return back()->with('success', 'Foto pegawai berhasil dihapus.');
-        }
-        return back()->with('error', 'Tidak ada foto untuk dihapus.');
-    }
-
-    public function bulkDestroy(Request $request)
-    {
-        $ids = $request->validate([
-            'ids' => ['required', 'array', 'min:1'],
-            'ids.*' => ['integer', 'exists:employees,id'],
-        ])['ids'];
-
-        if (empty($ids)) return back()->with('error', 'Tidak ada data terpilih.');
-
-        $employees = Employee::whereIn('id', $ids)->get();
-        foreach ($employees as $employee) {
-            $employee->user->delete(); 
-        }
-
-        AuditLog::create([
-            'user_id' => auth()->id(),
-            'activity' => 'bulk_delete_employees',
-            'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . ' menghapus ' . count($ids) . ' data pegawai secara massal'
-        ]);
-
-        return back()->with('success', count($ids) . ' data pegawai berhasil dihapus.');
+        return $pdf->download('daftar-pegawai-jombang.pdf');
     }
 }

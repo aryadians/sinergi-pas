@@ -108,6 +108,29 @@
                         </div>
                     </div>
 
+                    <!-- Meal Allowance Configuration -->
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 card-3d">
+                        <h4 class="text-sm font-bold text-slate-900 mb-6 flex items-center gap-2">
+                            <i data-lucide="banknote" class="w-4 h-4 text-slate-400"></i>
+                            Konfigurasi Uang Makan
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Golongan II (Rp)</label>
+                                <input type="number" name="meal_allowance_ii" value="{{ $settings['meal_allowance_ii'] ?? '35000' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none font-semibold text-sm transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Golongan III (Rp)</label>
+                                <input type="number" name="meal_allowance_iii" value="{{ $settings['meal_allowance_iii'] ?? '37000' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none font-semibold text-sm transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Golongan IV (Rp)</label>
+                                <input type="number" name="meal_allowance_iv" value="{{ $settings['meal_allowance_iv'] ?? '41000' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none font-semibold text-sm transition-all">
+                            </div>
+                        </div>
+                        <p class="text-[9px] text-slate-400 mt-4 italic">*Tarif dihitung per hari kehadiran efektif.</p>
+                    </div>
+
                     <div class="flex justify-end">
                         <button type="submit" class="px-10 py-3.5 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 shadow-lg shadow-slate-200 transition-all btn-3d">
                             Simpan Konfigurasi

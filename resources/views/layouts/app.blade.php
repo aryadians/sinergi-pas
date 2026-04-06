@@ -153,9 +153,23 @@
                 </a>
                 
                 @if(auth()->user()->role === 'superadmin')
+                <div class="pt-4 pb-2 px-4">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kepegawaian</p>
+                </div>
+
                 <a href="{{ route('employees.index') }}" class="sidebar-item {{ request()->routeIs('employees.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
                     <i data-lucide="users" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Data Pegawai</span>
+                </a>
+
+                <a href="{{ route('admin.attendance.index') }}" class="sidebar-item {{ request()->routeIs('admin.attendance.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
+                    <i data-lucide="fingerprint" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Absensi</span>
+                </a>
+
+                <a href="{{ route('admin.schedules.index') }}" class="sidebar-item {{ request()->routeIs('admin.schedules.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
+                    <i data-lucide="calendar-days" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Jadwal Shift</span>
                 </a>
                 @endif
 
