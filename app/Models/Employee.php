@@ -14,7 +14,9 @@ class Employee extends Model
     protected $fillable = [
         'user_id',
         'nip',
+        'nik',
         'full_name',
+        'phone_number',
         'position',
         'rank',
         'rank_class',
@@ -53,13 +55,7 @@ class Employee extends Model
     public function getPhotoAttribute($value)
     {
         if (!$value) return null;
-        
-        // If it's already a Base64 string, return it
-        if (str_starts_with($value, 'data:image')) {
-            return $value;
-        }
-        
-        // Return relative URL for storage files (avoids APP_URL issues)
+        if (str_starts_with($value, 'data:image')) return $value;
         return '/storage/' . $value;
     }
 

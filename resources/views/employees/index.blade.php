@@ -89,7 +89,8 @@
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $employee->full_name }}</p>
-                                    <p class="text-[10px] font-mono font-bold text-slate-400 mt-0.5 tracking-tight">NIP. {{ $employee->nip }}</p>
+                                    <p class="text-[10px] font-mono font-bold text-slate-400 mt-0.5 tracking-tight">NIP. {{ $employee->nip }} | NIK. {{ $employee->nik ?? '-' }}</p>
+                                    <p class="text-[9px] font-bold text-green-600 mt-0.5 uppercase">WA: {{ $employee->phone_number ?? '-' }}</p>
                                 </div>
                             </div>
                         </td>
@@ -169,11 +170,21 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">NIK</label>
+                        <input type="text" name="nik" placeholder="16 Digit NIK..." class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">No. WhatsApp</label>
+                        <input type="text" name="phone_number" placeholder="628..." class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
                         <input type="email" name="email" required placeholder="pegawai@sinergipas.id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                     </div>
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Golongan (II, III, IV)</label>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Golongan</label>
                         <select name="rank_class" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
                             <option value="II">Golongan II</option>
                             <option value="III">Golongan III</option>
@@ -254,6 +265,16 @@
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">NIP Pegawai</label>
                         <input type="text" name="nip" id="edit_nip" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">NIK</label>
+                        <input type="text" name="nik" id="edit_nik" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
+                    </div>
+                    <div class="space-y-1.5">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">No. WhatsApp</label>
+                        <input type="text" name="phone_number" id="edit_phone_number" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                     </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -339,12 +360,12 @@
             <div class="space-y-3 relative z-10">
                 <p class="text-[11px] font-medium text-slate-300">Gunakan format kolom berikut pada baris pertama:</p>
                 <div class="bg-white/5 p-3 rounded-xl border border-white/10 font-mono text-[10px] text-amber-200 text-center select-all">
-                    nip, full_name, position, work_unit, email, rank_class, employee_type, picket_regu
+                    nama_lengkap, jabatan, unit_kerja, email, nik, no_whatsapp, gol, regu
                 </div>
                 <ul class="text-[9px] text-slate-400 space-y-1 pl-4 list-disc">
-                    <li>Rank Class: II, III, atau IV</li>
-                    <li>Type: regu_jaga atau non_regu_jaga</li>
-                    <li>Regu: A, B, C, atau D (opsional)</li>
+                    <li>NIP akan otomatis mengambil dari NIK jika tidak ada.</li>
+                    <li>Unit & Jabatan harus sesuai data master.</li>
+                    <li>Password default diatur sama dengan NIK.</li>
                 </ul>
             </div>
         </div>
@@ -386,8 +407,10 @@
         const checked = checkboxes.filter(c => c.checked);
         selectedCount.textContent = checked.length;
         bulkActionBar.classList.toggle('hidden', checked.length === 0);
-        selectAll.checked = checkboxes.length > 0 && checked.length === checkboxes.length;
-        selectAll.indeterminate = checked.length > 0 && checked.length < checkboxes.length;
+        if(selectAll) {
+            selectAll.checked = checkboxes.length > 0 && checked.length === checkboxes.length;
+            selectAll.indeterminate = checked.length > 0 && checked.length < checkboxes.length;
+        }
     }
 
     if(selectAll) {
@@ -430,6 +453,8 @@
         form.action = `/employees/${employee.id}`;
         document.getElementById('edit_full_name').value = employee.full_name;
         document.getElementById('edit_nip').value = employee.nip;
+        document.getElementById('edit_nik').value = employee.nik || '';
+        document.getElementById('edit_phone_number').value = employee.phone_number || '';
         document.getElementById('edit_email').value = email;
         document.getElementById('edit_rank_class').value = employee.rank_class || 'II';
         document.getElementById('edit_employee_type').value = employee.employee_type || 'non_regu_jaga';

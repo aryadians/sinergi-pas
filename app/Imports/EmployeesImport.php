@@ -17,16 +17,38 @@ class EmployeesImport implements ToModel, WithHeadingRow, WithBatchInserts, With
 {
     public function model(array $row)
     {
-        $nip = $row['nip'] ?? null;
+        // New Format Mapping based on user request:
+        // Nama Lengkap, Jabatan, Unit Kerja, Email, NIK, No. WhatsApp, Gol, regu/nonregu, [Optional NIP]
+        
+        $nama = $row['nama_lengkap'] ?? null;
+        $jabatanName = $row['jabatan'] ?? null;
+        $unitName = $row['unit_kerja'] ?? null;
         $email = $row['email'] ?? null;
-        $nama = $row['full_name'] ?? $row['nama_lengkap'] ?? $row['nama'] ?? null;
-        $jabatanName = $row['position'] ?? $row['jabatan'] ?? null;
-        $unitName = $row['work_unit'] ?? $row['unit_kerja'] ?? null;
-        $rankClass = $row['rank_class'] ?? $row['golongan'] ?? null;
-        $type = $row['employee_type'] ?? 'non_regu_jaga';
-        $regu = $row['picket_regu'] ?? $row['regu'] ?? null;
+        $nik = $row['nik'] ?? null;
+        $wa = $row['no_whatsapp'] ?? $row['whatsapp'] ?? null;
+        $rankClass = $row['gol'] ?? $row['golongan'] ?? null;
+        $typeRaw = $row['regunonregu'] ?? $row['tipe'] ?? null;
+        $nip = $row['nip'] ?? $nik; // Fallback NIP to NIK if not provided
 
         if (empty($nip) || empty($email)) return null;
+
+        // Auto-detect Employee Type based on Position
+        $employeeType = 'non_regu_jaga';
+        $picketRegu = $row['regu'] ?? null;
+
+        $jagaKeywords = ['JAGA', 'RUMAH TAHANAN', 'PENGAMANAN', 'KOMANDAN'];
+        foreach ($jagaKeywords as $key) {
+            if (str_contains(strtoupper($jabatanName), $key)) {
+                $employeeType = 'regu_jaga';
+                break;
+            }
+        }
+
+        // Override if explicitly mentioned in Excel
+        if ($typeRaw) {
+            if (str_contains(strtolower($typeRaw), 'regu')) $employeeType = 'regu_jaga';
+            if (str_contains(strtolower($typeRaw), 'non')) $employeeType = 'non_regu_jaga';
+        }
 
         // Resolve Position ID
         $positionId = null;
@@ -48,7 +70,7 @@ class EmployeesImport implements ToModel, WithHeadingRow, WithBatchInserts, With
             $workUnitId = $unit->id;
         }
 
-        // 1. Update atau Create User
+        // 1. User Account
         $user = User::updateOrCreate(
             ['email' => $email],
             [
@@ -58,18 +80,20 @@ class EmployeesImport implements ToModel, WithHeadingRow, WithBatchInserts, With
             ]
         );
 
-        // 2. Update atau Create Employee
+        // 2. Employee Profile
         Employee::updateOrCreate(
             ['nip' => (string)$nip],
             [
                 'user_id' => $user->id,
-                'full_name' => $nama ?? 'Pegawai Baru',
-                'position' => $jabatanName ?? 'Staf',
+                'nik' => (string)$nik,
+                'full_name' => $nama,
+                'phone_number' => $wa,
+                'position' => $jabatanName,
                 'position_id' => $positionId,
                 'work_unit_id' => $workUnitId,
                 'rank_class' => $rankClass,
-                'employee_type' => $type,
-                'picket_regu' => $regu,
+                'employee_type' => $employeeType,
+                'picket_regu' => $picketRegu,
             ]
         );
 
