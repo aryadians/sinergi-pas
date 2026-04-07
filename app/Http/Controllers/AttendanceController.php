@@ -23,7 +23,7 @@ class AttendanceController extends Controller
         $date = Carbon::parse($monthStr);
         $search = $request->search;
 
-        // Fetch all employees and their attendances for the selected month
+        // Fetch employees for Summary Tab
         $employees = Employee::with(['work_unit', 'squad'])
             ->when($search, function($q) use ($search) {
                 $q->where('full_name', 'like', "%$search%")
@@ -35,6 +35,20 @@ class AttendanceController extends Controller
             ->orderBy('full_name')
             ->paginate(50)->withQueryString();
 
+        // Fetch detailed logs for Log Tab
+        $attendanceLogs = Attendance::with('employee')
+            ->whereMonth('date', $date->month)
+            ->whereYear('date', $date->year)
+            ->when($search, function($q) use ($search) {
+                $q->whereHas('employee', function($eq) use ($search) {
+                    $eq->where('full_name', 'like', "%$search%")
+                       ->orWhere('nip', 'like', "%$search%");
+                });
+            })
+            ->orderBy('date', 'desc')
+            ->orderBy('check_in', 'asc')
+            ->paginate(50, ['*'], 'log_page')->withQueryString();
+
         // Optimized Summary Calculation
         $summary = DB::table('attendances')
             ->whereMonth('date', $date->month)
@@ -45,7 +59,7 @@ class AttendanceController extends Controller
                 SUM(allowance_amount) as total_allowance
             ')->first();
 
-        return view('admin.attendance.index', compact('employees', 'summary', 'monthStr', 'date'));
+        return view('admin.attendance.index', compact('employees', 'attendanceLogs', 'summary', 'monthStr', 'date'));
     }
 
     public function import(Request $request)

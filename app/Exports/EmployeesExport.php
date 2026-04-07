@@ -40,28 +40,30 @@ class EmployeesExport implements FromCollection, WithHeadings, WithMapping, With
     public function headings(): array
     {
         return [
-            'NO',
             'NIP',
             'NAMA LENGKAP',
             'JABATAN',
             'UNIT KERJA',
             'EMAIL',
-            'PANGKAT/GOL'
+            'NIK',
+            'NO. WHATSAPP',
+            'GOLONGAN',
+            'REGU'
         ];
     }
 
     public function map($employee): array
     {
-        static $no = 0;
-        $no++;
         return [
-            $no,
             $employee->nip,
             $employee->full_name,
             $employee->position,
             $employee->work_unit->name ?? '-',
             $employee->user->email ?? '-',
-            $employee->rank ?? '-'
+            $employee->nik ?? '-',
+            $employee->phone_number ?? '-',
+            $employee->rank_class ?? '-',
+            $employee->picket_regu ?? '-'
         ];
     }
 
@@ -70,25 +72,25 @@ class EmployeesExport implements FromCollection, WithHeadings, WithMapping, With
         $kop1 = Setting::getValue('kop_line_1', 'KEMENTERIAN HUKUM DAN HAK ASASI MANUSIA RI');
         $kop2 = Setting::getValue('kop_line_2', 'LEMBAGA PEMASYARAKATAN KELAS IIB JOMBANG');
         
-        $sheet->mergeCells('B1:G1');
+        $sheet->mergeCells('B1:I1');
         $sheet->setCellValue('B1', $kop1);
-        $sheet->mergeCells('B2:G2');
+        $sheet->mergeCells('B2:I2');
         $sheet->setCellValue('B2', $kop2);
         
-        $sheet->mergeCells('A5:G5');
+        $sheet->mergeCells('A5:I5');
         $sheet->setCellValue('A5', 'DAFTAR NOMINATIF PEGAWAI');
         
-        $sheet->getStyle('B1:G2')->getFont()->setBold(true)->setSize(12);
+        $sheet->getStyle('B1:I2')->getFont()->setBold(true)->setSize(12);
         $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14)->setUnderline(true);
         $sheet->getStyle('A5')->getAlignment()->setHorizontal('center');
         
-        $sheet->getStyle('A7:G7')->getFont()->setBold(true);
-        $sheet->getStyle('A7:G7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F1F5F9');
+        $sheet->getStyle('A7:I7')->getFont()->setBold(true);
+        $sheet->getStyle('A7:I7')->getFill()->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)->getStartColor()->setARGB('F1F5F9');
         
         $lastRow = $sheet->getHighestRow();
-        $sheet->getStyle("A7:G$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+        $sheet->getStyle("A7:I$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
         
-        foreach (range('A', 'G') as $col) {
+        foreach (range('A', 'I') as $col) {
             $sheet->getColumnDimension($col)->setAutoSize(true);
         }
 

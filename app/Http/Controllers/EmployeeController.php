@@ -178,22 +178,58 @@ class EmployeeController extends Controller
         return back()->with('success', count($ids) . ' data pegawai berhasil dihapus.');
     }
 
+    public function destroyAll(Request $request)
+    {
+        \Illuminate\Support\Facades\DB::beginTransaction();
+        try {
+            $currentUserId = auth()->id();
+            
+            // Get all employees except the one linked to current user
+            $employees = Employee::where('user_id', '!=', $currentUserId)->get();
+            $count = $employees->count();
+
+            foreach ($employees as $emp) {
+                if ($emp->getRawOriginal('photo')) {
+                    Storage::disk('public')->delete($emp->getRawOriginal('photo'));
+                }
+                if ($emp->user) {
+                    $emp->user->delete();
+                }
+                $emp->delete();
+            }
+
+            AuditLog::create([
+                'user_id' => $currentUserId,
+                'activity' => 'destroy_all_employees',
+                'ip_address' => $request->ip(),
+                'details' => auth()->user()->name . ' menghapus SELURUH data pegawai (' . $count . ' data)'
+            ]);
+
+            \Illuminate\Support\Facades\DB::commit();
+            return back()->with('success', 'Seluruh data pegawai berhasil dihapus.');
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\DB::rollBack();
+            return back()->with('error', 'Gagal menghapus data: ' . $e->getMessage());
+        }
+    }
+
     public function importExcel(Request $request)
     {
         set_time_limit(0);
         $request->validate(['file' => 'required|mimes:xlsx,xls,csv']);
         
         try {
-            Excel::import(new EmployeesImport, $request->file('file'));
+            $import = new EmployeesImport;
+            Excel::import($import, $request->file('file'));
             
             AuditLog::create([
                 'user_id' => auth()->id(),
                 'activity' => 'import_employees',
                 'ip_address' => $request->ip(),
-                'details' => auth()->user()->name . ' mengimpor data pegawai via Excel'
+                'details' => auth()->user()->name . ' mengimpor ' . $import->importedCount . ' data pegawai via Excel'
             ]);
 
-            return back()->with('success', 'Data pegawai berhasil diimpor.');
+            return back()->with('success', $import->importedCount . ' data pegawai berhasil diimpor.');
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal impor: ' . $e->getMessage());
         }

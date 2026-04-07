@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/employees/import/excel', [EmployeeController::class, 'importExcel'])->name('employees.import.excel');
         Route::get('/employees/export/excel', [EmployeeController::class, 'exportExcel'])->name('employees.export.excel');
         Route::delete('/employees/bulk-destroy', [EmployeeController::class, 'bulkDestroy'])->name('employees.bulk-destroy');
+        Route::delete('/employees/destroy-all', [EmployeeController::class, 'destroyAll'])->name('employees.destroy-all');
         Route::resource('employees', EmployeeController::class);
 
         Route::get('/audit', [AuditController::class, 'index'])->name('audit.index');

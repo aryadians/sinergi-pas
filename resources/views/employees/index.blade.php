@@ -21,41 +21,70 @@
 
 <div class="space-y-8 page-fade">
     <!-- Hero Section -->
-    <div class="relative overflow-hidden rounded-[40px] bg-slate-900 px-10 py-12 text-white shadow-2xl card-3d mb-10">
-        <div class="absolute -left-10 top-8 h-64 w-64 rounded-full bg-blue-500/10 blur-3xl"></div>
-        <div class="absolute right-0 top-0 h-80 w-80 rounded-full bg-amber-500/5 blur-3xl"></div>
+    <div class="relative overflow-hidden rounded-[48px] bg-slate-900 px-10 py-14 text-white shadow-2xl card-3d mb-12 border border-white/5">
+        <div class="absolute -left-20 -top-20 h-96 w-96 rounded-full bg-blue-600/20 blur-[120px] animate-pulse"></div>
+        <div class="absolute -right-20 -bottom-20 h-96 w-96 rounded-full bg-indigo-500/10 blur-[100px]"></div>
         
-        <div class="relative z-10 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-            <div class="space-y-4">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/50">
-                        <i data-lucide="users" class="w-6 h-6 text-white"></i>
+        <div class="relative z-10 flex flex-col gap-10 lg:flex-row lg:items-center lg:justify-between">
+            <div class="space-y-6">
+                <div class="flex items-center gap-5">
+                    <div class="relative">
+                        <div class="absolute inset-0 bg-blue-600 blur-xl opacity-40 animate-pulse"></div>
+                        <div class="relative w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-3xl flex items-center justify-center shadow-2xl shadow-blue-900/50 transform -rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                            <i data-lucide="users-round" class="w-8 h-8 text-white"></i>
+                        </div>
                     </div>
-                    <h2 class="text-4xl font-black tracking-tight italic">Manajemen <span class="text-blue-500">Pegawai</span></h2>
+                    <div>
+                        <h2 class="text-5xl font-black tracking-tight italic leading-none">
+                            Data <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-300">Pegawai</span>
+                        </h2>
+                        <div class="flex items-center gap-2 mt-2">
+                            <div class="h-1 w-12 bg-blue-500 rounded-full"></div>
+                            <p class="text-[11px] font-black uppercase tracking-[0.3em] text-blue-400/80">Human Resources Engine</p>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-slate-400 font-medium max-w-2xl leading-relaxed">
-                    Pusat kendali database kepegawaian. Kelola profil, akses sistem, dan penempatan unit kerja seluruh petugas Lapas Jombang secara terintegrasi.
+                
+                <p class="text-slate-400 font-medium max-w-2xl text-lg leading-relaxed">
+                    Pusat kendali database kepegawaian modern. Kelola profil, akses sistem, dan penempatan unit kerja seluruh petugas secara terintegrasi dengan standar keamanan tinggi.
                 </p>
-                <div class="flex items-center gap-2">
-                    <span class="px-4 py-1.5 bg-blue-500/10 border border-blue-500/20 rounded-full text-[10px] font-black uppercase tracking-[0.2em] text-blue-400">
-                        {{ $employees->total() }} Personel Terdaftar
-                    </span>
-                    <span class="w-1.5 h-1.5 rounded-full bg-slate-700"></span>
-                    <span class="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Update: {{ date('d/m/Y') }}</span>
+
+                <div class="flex flex-wrap items-center gap-6">
+                    <div class="flex items-center gap-3 px-5 py-2.5 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-md">
+                        <div class="flex -space-x-3">
+                            <div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-blue-500 flex items-center justify-center text-[10px] font-bold">LP</div>
+                            <div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-indigo-500 flex items-center justify-center text-[10px] font-bold">JB</div>
+                            <div class="w-8 h-8 rounded-full border-2 border-slate-900 bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-400">+</div>
+                        </div>
+                        <span class="text-sm font-bold text-white tracking-wide">
+                            {{ $employees->total() }} <span class="text-slate-500 font-medium ml-1 text-xs uppercase tracking-widest">Personel Aktif</span>
+                        </span>
+                    </div>
+                    <div class="h-10 w-px bg-white/10 hidden md:block"></div>
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Sinkronisasi Terakhir</span>
+                        <span class="text-sm font-bold text-blue-400">{{ date('d F Y') }}</span>
+                    </div>
                 </div>
             </div>
 
             <div class="flex flex-wrap gap-4 items-center">
-                <div class="flex bg-white/5 p-1.5 rounded-[22px] border border-white/10 backdrop-blur-md">
-                    <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 group">
-                        <i data-lucide="file-up" class="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform"></i> Impor Data
+                <div class="flex bg-white/5 p-2 rounded-[28px] border border-white/10 backdrop-blur-md shadow-inner">
+                    <button type="button" onclick="document.getElementById('importModal').classList.remove('hidden')" class="px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 group">
+                        <i data-lucide="file-up" class="w-5 h-5 text-amber-400 group-hover:-translate-y-1 transition-transform"></i> Impor
                     </button>
-                    <a href="{{ route('employees.export.excel') }}" class="px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-2 group no-loader">
-                        <i data-lucide="file-spreadsheet" class="w-4 h-4 text-green-400 group-hover:scale-110 transition-transform"></i> Ekspor
+                    <a href="{{ route('employees.export.excel') }}" class="px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-white/10 transition-all flex items-center gap-3 group no-loader">
+                        <i data-lucide="download-cloud" class="w-5 h-5 text-emerald-400 group-hover:translate-y-1 transition-transform"></i> Ekspor
                     </a>
+                    <button type="button" onclick="confirmDestroyAll()" class="px-6 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest hover:bg-red-500/20 text-red-400 transition-all flex items-center gap-3 group">
+                        <i data-lucide="trash-2" class="w-5 h-5 group-hover:scale-110 transition-transform"></i> Kosongkan Data
+                    </button>
                 </div>
-                <button type="button" onclick="document.getElementById('addModal').classList.remove('hidden')" class="px-8 py-4 rounded-[22px] bg-white text-slate-900 text-[10px] font-black uppercase tracking-widest hover:bg-blue-500 hover:text-white transition-all shadow-xl flex items-center gap-3 active:scale-95 group">
-                    <i data-lucide="user-plus" class="w-5 h-5 text-blue-600 group-hover:text-white"></i> Registrasi Baru
+                <button type="button" onclick="document.getElementById('addModal').classList.remove('hidden')" class="px-10 py-5 rounded-[28px] bg-white text-slate-900 text-[11px] font-black uppercase tracking-[0.15em] hover:bg-blue-600 hover:text-white transition-all shadow-[0_20px_40px_rgba(0,0,0,0.3)] flex items-center gap-4 active:scale-95 group">
+                    <div class="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center group-hover:bg-white/20 transition-colors">
+                        <i data-lucide="user-plus" class="w-5 h-5 text-blue-600 group-hover:text-white"></i>
+                    </div>
+                    Registrasi Baru
                 </button>
             </div>
         </div>
@@ -322,7 +351,7 @@
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Golongan</label>
-                        <select name="rank_class" id="edit_rank_class" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none">
+                        <select name="rank_class" id="edit_rank_class" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
                             <option value="II">Golongan II</option>
                             <option value="III">Golongan III</option>
                             <option value="IV">Golongan IV</option>
@@ -432,6 +461,10 @@
     @csrf @method('DELETE')
 </form>
 
+<form id="destroyAllForm" action="{{ route('employees.destroy-all') }}" method="POST" class="hidden no-loader">
+    @csrf @method('DELETE')
+</form>
+
 <script>
     // Show Loading on Import Submit
     document.getElementById('importForm').addEventListener('submit', function() {
@@ -493,6 +526,42 @@
                     form.appendChild(input);
                 });
                 form.submit();
+            }
+        });
+    }
+
+    function confirmDestroyAll() {
+        Swal.fire({
+            title: 'KOSONGKAN DATABASE?',
+            text: "Tindakan ini akan menghapus SELURUH data pegawai secara permanen. Anda tidak dapat membatalkan ini!",
+            icon: 'error',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            confirmButtonText: 'YA, HAPUS SEMUA!',
+            cancelButtonText: 'Batal',
+            footer: '<span class="text-red-500 font-bold">Hanya Superadmin yang dapat melakukan ini.</span>',
+            customClass: { popup: 'rounded-3xl' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Konfirmasi Terakhir',
+                    text: 'Ketik kata "HAPUS" untuk mengonfirmasi pembersihan total data pegawai:',
+                    input: 'text',
+                    inputAttributes: { autocapitalize: 'off' },
+                    showCancelButton: true,
+                    confirmButtonText: 'Eksekusi Sekarang!',
+                    confirmButtonColor: '#EF4444',
+                    customClass: { popup: 'rounded-3xl' },
+                    preConfirm: (value) => {
+                        if (value !== 'HAPUS') {
+                            Swal.showValidationMessage('Kata konfirmasi salah!');
+                        }
+                    }
+                }).then((res) => {
+                    if (res.isConfirmed) {
+                        document.getElementById('destroyAllForm').submit();
+                    }
+                });
             }
         });
     }

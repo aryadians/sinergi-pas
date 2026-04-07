@@ -84,80 +84,155 @@
         </div>
     </div>
 
-    <!-- Table Section -->
-    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden card-3d">
-        <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead>
-                    <tr class="bg-slate-50 border-b border-slate-100">
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pegawai</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Kategori</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Hadir (Hari)</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Terlambat (Total Menit)</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Estimasi Uang Makan</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-50">
-                    @forelse($employees as $emp)
-                    @php
-                        $totalHadir = $emp->attendances->where('status', '!=', 'absent')->count();
-                        $totalTelat = $emp->attendances->sum('late_minutes');
-                        $totalUangMakan = $emp->attendances->sum('allowance_amount');
-                    @endphp
-                    <tr class="hover:bg-slate-50/50 transition-colors group">
-                        <td class="px-6 py-4">
-                            <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold border border-slate-200 shrink-0 overflow-hidden">
-                                    @if($emp->photo)
-                                        <img src="{{ $emp->photo }}" class="w-full h-full object-cover">
-                                    @else
-                                        {{ substr($emp->full_name, 0, 1) }}
-                                    @endif
+    <!-- Tab Navigation -->
+    <div class="flex gap-2 p-1.5 bg-slate-100 rounded-[24px] w-fit border border-slate-200 shadow-inner">
+        <button onclick="switchTab('recap')" id="btn-recap" class="tab-btn active px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-3">
+            <i data-lucide="calculator" class="w-4 h-4"></i> Rekapitulasi Bulanan
+        </button>
+        <button onclick="switchTab('logs')" id="btn-logs" class="tab-btn px-8 py-3.5 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-300 flex items-center gap-3">
+            <i data-lucide="list-checks" class="w-4 h-4"></i> Log Absensi Detail
+        </button>
+    </div>
+
+    <!-- Tab Content: Recap -->
+    <div id="tab-recap" class="tab-content">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden card-3d">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-100">
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pegawai</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Kategori</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Hadir (Hari)</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Terlambat (Total)</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Uang Makan</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        @forelse($employees as $emp)
+                        @php
+                            $totalHadir = $emp->attendances->where('status', '!=', 'absent')->count();
+                            $totalTelat = $emp->attendances->sum('late_minutes');
+                            $totalUangMakan = $emp->attendances->sum('allowance_amount');
+                        @endphp
+                        <tr class="hover:bg-slate-50/50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold border border-slate-200 shrink-0 overflow-hidden">
+                                        @if($emp->photo)
+                                            <img src="{{ $emp->photo }}" class="w-full h-full object-cover">
+                                        @else
+                                            {{ substr($emp->full_name, 0, 1) }}
+                                        @endif
+                                    </div>
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $emp->full_name }}</p>
+                                        <p class="text-[10px] font-mono font-bold text-slate-400">NIP. {{ $emp->nip }}</p>
+                                    </div>
                                 </div>
-                                <div class="min-w-0">
-                                    <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $emp->full_name }}</p>
-                                    <p class="text-[10px] font-mono font-bold text-slate-400">NIP. {{ $emp->nip }}</p>
-                                </div>
-                            </div>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider border {{ $emp->category_label === 'Petugas Jaga' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-100 text-slate-600 border-slate-200' }}">
-                                {{ $emp->category_label }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="text-sm font-bold text-slate-900">{{ $totalHadir }}</span>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            @if($totalTelat > 0)
-                                <span class="text-sm font-bold text-red-500">{{ $totalTelat }} Menit</span>
-                            @else
-                                <span class="text-sm font-bold text-slate-400">-</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 text-right">
-                            <p class="text-sm font-bold text-slate-900">Rp {{ number_format($totalUangMakan, 0, ',', '.') }}</p>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Gol. {{ $emp->rank_class ?? '-' }}</p>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="5" class="px-6 py-20 text-center">
-                            <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-dashed border-slate-200">
-                                <i data-lucide="users" class="w-8 h-8 text-slate-300"></i>
-                            </div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest italic">Data pegawai belum tersedia</p>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider border {{ $emp->category_label === 'Petugas Jaga' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-100 text-slate-600 border-slate-200' }}">
+                                    {{ $emp->category_label }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="text-sm font-bold text-slate-900">{{ $totalHadir }} Hari</span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                @if($totalTelat > 0)
+                                    <span class="text-sm font-bold text-red-500">{{ $totalTelat }} Menit</span>
+                                @else
+                                    <span class="text-sm font-bold text-slate-400">-</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 text-right">
+                                <p class="text-sm font-bold text-emerald-600">Rp {{ number_format($totalUangMakan, 0, ',', '.') }}</p>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Gol. {{ $emp->rank_class ?? '-' }}</p>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-20 text-center">
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest italic">Belum ada data untuk periode ini</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            @if($employees->hasPages())
+            <div class="p-6 border-t border-slate-100 bg-slate-50/30">
+                {{ $employees->links() }}
+            </div>
+            @endif
         </div>
-        @if($employees->hasPages())
-        <div class="p-6 border-t border-slate-100 bg-slate-50/30">
-            {{ $employees->links() }}
+    </div>
+
+    <!-- Tab Content: Logs -->
+    <div id="tab-logs" class="tab-content hidden">
+        <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden card-3d">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-100">
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tanggal</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pegawai</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Jam Masuk</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Jam Pulang</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-50">
+                        @forelse($attendanceLogs as $log)
+                        <tr class="hover:bg-slate-50/50 transition-colors group">
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-bold text-slate-900">{{ \Carbon\Carbon::parse($log->date)->translatedFormat('d F Y') }}</p>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase">{{ \Carbon\Carbon::parse($log->date)->translatedFormat('l') }}</p>
+                            </td>
+                            <td class="px-6 py-4">
+                                <p class="text-sm font-bold text-slate-900 truncate max-w-[200px]">{{ $log->employee->full_name }}</p>
+                                <p class="text-[10px] font-mono text-slate-400">NIP. {{ $log->employee->nip }}</p>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-xl text-xs font-black border border-blue-100">
+                                    {{ $log->check_in ? \Carbon\Carbon::parse($log->check_in)->format('H:i') : '--:--' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                <span class="px-3 py-1.5 bg-slate-50 text-slate-600 rounded-xl text-xs font-black border border-slate-100">
+                                    {{ $log->check_out && $log->check_out != $log->check_in ? \Carbon\Carbon::parse($log->check_out)->format('H:i') : '--:--' }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-center">
+                                @if($log->status === 'present')
+                                    <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[9px] font-black uppercase tracking-wider border border-green-100">Hadir Tepat Waktu</span>
+                                @elseif($log->status === 'late')
+                                    <div class="flex flex-col items-center">
+                                        <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[9px] font-black uppercase tracking-wider border border-amber-100">Terlambat</span>
+                                        <span class="text-[8px] font-bold text-red-400 mt-1">{{ $log->late_minutes }} Menit</span>
+                                    </div>
+                                @else
+                                    <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase tracking-wider border border-red-100">{{ strtoupper($log->status) }}</span>
+                                @endif
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="px-6 py-20 text-center">
+                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest italic">Belum ada aktivitas absensi tercatat</p>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+            @if($attendanceLogs->hasPages())
+            <div class="p-6 border-t border-slate-100 bg-slate-50/30">
+                {{ $attendanceLogs->links() }}
+            </div>
+            @endif
         </div>
-        @endif
     </div>
 </div>
 
@@ -168,8 +243,8 @@
         <div class="relative z-10">
             <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Impor Data Fingerprint</h3>
-                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Sinkronisasi Absensi Mesin</p>
+                    <h3 class="text-2xl font-bold text-slate-900 tracking-tight">Impor Data Absensi</h3>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Sinkronisasi Fingerprint Mesin</p>
                 </div>
                 <button onclick="document.getElementById('importModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
                     <i data-lucide="x" class="w-6 h-6"></i>
@@ -177,9 +252,9 @@
             </div>
 
             <div class="mb-8 p-5 bg-amber-50 rounded-2xl border border-amber-100">
-                <h4 class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-2">Petunjuk Header Excel:</h4>
+                <h4 class="text-[10px] font-bold text-amber-800 uppercase tracking-widest mb-2">Petunjuk Format:</h4>
                 <p class="text-[10px] font-semibold text-amber-700 leading-relaxed italic">
-                    Sistem akan otomatis mendeteksi baris data. Pastikan kolom NIP berada di index ke-5 (Kolom E) dan Waktu Scan di kolom ke-3 (Kolom C).
+                    Sistem mendukung file .xlsx / .xls. Pastikan kolom NIP dan Waktu Scan tersedia sesuai template mesin absensi Anda.
                 </p>
             </div>
 
@@ -232,7 +307,44 @@
     </div>
 </div>
 
+<style>
+    .tab-btn.active {
+        background-color: white;
+        color: #0F172A;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    }
+    .tab-btn:not(.active) {
+        color: #64748B;
+    }
+    .tab-btn:not(.active):hover {
+        color: #0F172A;
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+</style>
+
 <script>
+    function switchTab(tabName) {
+        // Toggle contents
+        document.getElementById('tab-recap').classList.toggle('hidden', tabName !== 'recap');
+        document.getElementById('tab-logs').classList.toggle('hidden', tabName !== 'logs');
+
+        // Toggle buttons
+        document.getElementById('btn-recap').classList.toggle('active', tabName === 'recap');
+        document.getElementById('btn-logs').classList.toggle('active', tabName === 'logs');
+
+        // Remember tab in URL/LocalStorage if needed (Optional)
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabName);
+        window.history.pushState({}, '', url);
+    }
+
+    // Auto-switch tab based on URL param
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeTab = urlParams.get('tab') || 'recap';
+        switchTab(activeTab);
+    });
+
     function toggleDateInput() {
         const filter = document.getElementById('export_filter').value;
         const container = document.getElementById('date_input_container');
