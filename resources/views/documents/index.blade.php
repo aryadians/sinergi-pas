@@ -98,10 +98,9 @@
                                     @endif
                                 </div>
                                 <div class="min-w-0">
-                                    <h3 class="text-sm font-black text-slate-900 truncate leading-tight">{{ $employee->full_name }}</h3>
-                                    <p class="text-[9px] font-bold text-blue-600 uppercase tracking-tighter truncate">NIP. {{ $employee->nip }}</p>
-                                </div>
-                            </div>
+                                    <h3 class="text-[11px] font-black text-slate-900 leading-tight break-words">{{ $employee->full_name }}</h3>
+                                    <p class="text-[9px] font-bold text-blue-600 uppercase tracking-tighter truncate mt-0.5">NIP. {{ $employee->nip }}</p>
+                                </div>                            </div>
                             <a href="{{ route('documents.employee', $employee->id) }}" 
                                 class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center hover:bg-blue-600 transition-all shadow-lg btn-3d shrink-0">
                                 <i data-lucide="folder-open" class="w-5 h-5"></i>

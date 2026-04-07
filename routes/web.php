@@ -78,6 +78,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
 
         // Rank Management
+        Route::delete('/admin/ranks/bulk', [\App\Http\Controllers\Admin\RankController::class, 'bulkDestroy'])->name('admin.ranks.bulk-destroy');
         Route::resource('/admin/ranks', \App\Http\Controllers\Admin\RankController::class)->names('admin.ranks');
 
         // Position & Work Unit Management

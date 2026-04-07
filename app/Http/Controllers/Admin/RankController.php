@@ -20,6 +20,7 @@ class RankController extends Controller
         $request->validate([
             'name' => 'required|string|unique:ranks,name',
             'description' => 'nullable|string',
+            'meal_allowance' => 'required|integer|min:0',
         ]);
 
         Rank::create($request->all());
@@ -39,6 +40,7 @@ class RankController extends Controller
         $request->validate([
             'name' => 'required|string|unique:ranks,name,' . $rank->id,
             'description' => 'nullable|string',
+            'meal_allowance' => 'required|integer|min:0',
         ]);
 
         $rank->update($request->all());
@@ -66,5 +68,22 @@ class RankController extends Controller
         ]);
 
         return back()->with('success', 'Golongan berhasil dihapus.');
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids) return back()->with('error', 'Pilih data yang ingin dihapus.');
+
+        $count = Rank::whereIn('id', $ids)->delete();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'bulk_delete_rank',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . ' menghapus ' . $count . ' golongan secara massal'
+        ]);
+
+        return back()->with('success', $count . ' golongan berhasil dihapus.');
     }
 }

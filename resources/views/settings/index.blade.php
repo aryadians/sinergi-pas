@@ -129,7 +129,7 @@
                 <form action="{{ route('settings.update') }}" method="POST" class="space-y-6">
                     @csrf
                     <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 card-3d">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10 pb-10 border-b border-slate-100">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
                             <div>
                                 <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Threshold Terlambat (Kantor)</label>
                                 <div class="relative">
@@ -138,36 +138,22 @@
                                 </div>
                                 <p class="text-[10px] text-slate-400 mt-3 italic font-medium leading-relaxed">Staf yang melakukan scan setelah jam ini akan otomatis tercatat sebagai "Terlambat".</p>
                             </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div class="p-6 rounded-3xl bg-slate-50 border border-slate-100 group hover:border-blue-200 transition-all">
-                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Rate Golongan II</label>
-                                <div class="flex items-center gap-3">
-                                    <span class="text-slate-400 font-bold">Rp</span>
-                                    <input type="number" name="meal_allowance_ii" value="{{ $settings['meal_allowance_ii'] ?? '35000' }}" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-900 focus:ring-0">
+                            <div class="bg-slate-50 rounded-3xl p-8 border border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
+                                <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
+                                    <i data-lucide="banknote" class="w-6 h-6 text-emerald-500"></i>
                                 </div>
-                            </div>
-                            <div class="p-6 rounded-3xl bg-slate-50 border border-slate-100 group hover:border-blue-200 transition-all">
-                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Rate Golongan III</label>
-                                <div class="flex items-center gap-3">
-                                    <span class="text-slate-400 font-bold">Rp</span>
-                                    <input type="number" name="meal_allowance_iii" value="{{ $settings['meal_allowance_iii'] ?? '37000' }}" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-900 focus:ring-0">
-                                </div>
-                            </div>
-                            <div class="p-6 rounded-3xl bg-slate-50 border border-slate-100 group hover:border-blue-200 transition-all">
-                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Rate Golongan IV</label>
-                                <div class="flex items-center gap-3">
-                                    <span class="text-slate-400 font-bold">Rp</span>
-                                    <input type="number" name="meal_allowance_iv" value="{{ $settings['meal_allowance_iv'] ?? '41000' }}" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-900 focus:ring-0">
-                                </div>
+                                <h4 class="text-sm font-bold text-slate-900 mb-2">Rate Uang Makan</h4>
+                                <p class="text-[10px] text-slate-500 font-medium leading-relaxed mb-6">Manajemen besaran uang makan kini terintegrasi langsung dengan data Golongan.</p>
+                                <a href="{{ route('admin.ranks.index') }}" class="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg">
+                                    Atur Rate di Halaman Golongan
+                                </a>
                             </div>
                         </div>
                     </div>
 
                     <div class="flex justify-end">
                         <button type="submit" class="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all btn-3d shadow-xl">
-                            Update Parameter Absensi
+                            Simpan Parameter Absensi
                         </button>
                     </div>
                 </form>
