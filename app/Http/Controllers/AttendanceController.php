@@ -100,6 +100,13 @@ class AttendanceController extends Controller
                 $date = $entry['date'];
                 $times = $entry['times'];
 
+                // Load existing attendance if any
+                $existing = Attendance::where('employee_id', $emp->id)->where('date', $date)->first();
+                if ($existing) {
+                    if ($existing->check_in) $times[] = $existing->check_in;
+                    if ($existing->check_out) $times[] = $existing->check_out;
+                }
+
                 $minTime = min($times);
                 $maxTime = max($times);
 

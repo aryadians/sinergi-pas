@@ -102,23 +102,6 @@ class DocumentController extends Controller
         return back()->with('success', 'Dokumen berhasil diverifikasi.');
     }
 
-    public function preview(Document $document)
-    {
-        $this->ensureDocumentOwnerOrSuperadmin($document);
-        $path = storage_path('app/private/' . $document->file_path);
-        if (!file_exists($path)) abort(404);
-        return response()->file($path, ['Content-Disposition' => 'inline']);
-    }
-
-    public function previewVersion(DocumentVersion $version)
-    {
-        $document = $version->document;
-        $this->ensureDocumentOwnerOrSuperadmin($document);
-        $path = storage_path('app/private/' . $version->file_path);
-        if (!file_exists($path)) abort(404);
-        return response()->file($path, ['Content-Disposition' => 'inline']);
-    }
-
     public function reject(Request $request, Document $document)
     {
         $this->ensureSuperadmin();

@@ -7,6 +7,7 @@ use App\Models\Shift;
 use App\Models\Schedule;
 use App\Models\AuditLog;
 use App\Models\Setting;
+use App\Models\Squad;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -16,8 +17,9 @@ class ScheduleController extends Controller
 {
     public function index(Request $request)
     {
-        $employees = Employee::with('work_unit')->orderBy('full_name')->get();
+        $employees = Employee::with(['work_unit', 'squad'])->orderBy('full_name')->get();
         $shifts = Shift::all();
+        $squads = Squad::all();
         
         $month = $request->filled('month') ? Carbon::parse($request->month) : now();
         $daysInMonth = $month->daysInMonth;
@@ -27,21 +29,25 @@ class ScheduleController extends Controller
             ->get()
             ->groupBy('employee_id');
 
-        return view('admin.schedules.index', compact('employees', 'shifts', 'month', 'daysInMonth', 'schedules'));
+        return view('admin.schedules.index', compact('employees', 'shifts', 'month', 'daysInMonth', 'schedules', 'squads'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'employee_id' => 'required|exists:employees,id',
-            'shift_id' => 'required|exists:shifts,id',
+            'shift_id' => 'nullable|exists:shifts,id',
             'date' => 'required|date',
         ]);
 
-        Schedule::updateOrCreate(
-            ['employee_id' => $request->employee_id, 'date' => $request->date],
-            ['shift_id' => $request->shift_id]
-        );
+        if (!$request->shift_id) {
+            Schedule::where('employee_id', $request->employee_id)->where('date', $request->date)->delete();
+        } else {
+            Schedule::updateOrCreate(
+                ['employee_id' => $request->employee_id, 'date' => $request->date],
+                ['shift_id' => $request->shift_id]
+            );
+        }
 
         return response()->json(['success' => true]);
     }
@@ -49,15 +55,20 @@ class ScheduleController extends Controller
     public function generateRoster(Request $request)
     {
         $request->validate([
-            'regu' => 'required|string',
+            'squad_id' => 'required|exists:squads,id',
             'month' => 'required|string',
             'pattern' => 'required|array',
         ]);
 
         $month = Carbon::parse($request->month);
-        $employees = Employee::where('picket_regu', $request->regu)->get();
+        $squad = Squad::find($request->squad_id);
+        $employees = Employee::where('squad_id', $request->squad_id)->get();
         $pattern = $request->pattern;
         $patternCount = count($pattern);
+
+        if ($employees->isEmpty()) {
+            return back()->with('error', "Tidak ada pegawai dalam regu yang dipilih.");
+        }
 
         foreach ($employees as $employee) {
             for ($day = 1; $day <= $month->daysInMonth; $day++) {
@@ -80,10 +91,10 @@ class ScheduleController extends Controller
             'user_id' => auth()->id(),
             'activity' => 'generate_roster',
             'ip_address' => $request->ip(),
-            'details' => auth()->user()->name . " men-generate roster otomatis untuk Regu $request->regu bulan " . $month->format('F Y')
+            'details' => auth()->user()->name . " men-generate roster otomatis untuk Regu $squad->name bulan " . $month->translatedFormat('F Y')
         ]);
 
-        return back()->with('success', "Roster untuk Regu $request->regu berhasil di-generate.");
+        return back()->with('success', "Roster untuk Regu $squad->name berhasil di-generate.");
     }
 
     public function export(Request $request)

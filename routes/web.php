@@ -11,6 +11,7 @@ use App\Http\Controllers\ForgotPasswordController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\Admin\SquadController;
 use Illuminate\Support\Facades\Route;
 
 // Guest Routes
@@ -39,7 +40,6 @@ Route::middleware('auth')->group(function () {
     Route::post('/documents/bulk-action', [DocumentController::class, 'bulkAction'])->name('documents.bulk-action');
     Route::post('/documents/category', [DocumentController::class, 'storeCategory'])->name('documents.category.store');
     Route::delete('/documents/category/{category}', [DocumentController::class, 'destroyCategory'])->name('documents.category.destroy');
-    Route::get('/documents/{document}/preview', [DocumentController::class, 'preview'])->name('documents.preview');
     Route::get('/documents/{document}/download', [DocumentController::class, 'download'])->name('documents.download');
     Route::post('/documents/{document}/verify', [DocumentController::class, 'verify'])->name('documents.verify');
     Route::post('/documents/{document}/reject', [DocumentController::class, 'reject'])->name('documents.reject');
@@ -93,6 +93,15 @@ Route::middleware('auth')->group(function () {
             Route::get('/', [AttendanceController::class, 'index'])->name('index');
             Route::post('/import', [AttendanceController::class, 'import'])->name('import');
             Route::get('/export', [AttendanceController::class, 'export'])->name('export');
+        });
+
+        Route::prefix('admin/squads')->name('admin.squads.')->group(function () {
+            Route::get('/', [SquadController::class, 'index'])->name('index');
+            Route::post('/', [SquadController::class, 'store'])->name('store');
+            Route::put('/{squad}', [SquadController::class, 'update'])->name('update');
+            Route::delete('/{squad}', [SquadController::class, 'destroy'])->name('destroy');
+            Route::post('/{squad}/add-member', [SquadController::class, 'addMember'])->name('add-member');
+            Route::post('/{squad}/remove-member', [SquadController::class, 'removeMember'])->name('remove-member');
         });
 
         Route::prefix('admin/shifts')->name('admin.shifts.')->group(function () {

@@ -25,11 +25,17 @@ class Employee extends Model
         'photo',
         'position_id',
         'work_unit_id',
+        'squad_id',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function squad(): BelongsTo
+    {
+        return $this->belongsTo(Squad::class);
     }
 
     public function position_relation(): BelongsTo

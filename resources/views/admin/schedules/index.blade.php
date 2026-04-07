@@ -25,6 +25,9 @@
         </div>
 
         <div class="flex flex-wrap gap-3 w-full lg:w-auto">
+            <a href="{{ route('admin.squads.index') }}" class="flex-1 lg:flex-none px-6 py-3 rounded-xl bg-slate-100 text-slate-600 font-bold text-[10px] uppercase tracking-wider hover:bg-slate-200 transition-all flex items-center justify-center gap-2">
+                <i data-lucide="users" class="w-4 h-4"></i> Manajemen Regu
+            </a>
             <button onclick="document.getElementById('rosterModal').classList.remove('hidden')" class="flex-1 lg:flex-none px-6 py-3 rounded-xl bg-amber-600 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-amber-700 transition-all shadow-lg btn-3d flex items-center justify-center gap-2">
                 <i data-lucide="wand-2" class="w-4 h-4"></i> Generate Roster Otomatis
             </button>
@@ -57,7 +60,7 @@
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-xs font-bold text-slate-900 truncate">{{ $emp->full_name }}</p>
-                                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{{ $emp->picket_regu ? 'Regu ' . $emp->picket_regu : 'Staf' }}</p>
+                                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-widest">{{ $emp->squad->name ?? 'Staf' }}</p>
                                 </div>
                             </div>
                         </td>
@@ -131,16 +134,15 @@
                 <div class="grid grid-cols-2 gap-6">
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pilih Regu</label>
-                        <select name="regu" required class="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                            <option value="A">Regu A</option>
-                            <option value="B">Regu B</option>
-                            <option value="C">Regu C</option>
-                            <option value="D">Regu D</option>
+                        <select name="squad_id" required class="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            @foreach($squads as $squad)
+                                <option value="{{ $squad->id }}">{{ $squad->name }} ({{ $squad->employees_count ?? $squad->employees->count() }} Anggota)</option>
+                            @endforeach
                         </select>
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pola Perulangan</label>
-                        <p class="text-[9px] text-slate-400 italic">Default: Pagi -> Siang -> Malam -> Libur</p>
+                        <p class="text-[9px] text-slate-400 italic">Pilih shift berurutan (misal: P-S-M-L)</p>
                     </div>
                 </div>
 
@@ -223,4 +225,20 @@
         }
     }
 </script>
+
+@if(session('success'))
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: "{{ session('success') }}", confirmButtonColor: '#0F172A', customClass: { popup: 'rounded-2xl' } });
+    });
+</script>
+@endif
+
+@if(session('error'))
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        Swal.fire({ icon: 'error', title: 'Gagal', text: "{{ session('error') }}", confirmButtonColor: '#EF4444', customClass: { popup: 'rounded-2xl' } });
+    });
+</script>
+@endif
 @endsection
