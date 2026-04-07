@@ -152,9 +152,9 @@
                                 <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Gol. {{ $emp->rank_class ?? '-' }}</p>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <a href="{{ route('admin.attendance.export', ['filter' => 'individual', 'employee_id' => $emp->id, 'month' => $monthStr]) }}" class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-600 hover:text-white transition-all no-loader">
+                                <button onclick="openIndividualExportModal({{ $emp->id }}, '{{ $emp->full_name }}')" class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold uppercase hover:bg-blue-600 hover:text-white transition-all">
                                     <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Laporan
-                                </a>
+                                </button>
                             </td>
                         </tr>
                         @empty
@@ -329,6 +329,33 @@
     </div>
 </div>
 
+<!-- Individual Export Modal -->
+<div id="individualExportModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-sm rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
+        <h3 class="text-xl font-bold text-slate-900 mb-2 italic">Export Laporan Individu</h3>
+        <p id="individual_name" class="text-sm font-bold text-blue-600 mb-6"></p>
+        
+        <form action="{{ route('admin.attendance.export') }}" method="GET" class="space-y-6">
+            <input type="hidden" name="filter" value="individual">
+            <input type="hidden" name="employee_id" id="individual_emp_id">
+            <input type="hidden" name="month" value="{{ $monthStr }}">
+            
+            <div>
+                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Format Laporan</label>
+                <select name="type" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                    <option value="pdf">Dokumen PDF Resmi</option>
+                    <option value="excel">Microsoft Excel (.xlsx)</option>
+                </select>
+            </div>
+
+            <button type="submit" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg">
+                Download Laporan Individu
+            </button>
+            <button type="button" onclick="document.getElementById('individualExportModal').classList.add('hidden')" class="w-full text-slate-400 font-bold text-[10px] uppercase tracking-widest mt-2">Batal</button>
+        </form>
+    </div>
+</div>
+
 <style>
     .tab-btn.active {
         background-color: white;
@@ -345,6 +372,12 @@
 </style>
 
 <script>
+    function openIndividualExportModal(id, name) {
+        document.getElementById('individual_emp_id').value = id;
+        document.getElementById('individual_name').innerText = name;
+        document.getElementById('individualExportModal').classList.remove('hidden');
+    }
+
     function updateExportUI() {
         const filter = document.getElementById('export_filter').value;
         const dateContainer = document.getElementById('date_input_container');
@@ -355,15 +388,10 @@
     }
 
     function switchTab(tabName) {
-        // Toggle contents
         document.getElementById('tab-recap').classList.toggle('hidden', tabName !== 'recap');
         document.getElementById('tab-logs').classList.toggle('hidden', tabName !== 'logs');
-
-        // Toggle buttons
         document.getElementById('btn-recap').classList.toggle('active', tabName === 'recap');
         document.getElementById('btn-logs').classList.toggle('active', tabName === 'logs');
-
-        // Remember tab in URL/LocalStorage
         const url = new URL(window.location);
         url.searchParams.set('tab', tabName);
         window.history.pushState({}, '', url);

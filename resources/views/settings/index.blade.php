@@ -181,10 +181,16 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Jabatan -->
-                    <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden card-3d flex flex-col h-[450px]">
+                    <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden card-3d flex flex-col h-[500px]">
                         <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
-                            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Daftar Jabatan</h4>
-                            <span class="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold">{{ $positions->count() }}</span>
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="selectAllPositions" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
+                                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Daftar Jabatan</h4>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="confirmBulkDelete('position')" id="btnDeletePositions" class="hidden px-3 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-bold uppercase hover:bg-red-600 hover:text-white transition-all">Hapus Terpilih</button>
+                                <span class="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold">{{ $positions->count() }}</span>
+                            </div>
                         </div>
                         <div class="p-6 flex-1 flex flex-col min-h-0">
                             <form action="{{ route('settings.positions.store') }}" method="POST" class="flex gap-2 mb-6 shrink-0">
@@ -197,7 +203,10 @@
                             <div class="overflow-y-auto custom-scrollbar space-y-2 flex-1 pr-2">
                                 @foreach($positions as $p)
                                 <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-blue-200 transition-all">
-                                    <span class="text-xs font-black text-slate-700 uppercase tracking-tight">{{ $p->name }}</span>
+                                    <div class="flex items-center gap-3">
+                                        <input type="checkbox" name="pos_ids[]" value="{{ $p->id }}" class="pos-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
+                                        <span class="text-xs font-black text-slate-700 uppercase tracking-tight">{{ $p->name }}</span>
+                                    </div>
                                     <form action="{{ route('settings.positions.destroy', $p->id) }}" method="POST" class="no-loader">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
@@ -211,10 +220,16 @@
                     </div>
 
                     <!-- Unit Kerja -->
-                    <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden card-3d flex flex-col h-[450px]">
+                    <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden card-3d flex flex-col h-[500px]">
                         <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
-                            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Daftar Unit Kerja</h4>
-                            <span class="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold">{{ $workUnits->count() }}</span>
+                            <div class="flex items-center gap-3">
+                                <input type="checkbox" id="selectAllUnits" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
+                                <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Daftar Unit Kerja</h4>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button type="button" onclick="confirmBulkDelete('unit')" id="btnDeleteUnits" class="hidden px-3 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-bold uppercase hover:bg-red-600 hover:text-white transition-all">Hapus Terpilih</button>
+                                <span class="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold">{{ $workUnits->count() }}</span>
+                            </div>
                         </div>
                         <div class="p-6 flex-1 flex flex-col min-h-0">
                             <form action="{{ route('settings.work-units.store') }}" method="POST" class="flex gap-2 mb-6 shrink-0">
@@ -227,7 +242,10 @@
                             <div class="overflow-y-auto custom-scrollbar space-y-2 flex-1 pr-2">
                                 @foreach($workUnits as $u)
                                 <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-blue-200 transition-all">
-                                    <span class="text-xs font-black text-slate-700 uppercase tracking-tight">{{ $u->name }}</span>
+                                    <div class="flex items-center gap-3">
+                                        <input type="checkbox" name="unit_ids[]" value="{{ $u->id }}" class="unit-checkbox w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
+                                        <span class="text-xs font-black text-slate-700 uppercase tracking-tight">{{ $u->name }}</span>
+                                    </div>
                                     <form action="{{ route('settings.work-units.destroy', $u->id) }}" method="POST" class="no-loader">
                                         @csrf @method('DELETE')
                                         <button type="submit" class="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
@@ -244,6 +262,14 @@
         </div>
     </div>
 </div>
+
+<form id="bulkDeletePositionForm" action="{{ route('settings.positions.bulk-destroy') }}" method="POST" class="hidden no-loader">
+    @csrf @method('DELETE')
+</form>
+
+<form id="bulkDeleteUnitForm" action="{{ route('settings.work-units.bulk-destroy') }}" method="POST" class="hidden no-loader">
+    @csrf @method('DELETE')
+</form>
 
 @if(session('success'))
 <script>
@@ -262,7 +288,57 @@
         document.getElementById('preview_kop_2').innerText = kop2 || 'LAPAS KELAS IIB JOMBANG';
     }
 
+    // Bulk selection logic
+    function handleBulkSelect(selectAllId, checkboxClass, btnDeleteId) {
+        const selectAll = document.getElementById(selectAllId);
+        const checkboxes = document.querySelectorAll('.' + checkboxClass);
+        const btnDelete = document.getElementById(btnDeleteId);
+
+        selectAll.addEventListener('change', () => {
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            updateBtnVisibility();
+        });
+
+        checkboxes.forEach(cb => cb.addEventListener('change', updateBtnVisibility));
+
+        function updateBtnVisibility() {
+            const checkedCount = document.querySelectorAll('.' + checkboxClass + ':checked').length;
+            btnDelete.classList.toggle('hidden', checkedCount === 0);
+        }
+    }
+
+    function confirmBulkDelete(type) {
+        const checkboxClass = type === 'position' ? 'pos-checkbox' : 'unit-checkbox';
+        const checkedBoxes = document.querySelectorAll('.' + checkboxClass + ':checked');
+        const form = type === 'position' ? document.getElementById('bulkDeletePositionForm') : document.getElementById('bulkDeleteUnitForm');
+
+        Swal.fire({
+            title: 'Hapus Massal?',
+            text: `${checkedBoxes.length} data terpilih akan dihapus permanen.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            confirmButtonText: 'Ya, Hapus Semua!',
+            customClass: { popup: 'rounded-[32px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                form.querySelectorAll('input[name="ids[]"]').forEach(i => i.remove());
+                checkedBoxes.forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'ids[]';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
+                form.submit();
+            }
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', function() {
+        handleBulkSelect('selectAllPositions', 'pos-checkbox', 'btnDeletePositions');
+        handleBulkSelect('selectAllUnits', 'unit-checkbox', 'btnDeleteUnits');
+
         const navLinks = document.querySelectorAll('[data-nav]');
         const sections = document.querySelectorAll('section[id]');
 

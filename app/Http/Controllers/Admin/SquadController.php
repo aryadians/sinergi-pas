@@ -82,6 +82,24 @@ class SquadController extends Controller
         return back()->with('success', 'Regu berhasil dihapus.');
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids) return back()->with('error', 'Pilih data yang ingin dihapus.');
+
+        Employee::whereIn('squad_id', $ids)->update(['squad_id' => null]);
+        $count = Squad::whereIn('id', $ids)->delete();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'bulk_delete_squad',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . ' menghapus ' . $count . ' regu secara massal'
+        ]);
+
+        return back()->with('success', $count . ' regu berhasil dihapus.');
+    }
+
     public function addMember(Request $request, Squad $squad)
     {
         $request->validate([

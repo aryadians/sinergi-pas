@@ -83,6 +83,23 @@ class SettingController extends Controller
         return back()->with('success', 'Jabatan berhasil dihapus.');
     }
 
+    public function bulkDestroyPosition(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids) return back()->with('error', 'Pilih data yang ingin dihapus.');
+
+        $count = Position::whereIn('id', $ids)->delete();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'bulk_delete_position',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . ' menghapus ' . $count . ' jabatan secara massal'
+        ]);
+
+        return back()->with('success', $count . ' jabatan berhasil dihapus.');
+    }
+
     public function storeWorkUnit(Request $request)
     {
         $request->validate(['name' => 'required|string|max:255|unique:work_units,name']);
@@ -115,5 +132,22 @@ class SettingController extends Controller
         ]);
 
         return back()->with('success', 'Unit kerja berhasil dihapus.');
+    }
+
+    public function bulkDestroyWorkUnit(Request $request)
+    {
+        $ids = $request->ids;
+        if (!$ids) return back()->with('error', 'Pilih data yang ingin dihapus.');
+
+        $count = WorkUnit::whereIn('id', $ids)->delete();
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'bulk_delete_work_unit',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . ' menghapus ' . $count . ' unit kerja secara massal'
+        ]);
+
+        return back()->with('success', $count . ' unit kerja berhasil dihapus.');
     }
 }

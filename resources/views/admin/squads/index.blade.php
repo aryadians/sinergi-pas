@@ -7,10 +7,17 @@
 <div class="space-y-8 page-fade">
     <!-- Header & Tools -->
     <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-6">
             <a href="{{ route('admin.schedules.index') }}" class="inline-flex items-center gap-2 text-slate-500 hover:text-slate-900 transition-colors font-bold text-[10px] uppercase tracking-widest">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali ke Jadwal
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Kembali
             </a>
+            <div class="flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-slate-200 shadow-sm">
+                <input type="checkbox" id="selectAllSquads" class="w-4 h-4 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
+                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pilih Semua</span>
+            </div>
+            <button type="button" onclick="confirmBulkDelete()" id="btnDeleteSquads" class="hidden px-6 py-2.5 bg-red-50 text-red-600 border border-red-100 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-sm">
+                Hapus Terpilih (<span id="selectedCount">0</span>)
+            </button>
         </div>
 
         <button onclick="document.getElementById('squadModal').classList.remove('hidden')" class="px-6 py-3 rounded-xl bg-slate-900 text-white font-bold text-[10px] uppercase tracking-wider hover:bg-blue-600 transition-all shadow-lg btn-3d flex items-center justify-center gap-2">
@@ -21,11 +28,13 @@
     <!-- Squad Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         @forelse($squads as $squad)
-        <div class="bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm hover:border-blue-300 transition-all card-3d group">
-            <div class="flex justify-between items-start mb-6">
-                <div class="w-14 h-14 rounded-2xl bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 flex items-center justify-center border border-slate-100 transition-all">
-                    <i data-lucide="users" class="w-7 h-7"></i>
-                </div>
+        <div class="relative bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm hover:border-blue-300 transition-all card-3d group">
+            <!-- Selection Checkbox -->
+            <div class="absolute top-6 left-6 z-10">
+                <input type="checkbox" name="squad_ids[]" value="{{ $squad->id }}" class="squad-checkbox w-5 h-5 rounded-lg border-slate-200 text-blue-600 focus:ring-0 cursor-pointer">
+            </div>
+
+            <div class="flex justify-end items-start mb-6">
                 <div class="flex gap-2">
                     <button onclick="openEditModal({{ json_encode($squad) }})" class="p-2 text-slate-400 hover:text-blue-600 transition-colors">
                         <i data-lucide="edit-3" class="w-4 h-4"></i>
@@ -39,16 +48,21 @@
                 </div>
             </div>
 
-            <h3 class="text-xl font-bold text-slate-900 mb-2">{{ $squad->name }}</h3>
-            <p class="text-xs text-slate-500 font-medium mb-6 line-clamp-2 h-8">{{ $squad->description ?? 'Tidak ada deskripsi.' }}</p>
+            <div class="flex flex-col items-center text-center mb-6">
+                <div class="w-20 h-20 rounded-[28px] bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600 flex items-center justify-center border border-slate-100 transition-all mb-4 shadow-inner">
+                    <i data-lucide="users" class="w-10 h-10"></i>
+                </div>
+                <h3 class="text-xl font-black text-slate-900 italic tracking-tight">{{ $squad->name }}</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{ $squad->description ?? 'Grup Penjagaan' }}</p>
+            </div>
             
             <div class="flex items-center justify-between pt-6 border-t border-slate-50">
-                <div>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Anggota</p>
-                    <p class="text-lg font-bold text-slate-900">{{ $squad->employees_count }} <span class="text-[10px] text-slate-400 font-semibold">Petugas</span></p>
+                <div class="text-left">
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Kekuatan Personel</p>
+                    <p class="text-lg font-black text-slate-900">{{ $squad->employees_count }} <span class="text-[10px] text-slate-400 font-bold">ANGGOTA</span></p>
                 </div>
-                <button onclick="openManageMembersModal({{ json_encode($squad->load('employees')) }})" class="px-5 py-2.5 rounded-xl bg-slate-50 text-slate-600 font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
-                    Kelola Anggota
+                <button onclick="openManageMembersModal({{ json_encode($squad->load('employees')) }})" class="px-5 py-2.5 rounded-2xl bg-blue-600 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg">
+                    Manage
                 </button>
             </div>
         </div>
@@ -63,7 +77,11 @@
     </div>
 </div>
 
-<!-- Squad Modal (Create) -->
+<form id="bulkDeleteSquadForm" action="{{ route('admin.squads.bulk-destroy') }}" method="POST" class="hidden no-loader">
+    @csrf @method('DELETE')
+</form>
+
+<!-- Modals same as before, truncated for brevity but preserved in real file -->
 <div id="squadModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
         <h3 class="text-2xl font-bold text-slate-900 mb-8">Tambah Regu Baru</h3>
@@ -107,29 +125,22 @@
     </div>
 </div>
 
-<!-- Manage Members Modal -->
 <div id="membersModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-4xl rounded-[40px] shadow-2xl animate-in zoom-in duration-200 flex flex-col max-h-[90vh]">
         <div class="p-8 border-b border-slate-100 flex justify-between items-center shrink-0">
             <div>
-                <h3 id="members_squad_name" class="text-2xl font-bold text-slate-900">Kelola Anggota Regu</h3>
+                <h3 id="members_squad_name" class="text-2xl font-bold text-slate-900 italic">Kelola Anggota</h3>
                 <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Daftar Petugas Jaga</p>
             </div>
             <button onclick="document.getElementById('membersModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
-
         <div class="flex-1 overflow-hidden flex flex-col lg:flex-row">
-            <!-- Current Members -->
             <div class="flex-1 p-8 border-r border-slate-100 overflow-y-auto custom-scrollbar">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Anggota Saat Ini</h4>
-                <div id="current_members_list" class="space-y-3">
-                    <!-- Member list injected here -->
-                </div>
+                <div id="current_members_list" class="space-y-3"></div>
             </div>
-
-            <!-- Add Members -->
             <div class="lg:w-96 p-8 bg-slate-50 overflow-y-auto custom-scrollbar">
                 <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Tambah Anggota</h4>
                 <form id="addMemberForm" method="POST">
@@ -141,16 +152,14 @@
                                 <input type="checkbox" name="employee_ids[]" value="{{ $emp->id }}" class="w-5 h-5 rounded-lg border-slate-200 text-blue-600 focus:ring-0">
                                 <div class="min-w-0">
                                     <p class="text-[11px] font-bold text-slate-900 truncate">{{ $emp->full_name }}</p>
-                                    <p class="text-[9px] font-bold text-slate-400 truncate">NIP. {{ $emp->nip }}</p>
+                                    <p class="text-[9px] font-bold text-slate-400">NIP. {{ $emp->nip }}</p>
                                 </div>
                             </label>
                             @empty
-                            <p class="text-center text-[10px] font-bold text-slate-400 italic py-4">Semua petugas regu jaga sudah memiliki regu.</p>
+                            <p class="text-center text-[10px] font-bold text-slate-400 italic py-4">Tidak ada petugas tersedia.</p>
                             @endforelse
                         </div>
-                        <button type="submit" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all">
-                            Masukkan ke Regu
-                        </button>
+                        <button type="submit" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all">Assign ke Regu</button>
                     </div>
                 </form>
             </div>
@@ -159,6 +168,50 @@
 </div>
 
 <script>
+    const selectAll = document.getElementById('selectAllSquads');
+    const checkboxes = document.querySelectorAll('.squad-checkbox');
+    const btnDelete = document.getElementById('btnDeleteSquads');
+    const selectedCount = document.getElementById('selectedCount');
+
+    selectAll.addEventListener('change', () => {
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        updateUI();
+    });
+
+    checkboxes.forEach(cb => cb.addEventListener('change', updateUI));
+
+    function updateUI() {
+        const checked = document.querySelectorAll('.squad-checkbox:checked');
+        selectedCount.innerText = checked.length;
+        btnDelete.classList.toggle('hidden', checked.length === 0);
+    }
+
+    function confirmBulkDelete() {
+        const checked = document.querySelectorAll('.squad-checkbox:checked');
+        Swal.fire({
+            title: 'Hapus Massal Regu?',
+            text: `${checked.length} regu akan dihapus. Anggota di dalamnya akan otomatis menjadi Tanpa Regu.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#EF4444',
+            confirmButtonText: 'Ya, Hapus Semua!',
+            customClass: { popup: 'rounded-[32px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.getElementById('bulkDeleteSquadForm');
+                form.querySelectorAll('input[name="ids[]"]').forEach(i => i.remove());
+                checked.forEach(cb => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'ids[]';
+                    input.value = cb.value;
+                    form.appendChild(input);
+                });
+                form.submit();
+            }
+        });
+    }
+
     function openEditModal(squad) {
         document.getElementById('edit_name').value = squad.name;
         document.getElementById('edit_description').value = squad.description;
@@ -169,37 +222,29 @@
     function openManageMembersModal(squad) {
         document.getElementById('members_squad_name').innerText = `Kelola Anggota ${squad.name}`;
         document.getElementById('addMemberForm').action = `/admin/squads/${squad.id}/add-member`;
-        
-        const membersList = document.getElementById('current_members_list');
-        membersList.innerHTML = '';
-        
+        const list = document.getElementById('current_members_list');
+        list.innerHTML = '';
         if (squad.employees.length === 0) {
-            membersList.innerHTML = `<p class="text-center text-[10px] font-bold text-slate-400 italic py-10">Belum ada anggota di regu ini.</p>`;
+            list.innerHTML = `<p class="text-center text-[10px] font-bold text-slate-400 italic py-10">Belum ada anggota.</p>`;
         } else {
             squad.employees.forEach(emp => {
-                membersList.innerHTML += `
-                    <div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                list.innerHTML += `
+                    <div class="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-400 font-bold text-xs uppercase">
-                                ${emp.full_name.substring(0, 1)}
-                            </div>
+                            <div class="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-400 font-bold text-xs uppercase">${emp.full_name.substring(0, 1)}</div>
                             <div>
-                                <p class="text-[11px] font-bold text-slate-900">${emp.full_name}</p>
+                                <p class="text-[11px] font-black text-slate-900">${emp.full_name}</p>
                                 <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">NIP. ${emp.nip}</p>
                             </div>
                         </div>
                         <form action="/admin/squads/${squad.id}/remove-member" method="POST" class="no-loader">
-                            @csrf
-                            <input type="hidden" name="employee_id" value="${emp.id}">
-                            <button type="submit" class="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                                <i data-lucide="user-minus" class="w-4 h-4"></i>
-                            </button>
+                            @csrf <input type="hidden" name="employee_id" value="${emp.id}">
+                            <button type="submit" class="p-2 text-slate-300 hover:text-red-500 transition-colors"><i data-lucide="user-minus" class="w-4 h-4"></i></button>
                         </form>
                     </div>
                 `;
             });
         }
-        
         document.getElementById('membersModal').classList.remove('hidden');
         lucide.createIcons();
     }
@@ -208,7 +253,7 @@
 @if(session('success'))
 <script>
     window.addEventListener('DOMContentLoaded', () => {
-        Swal.fire({ icon: 'success', title: 'Berhasil', text: "{{ session('success') }}", confirmButtonColor: '#0F172A', customClass: { popup: 'rounded-2xl' } });
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: "{{ session('success') }}", confirmButtonColor: '#0F172A', customClass: { popup: 'rounded-[32px]' } });
     });
 </script>
 @endif

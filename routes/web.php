@@ -82,8 +82,11 @@ Route::middleware('auth')->group(function () {
 
         // Position & Work Unit Management
         Route::post('/settings/positions', [SettingController::class, 'storePosition'])->name('settings.positions.store');
+        Route::delete('/settings/positions/bulk', [SettingController::class, 'bulkDestroyPosition'])->name('settings.positions.bulk-destroy');
         Route::delete('/settings/positions/{position}', [SettingController::class, 'destroyPosition'])->name('settings.positions.destroy');
+        
         Route::post('/settings/work-units', [SettingController::class, 'storeWorkUnit'])->name('settings.work-units.store');
+        Route::delete('/settings/work-units/bulk', [SettingController::class, 'bulkDestroyWorkUnit'])->name('settings.work-units.bulk-destroy');
         Route::delete('/settings/work-units/{workUnit}', [SettingController::class, 'destroyWorkUnit'])->name('settings.work-units.destroy');
 
         // Report Issues Management
@@ -102,6 +105,7 @@ Route::middleware('auth')->group(function () {
         Route::prefix('admin/squads')->name('admin.squads.')->group(function () {
             Route::get('/', [SquadController::class, 'index'])->name('index');
             Route::post('/', [SquadController::class, 'store'])->name('store');
+            Route::delete('/bulk', [SquadController::class, 'bulkDestroy'])->name('bulk-destroy');
             Route::put('/{squad}', [SquadController::class, 'update'])->name('update');
             Route::delete('/{squad}', [SquadController::class, 'destroy'])->name('destroy');
             Route::post('/{squad}/add-member', [SquadController::class, 'addMember'])->name('add-member');
