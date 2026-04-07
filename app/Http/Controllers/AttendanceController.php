@@ -19,24 +19,22 @@ class AttendanceController extends Controller
 {
     public function index(Request $request)
     {
-        // Eager Loading for performance
-        $query = Attendance::with(['employee.work_unit']);
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->whereHas('employee', function($q) use ($search) {
-                $q->where('full_name', 'like', "%$search%")
-                  ->orWhere('nip', 'like', "%$search%");
-            });
-        }
-
         $monthStr = $request->filled('month') ? $request->month : now()->format('Y-m');
         $date = Carbon::parse($monthStr);
-        $query->whereMonth('date', $date->month)->whereYear('date', $date->year);
+        $search = $request->search;
 
-        // Fast Paginate
-        $attendances = $query->orderBy('date', 'desc')->paginate(50)->withQueryString();
-        
+        // Fetch all employees and their attendances for the selected month
+        $employees = Employee::with(['work_unit', 'squad'])
+            ->when($search, function($q) use ($search) {
+                $q->where('full_name', 'like', "%$search%")
+                  ->orWhere('nip', 'like', "%$search%");
+            })
+            ->with(['attendances' => function($q) use ($date) {
+                $q->whereMonth('date', $date->month)->whereYear('date', $date->year);
+            }])
+            ->orderBy('full_name')
+            ->paginate(50)->withQueryString();
+
         // Optimized Summary Calculation
         $summary = DB::table('attendances')
             ->whereMonth('date', $date->month)
@@ -47,7 +45,7 @@ class AttendanceController extends Controller
                 SUM(allowance_amount) as total_allowance
             ')->first();
 
-        return view('admin.attendance.index', compact('attendances', 'summary', 'monthStr'));
+        return view('admin.attendance.index', compact('employees', 'summary', 'monthStr', 'date'));
     }
 
     public function import(Request $request)
@@ -176,39 +174,74 @@ class AttendanceController extends Controller
         ini_set('memory_limit', '1024M'); // Increased for large PDF exports
 
         $filter = $request->filter ?? 'monthly';
-        $date = Carbon::parse($request->month ?? now());
+        $monthStr = $request->month ?? now()->format('Y-m');
+        $date = Carbon::parse($monthStr);
+        $exactDate = $request->filled('exact_date') ? Carbon::parse($request->exact_date) : now();
         
-        // Use cursor for memory efficiency if data is huge
-        $query = Attendance::with(['employee.work_unit'])->orderBy('date', 'asc');
+        $employees = Employee::with(['work_unit', 'squad'])->orderBy('full_name')->get();
 
         if ($filter === 'daily') {
-            $query->whereDate('date', now());
-        } elseif ($filter === 'weekly') {
-            $query->whereBetween('date', [now()->startOfWeek(), now()->endOfWeek()]);
+            $attendances = Attendance::whereDate('date', $exactDate)->get()->keyBy('employee_id');
+            // For daily, we map employees to their attendance that day
+            $data = $employees->map(function($emp) use ($attendances) {
+                $att = $attendances->get($emp->id);
+                return (object)[
+                    'employee' => $emp,
+                    'check_in' => $att ? $att->check_in : null,
+                    'check_out' => $att ? $att->check_out : null,
+                    'status' => $att ? $att->status : 'absent',
+                    'late_minutes' => $att ? $att->late_minutes : 0,
+                    'allowance_amount' => $att ? $att->allowance_amount : 0,
+                ];
+            });
+            $reportTitle = "LAPORAN ABSENSI HARIAN - " . strtoupper($exactDate->translatedFormat('d F Y'));
+            
+            if ($request->type === 'excel') {
+                return $this->exportExcelDaily($data, $reportTitle, "rekap-absensi-harian-{$exactDate->format('Y-m-d')}.xlsx");
+            }
+            $pdf = Pdf::loadView('admin.attendance.pdf-daily', compact('data', 'reportTitle'))->setPaper('a4', 'landscape');
+            return $pdf->download("rekap-absensi-harian-{$exactDate->format('Y-m-d')}.pdf");
+
         } else {
-            $query->whereMonth('date', $date->month)->whereYear('date', $date->year);
-        }
+            // Monthly Recap
+            $attendances = Attendance::whereMonth('date', $date->month)->whereYear('date', $date->year)->get()->groupBy('employee_id');
+            $data = $employees->map(function($emp) use ($attendances) {
+                $atts = $attendances->get($emp->id) ?? collect();
+                return (object)[
+                    'employee' => $emp,
+                    'total_present' => $atts->where('status', '!=', 'absent')->count(),
+                    'total_late_minutes' => $atts->sum('late_minutes'),
+                    'total_allowance' => $atts->sum('allowance_amount'),
+                ];
+            });
+            $reportTitle = "REKAPITULASI ABSENSI BULANAN - " . strtoupper($date->translatedFormat('F Y'));
 
-        if ($request->type === 'excel') {
-            $attendances = $query->get();
-            return $this->exportExcel($attendances, $date, $filter);
+            if ($request->type === 'excel') {
+                return $this->exportExcelMonthly($data, $reportTitle, "rekap-absensi-bulanan-{$date->format('Y-m')}.xlsx");
+            }
+            $pdf = Pdf::loadView('admin.attendance.pdf-monthly', compact('data', 'reportTitle'))->setPaper('a4', 'landscape');
+            return $pdf->download("rekap-absensi-bulanan-{$date->format('Y-m')}.pdf");
         }
-
-        // For PDF, we still need the collection
-        $attendances = $query->get();
-        $pdf = Pdf::loadView('admin.attendance.pdf', compact('attendances', 'date', 'filter'));
-        return $pdf->download("rekap-absensi-{$filter}.pdf");
     }
 
-    private function exportExcel($attendances, $date, $filter)
+    private function exportExcelDaily($data, $title, $filename)
     {
-        return Excel::download(new class($attendances, $date, $filter) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles, \Maatwebsite\Excel\Concerns\WithDrawings, \Maatwebsite\Excel\Concerns\WithCustomStartCell {
-            protected $data, $date, $filter;
-            public function __construct($data, $date, $filter) { $this->data = $data; $this->date = $date; $this->filter = $filter; }
+        return Excel::download(new class($data, $title) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles, \Maatwebsite\Excel\Concerns\WithDrawings, \Maatwebsite\Excel\Concerns\WithCustomStartCell {
+            protected $data, $title;
+            public function __construct($data, $title) { $this->data = $data; $this->title = $title; }
             public function collection() {
-                return $this->data->map(fn($a, $i) => [$i+1, $a->date, $a->employee->full_name, $a->employee->nip, $a->check_in, $a->check_out, $a->status, $a->allowance_amount]);
+                return $this->data->map(fn($item, $i) => [
+                    $i+1, 
+                    $item->employee->full_name, 
+                    $item->employee->nip, 
+                    $item->employee->category_label,
+                    $item->check_in ? Carbon::parse($item->check_in)->format('H:i') : '--:--', 
+                    $item->check_out && $item->check_out != $item->check_in ? Carbon::parse($item->check_out)->format('H:i') : '--:--', 
+                    strtoupper($item->status), 
+                    $item->allowance_amount
+                ]);
             }
-            public function headings(): array { return ['NO', 'TANGGAL', 'NAMA PEGAWAI', 'NIP', 'MASUK', 'PULANG', 'STATUS', 'UANG MAKAN']; }
+            public function headings(): array { return ['NO', 'NAMA PEGAWAI', 'NIP', 'KATEGORI', 'MASUK', 'PULANG', 'STATUS', 'UANG MAKAN']; }
             public function startCell(): string { return 'A7'; }
             public function drawings() {
                 $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
@@ -218,7 +251,7 @@ class AttendanceController extends Controller
             public function styles($sheet) {
                 $sheet->mergeCells('B1:H1'); $sheet->setCellValue('B1', Setting::getValue('kop_line_1'));
                 $sheet->mergeCells('B2:H2'); $sheet->setCellValue('B2', Setting::getValue('kop_line_2'));
-                $sheet->mergeCells('A5:H5'); $sheet->setCellValue('A5', "LAPORAN ABSENSI (" . strtoupper($this->filter) . ") - " . $this->date->translatedFormat('F Y'));
+                $sheet->mergeCells('A5:H5'); $sheet->setCellValue('A5', $this->title);
                 $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14);
                 $sheet->getStyle('A7:H7')->getFont()->setBold(true);
                 $lastRow = $sheet->getHighestRow();
@@ -227,6 +260,44 @@ class AttendanceController extends Controller
                 }
                 return [];
             }
-        }, "rekap-absensi-{$filter}.xlsx");
+        }, $filename);
+    }
+
+    private function exportExcelMonthly($data, $title, $filename)
+    {
+        return Excel::download(new class($data, $title) implements \Maatwebsite\Excel\Concerns\FromCollection, \Maatwebsite\Excel\Concerns\WithHeadings, \Maatwebsite\Excel\Concerns\WithStyles, \Maatwebsite\Excel\Concerns\WithDrawings, \Maatwebsite\Excel\Concerns\WithCustomStartCell {
+            protected $data, $title;
+            public function __construct($data, $title) { $this->data = $data; $this->title = $title; }
+            public function collection() {
+                return $this->data->map(fn($item, $i) => [
+                    $i+1, 
+                    $item->employee->full_name, 
+                    $item->employee->nip, 
+                    $item->employee->category_label,
+                    $item->total_present, 
+                    $item->total_late_minutes, 
+                    $item->total_allowance
+                ]);
+            }
+            public function headings(): array { return ['NO', 'NAMA PEGAWAI', 'NIP', 'KATEGORI', 'TOTAL HADIR (HARI)', 'TOTAL TELAT (MENIT)', 'TOTAL UANG MAKAN']; }
+            public function startCell(): string { return 'A7'; }
+            public function drawings() {
+                $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
+                $drawing->setPath(public_path('logo1.png'))->setHeight(80)->setCoordinates('A1');
+                return $drawing;
+            }
+            public function styles($sheet) {
+                $sheet->mergeCells('B1:G1'); $sheet->setCellValue('B1', Setting::getValue('kop_line_1'));
+                $sheet->mergeCells('B2:G2'); $sheet->setCellValue('B2', Setting::getValue('kop_line_2'));
+                $sheet->mergeCells('A5:G5'); $sheet->setCellValue('A5', $this->title);
+                $sheet->getStyle('A5')->getFont()->setBold(true)->setSize(14);
+                $sheet->getStyle('A7:G7')->getFont()->setBold(true);
+                $lastRow = $sheet->getHighestRow();
+                if ($lastRow >= 7) {
+                    $sheet->getStyle("A7:G$lastRow")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+                }
+                return [];
+            }
+        }, $filename);
     }
 }

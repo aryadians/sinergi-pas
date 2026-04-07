@@ -91,73 +91,71 @@
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-100">
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pegawai</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Tanggal</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Scan Masuk</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Scan Keluar</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Status</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Uang Makan</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Kategori</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Hadir (Hari)</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Terlambat (Total Menit)</th>
+                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Estimasi Uang Makan</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
-                    @forelse($attendances as $att)
+                    @forelse($employees as $emp)
+                    @php
+                        $totalHadir = $emp->attendances->where('status', '!=', 'absent')->count();
+                        $totalTelat = $emp->attendances->sum('late_minutes');
+                        $totalUangMakan = $emp->attendances->sum('allowance_amount');
+                    @endphp
                     <tr class="hover:bg-slate-50/50 transition-colors group">
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 font-bold border border-slate-200 shrink-0 overflow-hidden">
-                                    @if($att->employee->photo)
-                                        <img src="{{ $att->employee->photo }}" class="w-full h-full object-cover">
+                                    @if($emp->photo)
+                                        <img src="{{ $emp->photo }}" class="w-full h-full object-cover">
                                     @else
-                                        {{ substr($att->employee->full_name, 0, 1) }}
+                                        {{ substr($emp->full_name, 0, 1) }}
                                     @endif
                                 </div>
                                 <div class="min-w-0">
-                                    <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $att->employee->full_name }}</p>
-                                    <p class="text-[10px] font-mono font-bold text-slate-400">NIP. {{ $att->employee->nip }}</p>
+                                    <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $emp->full_name }}</p>
+                                    <p class="text-[10px] font-mono font-bold text-slate-400">NIP. {{ $emp->nip }}</p>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <span class="text-xs font-bold text-slate-700">{{ \Carbon\Carbon::parse($att->date)->translatedFormat('d M Y') }}</span>
+                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider border {{ $emp->category_label === 'Petugas Jaga' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-100 text-slate-600 border-slate-200' }}">
+                                {{ $emp->category_label }}
+                            </span>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <span class="text-sm font-bold {{ $att->late_minutes > 0 ? 'text-red-500' : 'text-slate-900' }}">
-                                {{ $att->check_in ? \Carbon\Carbon::parse($att->check_in)->format('H:i') : '--:--' }}
-                            </span>
-                            @if($att->late_minutes > 0)
-                                <p class="text-[8px] font-bold text-red-400 uppercase mt-0.5">Telat {{ $att->late_minutes }}m</p>
+                            <span class="text-sm font-bold text-slate-900">{{ $totalHadir }}</span>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            @if($totalTelat > 0)
+                                <span class="text-sm font-bold text-red-500">{{ $totalTelat }} Menit</span>
+                            @else
+                                <span class="text-sm font-bold text-slate-400">-</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="text-sm font-bold text-slate-900">
-                                {{ $att->check_out && $att->check_out != $att->check_in ? \Carbon\Carbon::parse($att->check_out)->format('H:i') : '--:--' }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider border {{ $att->status === 'present' ? 'bg-green-50 text-green-600 border-green-100' : ($att->status === 'late' ? 'bg-amber-50 text-amber-600 border-amber-100' : 'bg-slate-100 text-slate-500 border-slate-200') }}">
-                                {{ $att->status }}
-                            </span>
-                        </td>
                         <td class="px-6 py-4 text-right">
-                            <p class="text-sm font-bold text-slate-900">Rp {{ number_format($att->allowance_amount, 0, ',', '.') }}</p>
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Gol. {{ $att->employee->rank_class ?? '-' }}</p>
+                            <p class="text-sm font-bold text-slate-900">Rp {{ number_format($totalUangMakan, 0, ',', '.') }}</p>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Gol. {{ $emp->rank_class ?? '-' }}</p>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-20 text-center">
+                        <td colspan="5" class="px-6 py-20 text-center">
                             <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-dashed border-slate-200">
-                                <i data-lucide="fingerprint" class="w-8 h-8 text-slate-300"></i>
+                                <i data-lucide="users" class="w-8 h-8 text-slate-300"></i>
                             </div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest italic">Data absensi belum tersedia</p>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest italic">Data pegawai belum tersedia</p>
                         </td>
                     </tr>
                     @endforelse
                 </tbody>
             </table>
         </div>
-        @if($attendances->hasPages())
+        @if($employees->hasPages())
         <div class="p-6 border-t border-slate-100 bg-slate-50/30">
-            {{ $attendances->links() }}
+            {{ $employees->links() }}
         </div>
         @endif
     </div>
@@ -208,11 +206,14 @@
             <div class="space-y-4">
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Filter Periode</label>
-                    <select name="filter" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
-                        <option value="monthly">Bulanan (Sesuai Bulan Terpilih)</option>
-                        <option value="weekly">Minggu Ini (7 Hari Terakhir)</option>
-                        <option value="daily">Hari Ini</option>
+                    <select name="filter" id="export_filter" onchange="toggleDateInput()" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
+                        <option value="monthly">Rekap Bulanan (Sesuai Bulan Terpilih)</option>
+                        <option value="daily">Laporan Harian (Pilih Tanggal)</option>
                     </select>
+                </div>
+                <div id="date_input_container" class="hidden">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Pilih Tanggal</label>
+                    <input type="date" name="exact_date" value="{{ date('Y-m-d') }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-sm font-bold outline-none focus:border-blue-500">
                 </div>
                 <div>
                     <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Format File</label>
@@ -232,6 +233,16 @@
 </div>
 
 <script>
+    function toggleDateInput() {
+        const filter = document.getElementById('export_filter').value;
+        const container = document.getElementById('date_input_container');
+        if (filter === 'daily') {
+            container.classList.remove('hidden');
+        } else {
+            container.classList.add('hidden');
+        }
+    }
+
     function updateFileName(input) {
         if (input.files && input.files[0]) {
             document.getElementById('fileName').textContent = input.files[0].name;

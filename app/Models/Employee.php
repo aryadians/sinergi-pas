@@ -69,4 +69,15 @@ class Employee extends Model
     {
         return $this->hasMany(Document::class);
     }
+
+    public function getIsReguAttribute()
+    {
+        $pos = strtoupper((string)$this->position);
+        return str_contains($pos, 'JAGA') || str_contains($pos, 'PENJAGA') || $this->squad_id != null;
+    }
+
+    public function getCategoryLabelAttribute()
+    {
+        return $this->is_regu ? 'Petugas Jaga' : 'Staf';
+    }
 }
