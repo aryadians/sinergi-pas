@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Position;
 use App\Models\WorkUnit;
 use App\Models\Squad;
+use App\Models\Rank;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
@@ -23,6 +24,7 @@ class EmployeesImport implements ToCollection
         $positions = Position::all()->pluck('id', 'name')->toArray();
         $workUnits = WorkUnit::all()->pluck('id', 'name')->toArray();
         $squads = Squad::all()->pluck('id', 'name')->toArray();
+        $ranks = Rank::all()->pluck('id', 'name')->toArray(); // Fetch all ranks for mapping
 
         // Default mappings
         $map = [
@@ -45,7 +47,6 @@ class EmployeesImport implements ToCollection
                 // 1. Detect Header Row
                 $firstCell = strtolower(trim((string)($row[0] ?? '')));
                 if (!$dataStarted && (str_contains($firstCell, 'nip') || str_contains($firstCell, 'no') || str_contains(strtolower(trim((string)($row[1] ?? ''))), 'nip'))) {
-                    // This looks like a header row, try to map columns
                     foreach ($row as $colIdx => $cellValue) {
                         $cellValue = strtolower(trim((string)$cellValue));
                         if (str_contains($cellValue, 'nip')) $map['nip'] = $colIdx;
@@ -67,7 +68,6 @@ class EmployeesImport implements ToCollection
 
                 // 2. Extract NIP
                 $nipRaw = trim((string)($row[$map['nip']] ?? ''));
-                
                 if (empty($nipRaw) || !is_numeric(preg_replace('/[^0-9]/', '', $nipRaw))) {
                     if (!$dataStarted && is_numeric(preg_replace('/[^0-9]/', '', (string)($row[1] ?? ''))) && strlen(preg_replace('/[^0-9]/', '', (string)($row[1] ?? ''))) > 5) {
                         $map['nip'] = 1;
@@ -81,9 +81,7 @@ class EmployeesImport implements ToCollection
                         $map['regu'] = 9;
                         $nipRaw = trim((string)($row[$map['nip']] ?? ''));
                         $dataStarted = true;
-                    } else {
-                        continue;
-                    }
+                    } else { continue; }
                 }
 
                 $dataStarted = true;
@@ -107,20 +105,36 @@ class EmployeesImport implements ToCollection
                 $reguValue = $this->cleanValue($row[$map['regu']] ?? '');
 
                 if (empty($nama)) continue;
-
-                if (empty($email)) {
-                    $email = $nip . '@sinergipas.id';
-                }
+                if (empty($email)) $email = $nip . '@sinergipas.id';
 
                 // Resolve Master Data
                 $positionId = $this->resolveId($jabatanName, $positions, Position::class);
                 $workUnitId = $this->resolveId($unitName, $workUnits, WorkUnit::class);
                 
+                // --- FIX GOLONGAN (RANK) DETECTION ---
+                $rankId = null;
+                if (!empty($rankClass)) {
+                    // Try to find exact or fuzzy match in ranks table
+                    foreach ($ranks as $rId => $rName) {
+                        if (strcasecmp(trim($rName), trim($rankClass)) === 0) {
+                            $rankId = $rId;
+                            break;
+                        }
+                    }
+                    // If still not found, try to create it if it looks like a valid rank (optional, but requested CRUD consistency)
+                    if (!$rankId && strlen($rankClass) <= 10) {
+                        $newRank = Rank::firstOrCreate(['name' => strtoupper($rankClass)]);
+                        $rankId = $newRank->id;
+                        $ranks[$rankId] = $newRank->name;
+                    }
+                }
+
                 // Specific Classification Logic
                 $jNameUpper = strtoupper($jabatanName);
                 $isJaga = str_contains($jNameUpper, 'PETUGAS JAGA') || 
                           str_contains($jNameUpper, 'ANGGOTA JAGA') || 
                           str_contains($jNameUpper, 'KOMANDAN JAGA') ||
+                          str_contains($jNameUpper, 'PENGAMANAN') ||
                           str_contains($jNameUpper, 'PENJAGA');
 
                 $employeeType = $isJaga ? 'regu_jaga' : 'non_regu_jaga';
@@ -128,7 +142,6 @@ class EmployeesImport implements ToCollection
                 $squadId = null;
                 $picketRegu = null;
                 if ($isJaga && !empty($reguValue) && !in_array(strtolower($reguValue), ['non', 'staf', 'staff', '-', ''])) {
-                    // Clean regu value from common "Petugas Jaga" prefix if present in the cell
                     $cleanRegu = trim(str_ireplace(['Petugas Jaga', 'Regu'], '', $reguValue));
                     if (!empty($cleanRegu)) {
                         $squadId = $this->resolveId($cleanRegu, $squads, Squad::class);
@@ -138,26 +151,25 @@ class EmployeesImport implements ToCollection
 
                 $employee = Employee::where('nip', $nip)->first();
 
+                $employeeData = [
+                    'nik' => $nik,
+                    'full_name' => $nama,
+                    'phone_number' => $wa,
+                    'position' => $jabatanName,
+                    'position_id' => $positionId,
+                    'work_unit_id' => $workUnitId,
+                    'rank_id' => $rankId,
+                    'rank_class' => $rankClass,
+                    'employee_type' => $employeeType,
+                    'squad_id' => $squadId,
+                    'picket_regu' => $picketRegu
+                ];
+
                 if ($employee) {
                     if ($employee->user) {
-                        $employee->user->update([
-                            'name' => $nama,
-                            'email' => $email,
-                        ]);
+                        $employee->user->update(['name' => $nama, 'email' => $email]);
                     }
-
-                    $employee->update([
-                        'nik' => $nik,
-                        'full_name' => $nama,
-                        'phone_number' => $wa,
-                        'position' => $jabatanName,
-                        'position_id' => $positionId,
-                        'work_unit_id' => $workUnitId,
-                        'rank_class' => $rankClass,
-                        'employee_type' => $employeeType,
-                        'squad_id' => $squadId,
-                        'picket_regu' => $picketRegu
-                    ]);
+                    $employee->update($employeeData);
                 } else {
                     $user = User::create([
                         'name' => $nama,
@@ -165,21 +177,9 @@ class EmployeesImport implements ToCollection
                         'password' => Hash::make($nip),
                         'role' => 'pegawai'
                     ]);
-
-                    Employee::create([
-                        'user_id' => $user->id,
-                        'nip' => $nip,
-                        'nik' => $nik,
-                        'full_name' => $nama,
-                        'phone_number' => $wa,
-                        'position' => $jabatanName,
-                        'position_id' => $positionId,
-                        'work_unit_id' => $workUnitId,
-                        'rank_class' => $rankClass,
-                        'employee_type' => $employeeType,
-                        'squad_id' => $squadId,
-                        'picket_regu' => $picketRegu
-                    ]);
+                    $employeeData['user_id'] = $user->id;
+                    $employeeData['nip'] = $nip;
+                    Employee::create($employeeData);
                 }
                 $this->importedCount++;
             }
@@ -190,6 +190,32 @@ class EmployeesImport implements ToCollection
             throw $e;
         }
     }
+
+    private function cleanValue($value)
+    {
+        $val = trim((string)$value);
+        if (str_starts_with($val, '=')) {
+            if (str_contains(strtoupper($val), 'PETUGAS JAGA')) return 'Petugas Jaga';
+            if (str_contains(strtoupper($val), 'NON')) return 'Non';
+            return '';
+        }
+        return $val;
+    }
+
+    private function resolveId($name, &$cache, $modelClass)
+    {
+        if (empty($name)) return null;
+        if (isset($cache[$name])) return $cache[$name];
+
+        $record = $modelClass::firstOrCreate(
+            ['name' => $name],
+            ['slug' => Str::slug($name)]
+        );
+
+        $cache[$name] = $record->id;
+        return $record->id;
+    }
+}
 
     private function cleanValue($value)
     {

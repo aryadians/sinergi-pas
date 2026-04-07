@@ -9,10 +9,12 @@ use App\Models\DocumentCategory;
 use App\Models\ReportIssue;
 use App\Models\Setting;
 use App\Models\AuditLog;
+use App\Models\Attendance;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
+use Carbon\Carbon;
 
 class DashboardController extends Controller
 
@@ -21,6 +23,7 @@ class DashboardController extends Controller
     {
         $user = auth()->user();
         $workUnitId = $request->work_unit_id;
+        $today = Carbon::today();
 
         // --- ADMIN VIEW DATA ---
         if ($user->role === 'superadmin') {
@@ -34,7 +37,6 @@ class DashboardController extends Controller
             $openIssues = ReportIssue::where('status', 'open')->count();
 
             // Storage Analytics
-            // Calculate actual storage used in MB
             $totalSizeBytes = 0;
             $disk = Storage::disk('private');
             if ($disk->exists('documents')) {
@@ -45,10 +47,21 @@ class DashboardController extends Controller
             }
             $storageUsed = round($totalSizeBytes / (1024 * 1024), 2); // MB
 
-            // Compliance Tracking: Find employees missing mandatory documents
-            $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get(['id', 'name']);
+            // Attendance Analytics (Real-time Today)
+            $attendanceToday = Attendance::whereDate('date', $today)->get();
+            $presentToday = $attendanceToday->where('status', 'present')->count();
+            $lateTodayCount = $attendanceToday->where('status', 'late')->count();
+            $absentToday = $totalEmployees - $attendanceToday->count();
             
-            // Auto-fix: If no mandatory categories exist, mark 'Gaji' and 'SK' as mandatory for demo
+            $lateEmployees = Attendance::with('employee')
+                ->whereDate('date', $today)
+                ->where('status', 'late')
+                ->latest()
+                ->take(5)
+                ->get();
+
+            // Compliance Tracking
+            $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get(['id', 'name']);
             if ($mandatoryCategories->isEmpty()) {
                 DocumentCategory::where('slug', 'like', '%gaji%')
                     ->orWhere('slug', 'like', '%sk-%')
@@ -72,9 +85,7 @@ class DashboardController extends Controller
                     $q->where('role', 'pegawai');
                 });
 
-                if ($workUnitId) {
-                    $complianceQuery->where('work_unit_id', $workUnitId);
-                }
+                if ($workUnitId) { $complianceQuery->where('work_unit_id', $workUnitId); }
 
                 $whatsAppNumber = $this->normalizeWhatsAppNumber(
                     Setting::getValue('compliance_whatsapp_number', '628123456789')
@@ -84,16 +95,12 @@ class DashboardController extends Controller
                     ->get()
                     ->map(function ($employee) use ($totalMandatoryCategories, $whatsAppNumber) {
                         $uploadedCount = $employee->documents->pluck('document_category_id')->unique()->count();
-
-                        if ($uploadedCount >= $totalMandatoryCategories) {
-                            return null;
-                        }
+                        if ($uploadedCount >= $totalMandatoryCategories) return null;
 
                         $employee->setAttribute('uploaded_mandatory_count', $uploadedCount);
                         $employee->setAttribute('total_mandatory_count', $totalMandatoryCategories);
                         $employee->setAttribute('compliance_percent', (int) round(($uploadedCount / $totalMandatoryCategories) * 100));
                         $employee->setAttribute('whatsapp_link', $this->buildWhatsAppReminderLink($whatsAppNumber, $employee->full_name));
-
                         return $employee;
                     })
                     ->filter()
@@ -102,19 +109,13 @@ class DashboardController extends Controller
 
             $nonCompliantEmployeesTotal = $nonCompliantEmployees->count();
             $nonCompliantPreviewLimit = 10;
-            $nonCompliantEmployees = $nonCompliantEmployees
-                ->take($nonCompliantPreviewLimit)
-                ->values();
+            $nonCompliantEmployees = $nonCompliantEmployees->take($nonCompliantPreviewLimit)->values();
 
-            // Unit Performance
             $unitPerformance = WorkUnit::withCount('employees')->get();
-
             $latestEmployees = (clone $employeeQuery)->with(['user', 'work_unit'])->latest()->take(5)->get();
             $recentLogs = AuditLog::with('user')->latest()->take(5)->get();
             $chartData = DocumentCategory::withCount('documents')->get();
             $workUnits = WorkUnit::all();
-            
-            // Widget Settings
             $widgets = Setting::where('key', 'like', 'widget_%')->pluck('value', 'key');
 
             return view('dashboard', compact(
@@ -122,7 +123,8 @@ class DashboardController extends Controller
                 'openIssues', 'storageUsed', 'unitPerformance', 
                 'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees',
                 'nonCompliantEmployeesTotal', 'nonCompliantPreviewLimit',
-                'widgets', 'recentLogs', 'totalMandatoryCategories'
+                'widgets', 'recentLogs', 'totalMandatoryCategories',
+                'presentToday', 'lateTodayCount', 'absentToday', 'lateEmployees'
             ));
         } 
         
@@ -139,7 +141,6 @@ class DashboardController extends Controller
                 ->take(5)
                 ->get();
             
-            // Career Progress: Percentage of mandatory categories uploaded
             $mandatoryCats = DocumentCategory::where('is_mandatory', true)->get();
             $totalMandatory = $mandatoryCats->count();
             
@@ -154,15 +155,18 @@ class DashboardController extends Controller
                 $careerProgress = 100;
             }
 
-            // Latest Salary
             $latestSalary = Document::where('employee_id', $employee?->id)
                 ->whereHas('category', function($q) { $q->where('slug', 'like', '%gaji%'); })
                 ->latest()
                 ->first();
 
+            $myAttendanceToday = Attendance::where('employee_id', $employee?->id)
+                ->whereDate('date', $today)
+                ->first();
+
             return view('dashboard-pegawai', compact(
                 'myDocumentsCount', 'verifiedDocs', 'careerProgress', 'latestSalary', 
-                'employee', 'recentDocuments'
+                'employee', 'recentDocuments', 'myAttendanceToday'
             ));
         }
     }

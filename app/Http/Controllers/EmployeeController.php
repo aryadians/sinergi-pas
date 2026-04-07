@@ -8,6 +8,7 @@ use App\Models\Document;
 use App\Models\Position;
 use App\Models\WorkUnit;
 use App\Models\AuditLog;
+use App\Models\Rank;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -37,7 +38,7 @@ class EmployeeController extends Controller
         $employees = $query->orderBy('full_name')->get();
         $positions = Position::orderBy('name')->get();
         $workUnits = WorkUnit::orderBy('name')->get();
-        $ranks = \App\Models\Rank::orderBy('name')->get();
+        $ranks = Rank::orderBy('name')->get();
 
         return view('employees.index', compact('employees', 'positions', 'workUnits', 'ranks'));
     }
@@ -64,7 +65,12 @@ class EmployeeController extends Controller
         ]);
 
         $position = Position::find($request->position_id);
-        $rank = $request->rank_id ? \App\Models\Rank::find($request->rank_id) : null;
+        $rank = $request->rank_id ? Rank::find($request->rank_id) : null;
+
+        // Auto-correct employee_type based on position if needed
+        $jNameUpper = strtoupper($position->name);
+        $isJaga = str_contains($jNameUpper, 'JAGA') || str_contains($jNameUpper, 'PENGAMANAN') || str_contains($jNameUpper, 'PENJAGA');
+        $employeeType = $isJaga ? 'regu_jaga' : 'non_regu_jaga';
 
         Employee::create([
             'user_id' => $user->id,
@@ -75,7 +81,7 @@ class EmployeeController extends Controller
             'work_unit_id' => $request->work_unit_id,
             'rank_id' => $request->rank_id,
             'rank_class' => $rank?->name,
-            'employee_type' => $request->employee_type,
+            'employee_type' => $employeeType,
             'picket_regu' => $request->picket_regu,
         ]);
 
@@ -99,7 +105,6 @@ class EmployeeController extends Controller
             'work_unit_id' => 'required|exists:work_units,id',
             'rank_id' => 'nullable|exists:ranks,id',
             'password' => 'nullable|min:8',
-            'employee_type' => 'required|in:regu_jaga,non_regu_jaga',
             'picket_regu' => 'nullable|string',
         ]);
 
@@ -113,7 +118,12 @@ class EmployeeController extends Controller
         }
 
         $position = Position::find($request->position_id);
-        $rank = $request->rank_id ? \App\Models\Rank::find($request->rank_id) : null;
+        $rank = $request->rank_id ? Rank::find($request->rank_id) : null;
+
+        // Auto-correct employee_type based on updated position
+        $jNameUpper = strtoupper($position->name);
+        $isJaga = str_contains($jNameUpper, 'JAGA') || str_contains($jNameUpper, 'PENGAMANAN') || str_contains($jNameUpper, 'PENJAGA');
+        $employeeType = $isJaga ? 'regu_jaga' : 'non_regu_jaga';
 
         $employee->update([
             'nip' => $request->nip,
@@ -123,7 +133,7 @@ class EmployeeController extends Controller
             'work_unit_id' => $request->work_unit_id,
             'rank_id' => $request->rank_id,
             'rank_class' => $rank?->name,
-            'employee_type' => $request->employee_type,
+            'employee_type' => $employeeType,
             'picket_regu' => $request->picket_regu,
         ]);
 

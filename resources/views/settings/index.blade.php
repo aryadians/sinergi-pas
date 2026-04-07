@@ -17,6 +17,10 @@
                     <i data-lucide="megaphone" class="w-4 h-4"></i>
                     <span>Siaran & Style</span>
                 </a>
+                <a href="#absensi" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-semibold hover:bg-white hover:border-slate-200 border border-transparent transition-all" data-nav="absensi">
+                    <i data-lucide="fingerprint" class="w-4 h-4"></i>
+                    <span>Absensi & Uang Makan</span>
+                </a>
                 <a href="#master" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-semibold hover:bg-white hover:border-slate-200 border border-transparent transition-all" data-nav="master">
                     <i data-lucide="database" class="w-4 h-4"></i>
                     <span>Master Data</span>
@@ -36,16 +40,16 @@
             <!-- Umum & Kop -->
             <section id="umum" class="space-y-6">
                 <div class="flex items-center gap-3 pb-2 border-b border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-900">Konfigurasi Umum & Identitas</h3>
+                    <h3 class="text-lg font-bold text-slate-900 uppercase tracking-widest text-xs">Konfigurasi Umum & Kop</h3>
                 </div>
 
                 <form action="{{ route('settings.update') }}" method="POST" class="space-y-6">
                     @csrf
                     <!-- Dashboard Widgets -->
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden card-3d">
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden card-3d">
                         <div class="p-6 border-b border-slate-50 bg-slate-50/50">
-                            <h4 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-                                <i data-lucide="layout" class="w-4 h-4 text-slate-400"></i>
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                                <i data-lucide="layout" class="w-4 h-4"></i>
                                 Widget Dashboard
                             </h4>
                         </div>
@@ -54,17 +58,17 @@
                                 $widgets = [
                                     ['key' => 'widget_stats', 'label' => 'Statistik Utama', 'icon' => 'bar-chart-3'],
                                     ['key' => 'widget_employees', 'label' => 'Unit Kerja', 'icon' => 'users'],
-                                    ['key' => 'widget_chart', 'label' => 'Grafik', 'icon' => 'pie-chart'],
-                                    ['key' => 'widget_activity', 'label' => 'Aktivitas', 'icon' => 'activity'],
+                                    ['key' => 'widget_chart', 'label' => 'Grafik Berkas', 'icon' => 'pie-chart'],
+                                    ['key' => 'widget_activity', 'label' => 'Audit Trail', 'icon' => 'activity'],
                                 ];
                             @endphp
                             @foreach($widgets as $w)
-                            <label class="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 transition-all cursor-pointer group">
+                            <label class="flex items-center justify-between p-4 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-blue-200 transition-all cursor-pointer group">
                                 <div class="flex items-center gap-3">
-                                    <div class="w-10 h-10 rounded-lg bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors">
+                                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-slate-400 group-hover:text-blue-600 transition-colors">
                                         <i data-lucide="{{ $w['icon'] }}" class="w-5 h-5"></i>
                                     </div>
-                                    <span class="text-sm font-semibold text-slate-700">{{ $w['label'] }}</span>
+                                    <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">{{ $w['label'] }}</span>
                                 </div>
                                 <div class="relative inline-flex items-center">
                                     <input type="hidden" name="{{ $w['key'] }}" value="off">
@@ -76,204 +80,128 @@
                         </div>
                     </div>
 
-                    <!-- Kop Surat with Preview -->
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 card-3d">
-                        <h4 class="text-sm font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <i data-lucide="building" class="w-4 h-4 text-slate-400"></i>
-                            Identitas Kop Surat & Export
+                    <!-- Kop Surat -->
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 card-3d">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <i data-lucide="building" class="w-4 h-4"></i>
+                            Identitas Kop Surat
                         </h4>
                         
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                             <div class="space-y-4">
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Baris Pertama (Instansi)</label>
-                                    <input type="text" name="kop_line_1" id="kop_1" value="{{ $settings['kop_line_1'] ?? '' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none font-semibold text-sm transition-all" onkeyup="syncKop()">
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Instansi Utama (Baris 1)</label>
+                                    <input type="text" name="kop_line_1" id="kop_1" value="{{ $settings['kop_line_1'] ?? 'KEMENTERIAN HUKUM DAN HAM RI' }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm" onkeyup="syncKop()">
                                 </div>
                                 <div>
-                                    <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Baris Kedua (Satuan Kerja)</label>
-                                    <input type="text" name="kop_line_2" id="kop_2" value="{{ $settings['kop_line_2'] ?? '' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 outline-none font-semibold text-sm transition-all" onkeyup="syncKop()">
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Satuan Kerja (Baris 2)</label>
+                                    <input type="text" name="kop_line_2" id="kop_2" value="{{ $settings['kop_line_2'] ?? 'LAPAS KELAS IIB JOMBANG' }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm" onkeyup="syncKop()">
                                 </div>
                             </div>
 
-                            <div class="bg-slate-50 rounded-2xl border border-slate-100 p-6 flex flex-col items-center justify-center text-center">
-                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">Preview Kop Surat</p>
-                                <div class="flex items-center gap-4 border-b-2 border-slate-900 pb-4 w-full">
-                                    <img src="{{ asset('logo1.png') }}" class="w-12 h-12 object-contain">
+                            <div class="bg-slate-50 rounded-[32px] border border-slate-100 p-8 flex flex-col items-center justify-center">
+                                <div class="flex items-center gap-5 border-b-2 border-slate-900 pb-4 w-full">
+                                    <img src="{{ asset('logo1.png') }}" class="w-14 h-14 object-contain">
                                     <div class="text-left">
-                                        <h2 id="preview_kop_1" class="text-xs font-bold text-slate-900 uppercase leading-tight">{{ $settings['kop_line_1'] ?? 'KEMENTERIAN HUKUM DAN HAM RI' }}</h2>
-                                        <h3 id="preview_kop_2" class="text-sm font-extrabold text-slate-900 uppercase leading-tight">{{ $settings['kop_line_2'] ?? 'LAPAS KELAS IIB JOMBANG' }}</h3>
+                                        <h2 id="preview_kop_1" class="text-[10px] font-bold text-slate-900 uppercase leading-tight">{{ $settings['kop_line_1'] ?? 'KEMENTERIAN HUKUM DAN HAM RI' }}</h2>
+                                        <h3 id="preview_kop_2" class="text-sm font-black text-slate-900 uppercase leading-tight">{{ $settings['kop_line_2'] ?? 'LAPAS KELAS IIB JOMBANG' }}</h3>
                                     </div>
                                 </div>
+                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-4">Preview Header Laporan</p>
                             </div>
                         </div>
-                    </div>
-
-                    <!-- Attendance & Meal Allowance Configuration -->
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 card-3d">
-                        <h4 class="text-sm font-bold text-slate-900 mb-6 flex items-center gap-2">
-                            <i data-lucide="fingerprint" class="w-4 h-4 text-slate-400"></i>
-                            Parameter Kehadiran & Uang Makan
-                        </h4>
-                        
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8 pb-8 border-b border-slate-50">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Batas Jam Masuk Kantor (Staf / Non-Regu)</label>
-                                <input type="time" name="office_late_threshold" value="{{ $settings['office_late_threshold'] ?? '07:30' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none font-semibold text-sm transition-all">
-                                <p class="text-[9px] text-slate-400 mt-2 italic">Pegawai non-regu jaga dianggap terlambat setelah jam ini.</p>
-                            </div>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Golongan II (Rp)</label>
-                                <input type="number" name="meal_allowance_ii" value="{{ $settings['meal_allowance_ii'] ?? '35000' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none font-semibold text-sm transition-all">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Golongan III (Rp)</label>
-                                <input type="number" name="meal_allowance_iii" value="{{ $settings['meal_allowance_iii'] ?? '37000' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none font-semibold text-sm transition-all">
-                            </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Golongan IV (Rp)</label>
-                                <input type="number" name="meal_allowance_iv" value="{{ $settings['meal_allowance_iv'] ?? '41000' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-blue-500 outline-none font-semibold text-sm transition-all">
-                            </div>
-                        </div>
-                        <p class="text-[9px] text-slate-400 mt-4 italic">*Tarif dihitung per hari kehadiran efektif.</p>
                     </div>
 
                     <div class="flex justify-end">
-                        <button type="submit" class="px-10 py-3.5 bg-slate-900 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 shadow-lg shadow-slate-200 transition-all btn-3d">
-                            Simpan Konfigurasi
+                        <button type="submit" class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all btn-3d shadow-xl">
+                            Simpan Identitas
                         </button>
                     </div>
                 </form>
             </section>
 
-            <!-- Siaran & Style -->
-            <section id="siaran" class="space-y-6 pt-6 border-t border-slate-200">
-                <div class="flex items-center justify-between pb-2">
-                    <h3 class="text-lg font-bold text-slate-900">Siaran & Gaya Visual</h3>
+            <!-- Absensi & Uang Makan -->
+            <section id="absensi" class="space-y-6 pt-10 border-t border-slate-200">
+                <div class="flex items-center gap-3 pb-2 border-b border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-900 uppercase tracking-widest text-xs">Absensi & Uang Makan</h3>
                 </div>
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div class="lg:col-span-1 space-y-6">
-                        <!-- Create New -->
-                        <form action="{{ route('announcements.store') }}" method="POST" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4 card-3d">
-                            @csrf
-                            <h4 class="text-sm font-bold text-slate-900 mb-2">Buat Siaran Baru</h4>
+                <form action="{{ route('settings.update') }}" method="POST" class="space-y-6">
+                    @csrf
+                    <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 card-3d">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10 pb-10 border-b border-slate-100">
                             <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Tipe Tampilan</label>
-                                <select name="type" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-blue-500 appearance-none bg-slate-50">
-                                    <option value="banner">Running Text (Marquee)</option>
-                                    <option value="popup">Popup Modal (Alert)</option>
-                                </select>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Threshold Terlambat (Kantor)</label>
+                                <div class="relative">
+                                    <i data-lucide="clock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
+                                    <input type="time" name="office_late_threshold" value="{{ $settings['office_late_threshold'] ?? '07:30' }}" class="w-full pl-12 pr-5 py-4 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-black text-lg text-blue-600 transition-all">
+                                </div>
+                                <p class="text-[10px] text-slate-400 mt-3 italic font-medium leading-relaxed">Staf yang melakukan scan setelah jam ini akan otomatis tercatat sebagai "Terlambat".</p>
                             </div>
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Isi Pesan</label>
-                                <textarea name="message" rows="3" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-blue-500 bg-slate-50" placeholder="Ketik pengumuman..."></textarea>
-                            </div>
-                            <button type="submit" class="w-full py-3.5 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all btn-3d">
-                                Publikasikan Siaran
-                            </button>
-                        </form>
+                        </div>
 
-                        <!-- Global Visual Settings -->
-                        <form action="{{ route('settings.update') }}" method="POST" class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4 card-3d">
-                            @csrf
-                            <h4 class="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-                                <i data-lucide="palette" class="w-4 h-4 text-amber-500"></i>
-                                Style Siaran
-                            </h4>
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Warna Background</label>
-                                    <input type="color" name="running_text_bg" value="{{ $settings['running_text_bg'] ?? '#0F172A' }}" class="w-full h-10 rounded-lg cursor-pointer border border-slate-200 p-1 bg-slate-50">
-                                </div>
-                                <div>
-                                    <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Warna Teks</label>
-                                    <input type="color" name="running_text_color" value="{{ $settings['running_text_color'] ?? '#FFFFFF' }}" class="w-full h-10 rounded-lg cursor-pointer border border-slate-200 p-1 bg-slate-50">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="p-6 rounded-3xl bg-slate-50 border border-slate-100 group hover:border-blue-200 transition-all">
+                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Rate Golongan II</label>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-slate-400 font-bold">Rp</span>
+                                    <input type="number" name="meal_allowance_ii" value="{{ $settings['meal_allowance_ii'] ?? '35000' }}" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-900 focus:ring-0">
                                 </div>
                             </div>
-                            <div>
-                                <label class="block text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1.5">Kecepatan (Detik)</label>
-                                <input type="number" name="running_text_speed" value="{{ $settings['running_text_speed'] ?? '20' }}" min="5" max="100" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-blue-500 bg-slate-50">
-                                <p class="text-[8px] text-slate-400 mt-1 italic">*Semakin besar nilai, semakin lambat.</p>
-                            </div>
-                            <button type="submit" class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all">
-                                Update Visual
-                            </button>
-                        </form>
-                    </div>
-
-                    <div class="lg:col-span-2 space-y-4">
-                        <h4 class="text-sm font-bold text-slate-900">Riwayat & Kontrol Siaran</h4>
-                        <div class="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
-                            @forelse($announcements as $ann)
-                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-start justify-between gap-4 card-3d">
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-2 mb-2">
-                                        <span class="px-2 py-0.5 rounded-lg bg-slate-100 text-[9px] font-bold text-slate-500 uppercase">{{ $ann->type }}</span>
-                                        <span class="px-2 py-0.5 rounded-lg {{ $ann->is_active ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-slate-50 text-slate-400 border border-slate-100' }} text-[9px] font-bold uppercase">
-                                            {{ $ann->is_active ? 'Aktif' : 'Nonaktif' }}
-                                        </span>
-                                    </div>
-                                    <p class="text-sm font-semibold text-slate-700 leading-relaxed">{{ $ann->message }}</p>
-                                    <p class="text-[9px] text-slate-400 mt-2 font-bold uppercase tracking-widest">{{ $ann->created_at->format('d M Y, H:i') }}</p>
-                                </div>
-                                <div class="flex gap-2">
-                                    <form action="{{ route('announcements.toggle', $ann->id) }}" method="POST" class="no-loader">
-                                        @csrf @method('PATCH')
-                                        <button type="submit" class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-100 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all shadow-sm">
-                                            <i data-lucide="{{ $ann->is_active ? 'eye-off' : 'eye' }}" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
-                                    <form action="{{ route('announcements.destroy', $ann->id) }}" method="POST" class="no-loader">
-                                        @csrf @method('DELETE')
-                                        <button type="submit" onclick="return confirm('Hapus siaran ini?')" class="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-100 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all shadow-sm">
-                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                        </button>
-                                    </form>
+                            <div class="p-6 rounded-3xl bg-slate-50 border border-slate-100 group hover:border-blue-200 transition-all">
+                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Rate Golongan III</label>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-slate-400 font-bold">Rp</span>
+                                    <input type="number" name="meal_allowance_iii" value="{{ $settings['meal_allowance_iii'] ?? '37000' }}" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-900 focus:ring-0">
                                 </div>
                             </div>
-                            @empty
-                            <div class="text-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                                <i data-lucide="megaphone-off" class="w-10 h-10 text-slate-200 mx-auto mb-4"></i>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Belum ada riwayat siaran</p>
+                            <div class="p-6 rounded-3xl bg-slate-50 border border-slate-100 group hover:border-blue-200 transition-all">
+                                <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Rate Golongan IV</label>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-slate-400 font-bold">Rp</span>
+                                    <input type="number" name="meal_allowance_iv" value="{{ $settings['meal_allowance_iv'] ?? '41000' }}" class="w-full bg-transparent border-none p-0 font-black text-xl text-slate-900 focus:ring-0">
+                                </div>
                             </div>
-                            @endforelse
                         </div>
                     </div>
-                </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all btn-3d shadow-xl">
+                            Update Parameter Absensi
+                        </button>
+                    </div>
+                </form>
             </section>
 
             <!-- Master Data -->
-            <section id="master" class="space-y-6 pt-6 border-t border-slate-200">
-                <div class="flex items-center gap-3 pb-2">
-                    <h3 class="text-lg font-bold text-slate-900">Master Data</h3>
+            <section id="master" class="space-y-6 pt-10 border-t border-slate-200">
+                <div class="flex items-center gap-3 pb-2 border-b border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-900 uppercase tracking-widest text-xs">Pengelolaan Master Data</h3>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                     <!-- Jabatan -->
-                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden card-3d flex flex-col h-[400px]">
-                        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
-                            <h4 class="text-sm font-bold text-slate-900 uppercase tracking-tight">Daftar Jabatan</h4>
-                            <span class="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">{{ $positions->count() }}</span>
+                    <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden card-3d flex flex-col h-[450px]">
+                        <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+                            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Daftar Jabatan</h4>
+                            <span class="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold">{{ $positions->count() }}</span>
                         </div>
-                        <div class="p-5 flex-1 flex flex-col min-h-0">
-                            <form action="{{ route('settings.positions.store') }}" method="POST" class="flex gap-2 mb-4 shrink-0">
+                        <div class="p-6 flex-1 flex flex-col min-h-0">
+                            <form action="{{ route('settings.positions.store') }}" method="POST" class="flex gap-2 mb-6 shrink-0">
                                 @csrf
-                                <input type="text" name="name" required class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-blue-500 bg-slate-50" placeholder="Jabatan baru...">
-                                <button type="submit" class="w-11 h-11 flex items-center justify-center bg-slate-900 text-white rounded-xl hover:bg-blue-600 transition-all btn-3d">
-                                    <i data-lucide="plus" class="w-5 h-5"></i>
+                                <input type="text" name="name" required class="flex-1 px-5 py-3 rounded-2xl border border-slate-200 text-sm font-bold focus:border-blue-500 outline-none bg-slate-50" placeholder="Tambah jabatan...">
+                                <button type="submit" class="w-12 h-12 flex items-center justify-center bg-slate-900 text-white rounded-2xl hover:bg-blue-600 transition-all active:scale-95 shadow-lg">
+                                    <i data-lucide="plus" class="w-6 h-6"></i>
                                 </button>
                             </form>
                             <div class="overflow-y-auto custom-scrollbar space-y-2 flex-1 pr-2">
                                 @foreach($positions as $p)
-                                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-blue-200 transition-all">
-                                    <span class="text-xs font-bold text-slate-700 uppercase">{{ $p->name }}</span>
+                                <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-blue-200 transition-all">
+                                    <span class="text-xs font-black text-slate-700 uppercase tracking-tight">{{ $p->name }}</span>
                                     <form action="{{ route('settings.positions.destroy', $p->id) }}" method="POST" class="no-loader">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
-                                            <i data-lucide="x" class="w-4 h-4"></i>
+                                        <button type="submit" class="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
                                     </form>
                                 </div>
@@ -283,27 +211,27 @@
                     </div>
 
                     <!-- Unit Kerja -->
-                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden card-3d flex flex-col h-[400px]">
-                        <div class="p-5 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
-                            <h4 class="text-sm font-bold text-slate-900 uppercase tracking-tight">Daftar Unit Kerja</h4>
-                            <span class="text-[10px] font-bold text-slate-400 bg-white px-2 py-0.5 rounded-full border border-slate-100">{{ $workUnits->count() }}</span>
+                    <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden card-3d flex flex-col h-[450px]">
+                        <div class="p-6 bg-slate-50 border-b border-slate-100 flex justify-between items-center shrink-0">
+                            <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Daftar Unit Kerja</h4>
+                            <span class="px-2 py-0.5 rounded-full bg-blue-600 text-white text-[9px] font-bold">{{ $workUnits->count() }}</span>
                         </div>
-                        <div class="p-5 flex-1 flex flex-col min-h-0">
-                            <form action="{{ route('settings.work-units.store') }}" method="POST" class="flex gap-2 mb-4 shrink-0">
+                        <div class="p-6 flex-1 flex flex-col min-h-0">
+                            <form action="{{ route('settings.work-units.store') }}" method="POST" class="flex gap-2 mb-6 shrink-0">
                                 @csrf
-                                <input type="text" name="name" required class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold outline-none focus:border-blue-500 bg-slate-50" placeholder="Unit baru...">
-                                <button type="submit" class="w-11 h-11 flex items-center justify-center bg-slate-900 text-white rounded-xl hover:bg-blue-600 transition-all btn-3d">
-                                    <i data-lucide="plus" class="w-5 h-5"></i>
+                                <input type="text" name="name" required class="flex-1 px-5 py-3 rounded-2xl border border-slate-200 text-sm font-bold focus:border-blue-500 outline-none bg-slate-50" placeholder="Tambah unit...">
+                                <button type="submit" class="w-12 h-12 flex items-center justify-center bg-slate-900 text-white rounded-2xl hover:bg-blue-600 transition-all active:scale-95 shadow-lg">
+                                    <i data-lucide="plus" class="w-6 h-6"></i>
                                 </button>
                             </form>
                             <div class="overflow-y-auto custom-scrollbar space-y-2 flex-1 pr-2">
                                 @foreach($workUnits as $u)
-                                <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-blue-200 transition-all">
-                                    <span class="text-xs font-bold text-slate-700 uppercase">{{ $u->name }}</span>
+                                <div class="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100 group hover:bg-white hover:border-blue-200 transition-all">
+                                    <span class="text-xs font-black text-slate-700 uppercase tracking-tight">{{ $u->name }}</span>
                                     <form action="{{ route('settings.work-units.destroy', $u->id) }}" method="POST" class="no-loader">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="w-7 h-7 flex items-center justify-center rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
-                                            <i data-lucide="x" class="w-4 h-4"></i>
+                                        <button type="submit" class="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:text-red-500 hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100">
+                                            <i data-lucide="trash-2" class="w-4 h-4"></i>
                                         </button>
                                     </form>
                                 </div>
@@ -320,13 +248,7 @@
 @if(session('success'))
 <script>
     window.addEventListener('DOMContentLoaded', () => {
-        Swal.fire({
-            icon: 'success',
-            title: 'Berhasil',
-            text: "{{ session('success') }}",
-            confirmButtonColor: '#0F172A',
-            customClass: { popup: 'rounded-2xl' }
-        });
+        Swal.fire({ icon: 'success', title: 'Berhasil', text: "{{ session('success') }}", confirmButtonColor: '#0F172A', customClass: { popup: 'rounded-[32px]' } });
     });
 </script>
 @endif
@@ -348,7 +270,7 @@
             let current = '';
             sections.forEach(section => {
                 const sectionTop = section.offsetTop;
-                if (pageYOffset >= sectionTop - 120) {
+                if (pageYOffset >= sectionTop - 150) {
                     current = section.getAttribute('id');
                 }
             });
