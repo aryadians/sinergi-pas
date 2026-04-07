@@ -121,7 +121,7 @@ class EmployeesImport implements ToCollection
                             break;
                         }
                     }
-                    // If still not found, try to create it if it looks like a valid rank (optional, but requested CRUD consistency)
+                    // If still not found, try to create it if it looks like a valid rank
                     if (!$rankId && strlen($rankClass) <= 10) {
                         $newRank = Rank::firstOrCreate(['name' => strtoupper($rankClass)]);
                         $rankId = $newRank->id;
@@ -131,9 +131,7 @@ class EmployeesImport implements ToCollection
 
                 // Specific Classification Logic
                 $jNameUpper = strtoupper($jabatanName);
-                $isJaga = str_contains($jNameUpper, 'PETUGAS JAGA') || 
-                          str_contains($jNameUpper, 'ANGGOTA JAGA') || 
-                          str_contains($jNameUpper, 'KOMANDAN JAGA') ||
+                $isJaga = str_contains($jNameUpper, 'JAGA') || 
                           str_contains($jNameUpper, 'PENGAMANAN') ||
                           str_contains($jNameUpper, 'PENJAGA');
 
@@ -198,38 +196,6 @@ class EmployeesImport implements ToCollection
             if (str_contains(strtoupper($val), 'PETUGAS JAGA')) return 'Petugas Jaga';
             if (str_contains(strtoupper($val), 'NON')) return 'Non';
             return '';
-        }
-        return $val;
-    }
-
-    private function resolveId($name, &$cache, $modelClass)
-    {
-        if (empty($name)) return null;
-        if (isset($cache[$name])) return $cache[$name];
-
-        $record = $modelClass::firstOrCreate(
-            ['name' => $name],
-            ['slug' => Str::slug($name)]
-        );
-
-        $cache[$name] = $record->id;
-        return $record->id;
-    }
-}
-
-    private function cleanValue($value)
-    {
-        $val = trim((string)$value);
-        // If it starts with =, it might be a formula that failed to evaluate or was copied as string
-        if (str_starts_with($val, '=')) {
-            // For this specific system, we usually want the literal intended result if possible, 
-            // but if we get the formula string, it's garbage. 
-            // However, often users have "=IF(ISNUMBER...)" which results in "Petugas Jaga" or "Non".
-            // If we only have the formula string, we can't evaluate it here easily without a parser.
-            // But we can try to see if the value contains keywords.
-            if (str_contains(strtoupper($val), 'PETUGAS JAGA')) return 'Petugas Jaga';
-            if (str_contains(strtoupper($val), 'NON')) return 'Non';
-            return ''; // Strip the formula
         }
         return $val;
     }

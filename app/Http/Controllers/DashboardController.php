@@ -17,7 +17,6 @@ use Maatwebsite\Excel\Facades\Excel;
 use Carbon\Carbon;
 
 class DashboardController extends Controller
-
 {
     public function index(Request $request)
     {
@@ -46,19 +45,6 @@ class DashboardController extends Controller
                 }
             }
             $storageUsed = round($totalSizeBytes / (1024 * 1024), 2); // MB
-
-            // Attendance Analytics (Real-time Today)
-            $attendanceToday = Attendance::whereDate('date', $today)->get();
-            $presentToday = $attendanceToday->where('status', 'present')->count();
-            $lateTodayCount = $attendanceToday->where('status', 'late')->count();
-            $absentToday = $totalEmployees - $attendanceToday->count();
-            
-            $lateEmployees = Attendance::with('employee')
-                ->whereDate('date', $today)
-                ->where('status', 'late')
-                ->latest()
-                ->take(5)
-                ->get();
 
             // Compliance Tracking
             $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get(['id', 'name']);
@@ -123,8 +109,7 @@ class DashboardController extends Controller
                 'openIssues', 'storageUsed', 'unitPerformance', 
                 'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees',
                 'nonCompliantEmployeesTotal', 'nonCompliantPreviewLimit',
-                'widgets', 'recentLogs', 'totalMandatoryCategories',
-                'presentToday', 'lateTodayCount', 'absentToday', 'lateEmployees'
+                'widgets', 'recentLogs', 'totalMandatoryCategories'
             ));
         } 
         
