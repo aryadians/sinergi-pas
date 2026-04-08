@@ -72,18 +72,21 @@ class ScheduleController extends Controller
         $staffEmployees = Employee::where('employee_type', 'non_regu_jaga')->get();
         
         $officeShift = Shift::where('name', 'like', '%Kantor%')->first();
-        $pattern = $request->pattern;
+        $pattern = array_values($request->pattern); // Reset keys
         $patternCount = count($pattern);
 
         if ($reguEmployees->isEmpty() && $staffEmployees->isEmpty()) {
             return back()->with('error', "Tidak ada data pegawai untuk diproses.");
         }
 
+        $upsertData = [];
+        $now = now();
+
         DB::beginTransaction();
         try {
             for ($m = 0; $m < $duration; $m++) {
                 $currentMonth = $baseMonth->copy()->addMonths($m);
-                
+
                 // 1. Process Regu Jaga
                 foreach ($reguEmployees as $employee) {
                     for ($day = 1; $day <= $currentMonth->daysInMonth; $day++) {
@@ -96,12 +99,17 @@ class ScheduleController extends Controller
                         $shiftId = $pattern[$index];
 
                         if ($shiftId) {
-                            Schedule::updateOrCreate(
-                                ['employee_id' => $employee->id, 'date' => $dateObj->format('Y-m-d')],
-                                ['shift_id' => $shiftId]
-                            );
+                            $upsertData[] = [
+                                'employee_id' => $employee->id,
+                                'date' => $dateObj->format('Y-m-d'),
+                                'shift_id' => $shiftId,
+                                'created_at' => $now,
+                                'updated_at' => $now
+                            ];
                         } else {
-                            Schedule::where('employee_id', $employee->id)->where('date', $dateObj->format('Y-m-d'))->delete();
+                            Schedule::where('employee_id', $employee->id)
+                                    ->where('date', $dateObj->format('Y-m-d'))
+                                    ->delete();
                         }
                     }
                 }
@@ -112,15 +120,28 @@ class ScheduleController extends Controller
                         for ($day = 1; $day <= $currentMonth->daysInMonth; $day++) {
                             $dateObj = $currentMonth->copy()->day($day);
                             if ($dateObj->isWeekday()) {
-                                Schedule::updateOrCreate(
-                                    ['employee_id' => $employee->id, 'date' => $dateObj->format('Y-m-d')],
-                                    ['shift_id' => $officeShift->id]
-                                );
+                                $upsertData[] = [
+                                    'employee_id' => $employee->id,
+                                    'date' => $dateObj->format('Y-m-d'),
+                                    'shift_id' => $officeShift->id,
+                                    'created_at' => $now,
+                                    'updated_at' => $now
+                                ];
                             } else {
-                                Schedule::where('employee_id', $employee->id)->where('date', $dateObj->format('Y-m-d'))->delete();
+                                Schedule::where('employee_id', $employee->id)
+                                        ->where('date', $dateObj->format('Y-m-d'))
+                                        ->delete();
                             }
                         }
                     }
+                }
+            }
+
+            // Perform Bulk Upsert in chunks
+            if (!empty($upsertData)) {
+                $chunks = array_chunk($upsertData, 500);
+                foreach ($chunks as $chunk) {
+                    Schedule::upsert($chunk, ['employee_id', 'date'], ['shift_id', 'updated_at']);
                 }
             }
 
@@ -137,7 +158,7 @@ class ScheduleController extends Controller
             'details' => auth()->user()->name . " men-generate roster otomatis ($duration bulan) untuk Regu $squad->name dan Staf mulai " . $baseMonth->translatedFormat('F Y')
         ]);
 
-        return back()->with('success', "Roster ($duration bulan) berhasil di-generate.");
+        return back()->with('success', "Roster ($duration bulan) berhasil di-generate secara instan.");
     }
 
     public function reset(Request $request)
@@ -217,7 +238,7 @@ class ScheduleController extends Controller
             public function styles(\PhpOffice\PhpSpreadsheet\Worksheet\Worksheet $sheet) {
                 $kop1 = Setting::getValue('kop_line_1', 'KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN RI');
                 $kop2 = Setting::getValue('kop_line_2', 'KANTOR WILAYAH KEMENTERIAN IMIGRASI DAN PEMASYARAKATAN');
-                $endCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(3 + $this->days);
+                $endCol = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex(2 + $this->days + 1); // NO + NAMA + NIP + Days
                 $sheet->mergeCells("B1:{$endCol}1"); $sheet->setCellValue('B1', $kop1);
                 $sheet->mergeCells("B2:{$endCol}2"); $sheet->setCellValue('B2', $kop2);
                 $sheet->getStyle("B1:{$endCol}2")->getFont()->setBold(true)->setSize(12);
