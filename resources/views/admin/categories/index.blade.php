@@ -29,7 +29,7 @@
         <div class="relative bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm hover:border-indigo-300 transition-all card-3d group">
             <div class="flex justify-end items-start mb-6">
                 <div class="flex gap-2">
-                    <button onclick="openEditModal({{ json_encode($cat) }})" class="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                    <button data-category="{{ json_encode($cat) }}" onclick="openEditModal(this)" class="p-2 text-slate-400 hover:text-indigo-600 transition-colors">
                         <i data-lucide="edit-3" class="w-4 h-4"></i>
                     </button>
                     <form action="{{ route('admin.categories.destroy', $cat->id) }}" method="POST" class="no-loader">
@@ -54,7 +54,7 @@
                     <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Total Personel</p>
                     <p class="text-lg font-black text-slate-900">{{ $cat->employees_count }} <span class="text-[10px] text-slate-400 font-bold">PEGAWAI</span></p>
                 </div>
-                <button onclick="openManageMembersModal({{ json_encode($cat->load('employees')) }})" class="px-5 py-2.5 rounded-2xl bg-indigo-600 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg">
+                <button data-category="{{ json_encode($cat->load('employees')) }}" onclick="openManageMembersModal(this)" class="px-5 py-2.5 rounded-2xl bg-indigo-600 text-white font-bold text-[10px] uppercase tracking-widest hover:bg-slate-900 transition-all shadow-lg">
                     Kelola Anggota
                 </button>
             </div>
@@ -71,7 +71,7 @@
 </div>
 
 <!-- Modals -->
-<div id="categoryModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+<div id="createModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[100] p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
         <h3 class="text-2xl font-bold text-slate-900 mb-8">Tambah Kategori Baru</h3>
         <form action="{{ route('admin.categories.store') }}" method="POST" class="space-y-6">
@@ -97,7 +97,7 @@
                 <textarea name="description" rows="3" placeholder="Opsional..." class="w-full px-5 py-3 rounded-2xl border border-slate-200 text-sm font-bold focus:border-indigo-500 bg-slate-50 outline-none"></textarea>
             </div>
             <div class="flex gap-3 pt-4">
-                <button type="button" onclick="document.getElementById('categoryModal').classList.add('hidden')" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">Batal</button>
+                <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">Batal</button>
                 <button type="submit" class="flex-[2] py-4 bg-slate-900 text-white rounded-2xl font-bold text-[10px] uppercase tracking-widest hover:bg-indigo-600 transition-all shadow-lg">Simpan Kategori</button>
             </div>
         </form>
@@ -105,7 +105,7 @@
 </div>
 
 <!-- Edit Modal -->
-<div id="editModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+<div id="editModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[100] p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
         <h3 class="text-2xl font-bold text-slate-900 mb-8">Edit Kategori</h3>
         <form id="editForm" method="POST" class="space-y-6">
@@ -138,8 +138,19 @@
     </div>
 </div>
 
+<!-- Custom Loading Overlay for Roster Generation -->
+<div id="rosterLoading" class="fixed inset-0 z-[100] hidden cursor-wait items-center justify-center bg-slate-900/60 backdrop-blur-md">
+    <div class="bg-white rounded-[32px] p-10 shadow-2xl max-w-sm w-full text-center animate-in zoom-in duration-300">
+        <div class="relative w-24 h-24 mx-auto mb-6">
+            <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-amber-500 rounded-full border-t-transparent animate-spin"></div>
+        </div>
+        <p class="text-sm font-bold text-slate-900">Memproses Data...</p>
+    </div>
+</div>
+
 <!-- Manage Members Modal -->
-<div id="membersModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+<div id="membersModal" class="fixed inset-0 z-50 hidden items-center justify-center p-6 bg-slate-900/60 backdrop-blur-sm">
     <div class="bg-white w-full max-w-5xl rounded-[40px] shadow-2xl animate-in zoom-in duration-200 flex flex-col max-h-[90vh]">
         <div class="p-8 border-b border-slate-100 flex justify-between items-center shrink-0">
             <div>
@@ -210,15 +221,18 @@
     // ... bulk delete logic for categories can be added here ...
 
     // Modal Handlers
-    function openEditModal(category) {
+    function openEditModal(btn) {
+        const category = JSON.parse(btn.dataset.category);
         document.getElementById('edit_name').value = category.name;
         document.getElementById('edit_description').value = category.description;
         document.getElementById('edit_color').value = category.color;
         document.getElementById('editForm').action = `/admin/categories/${category.id}`;
         document.getElementById('editModal').classList.remove('hidden');
+        document.getElementById('editModal').classList.add('flex');
     }
 
-    function openManageMembersModal(category) {
+    function openManageMembersModal(btn) {
+        const category = JSON.parse(btn.dataset.category);
         document.getElementById('members_category_name').innerText = `Kelola Kategori ${category.name}`;
         document.getElementById('addMemberForm').action = `/admin/categories/${category.id}/add-member`;
         document.getElementById('bulkRemoveMembersForm').action = `/admin/categories/${category.id}/remove-members-bulk`;
@@ -234,6 +248,7 @@
                     <div class="flex items-center justify-between p-4 bg-white rounded-2xl border border-slate-100 group hover:border-indigo-200 hover:shadow-md transition-all">
                         <div class="flex items-center gap-4">
                             <input type="checkbox" name="employee_ids[]" value="${emp.id}" class="member-checkbox w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-0 cursor-pointer">
+                            <div class="h-6 w-px bg-slate-100"></div>
                             <div class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 font-bold text-xs uppercase">${emp.full_name.substring(0, 1)}</div>
                             <div>
                                 <p class="text-[11px] font-black text-slate-900">${emp.full_name}</p>

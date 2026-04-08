@@ -156,14 +156,57 @@
             .loader-ring {
                 width: 48px;
                 height: 48px;
-                border: 4px solid #F1F5F9;
-                border-top-color: #0F172A;
-                border-radius: 50%;
-                animation: spin 1s linear infinite;
-            }
-            @keyframes spin { to { transform: rotate(360deg); } }
+        }
+        .sidebar-item.active i { color: white !important; }
 
+        /* Component Refinement */
+        .rounded-premium { border-radius: 1.5rem; }
+        .rounded-button { border-radius: 0.875rem; }
+
+        /* Smooth Scrollbar */
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
+
+        .page-fade { animation: pageIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Mobile Optimizations */
+        @media (max-width: 1024px) {
+            body { padding-bottom: 80px; }
+        }
+
+        .bottom-nav-item.active {
+            color: #3B82F6;
+        }
+        .bottom-nav-item.active i {
+            transform: translateY(-4px);
+            color: #3B82F6;
+        }
+
+        #global-loading {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+        .loader-ring {
+            width: 48px;
+            height: 48px;
+            border: 4px solid #F1F5F9;
+            border-top-color: #0F172A;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
+    @stack('styles')
 </head>
 <body class="antialiased">
     <div id="global-loading">
@@ -299,10 +342,12 @@
                     <span class="mx-12"><i data-lucide="megaphone" class="w-4 h-4 inline mr-2 align-middle"></i> {{ $activeBanner->message }}</span>
                 </div>
             </div>
+            @push('styles')
             <style>
                 @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
                 .animate-marquee { animation: marquee {{ $bannerSpeed }}s linear infinite; }
             </style>
+            @endpush
             @endif
 
             <header class="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/80 backdrop-blur-md px-6 lg:px-10">

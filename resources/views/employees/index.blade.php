@@ -450,7 +450,7 @@
 </div>
 
 <!-- Import Modal -->
-<div id="rosterModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+<div id="createModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
         <div class="flex justify-between items-center mb-8">
             <h3 class="text-xl font-bold text-slate-900">Import Batch Pegawai</h3>

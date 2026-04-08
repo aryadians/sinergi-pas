@@ -51,7 +51,7 @@
 </style>
 
 <!-- Custom Loading Overlay for Roster Generation -->
-<div id="rosterLoading" class="fixed inset-0 z-100 hidden items-center justify-center bg-slate-900/60 backdrop-blur-md">
+<div id="rosterLoading" class="fixed inset-0 z-50 hidden cursor-wait items-center justify-center bg-slate-900/60 backdrop-blur-md">
     <div class="bg-white rounded-[32px] p-10 shadow-2xl max-w-sm w-full text-center animate-in zoom-in duration-300">
         <div class="relative w-24 h-24 mx-auto mb-6">
             <div class="absolute inset-0 border-4 border-slate-100 rounded-full"></div>
@@ -66,56 +66,78 @@
 </div>
 
 <div class="space-y-8 page-fade">
-    <!-- Header & Tools -->
-    <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm card-3d">
-        <div class="flex flex-wrap items-center gap-4 w-full lg:w-auto">
-            <form action="{{ route('admin.schedules.index') }}" method="GET" class="w-full lg:w-auto flex items-center gap-3">
-                <input type="hidden" name="type" value="{{ $activeType->id }}">
-                <div class="relative group">
-                    <i data-lucide="calendar" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
-                    <input type="month" name="month" value="{{ $month->format('Y-m') }}" onchange="this.form.submit()" class="pl-11 pr-4 py-2.5 rounded-2xl text-sm font-bold text-slate-700 outline-none border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 transition-all">
+    <!-- Premium Header & Intelligent Tools -->
+    <div class="relative overflow-hidden bg-gradient-to-br from-white via-white to-slate-50/50 p-8 rounded-[40px] border border-slate-200 shadow-xl shadow-slate-200/50 card-3d">
+        <!-- Abstract Background Element -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-full -mr-32 -mt-32 blur-3xl opacity-50"></div>
+        
+        <div class="relative z-10 flex flex-col xl:flex-row justify-between items-start xl:items-center gap-8">
+            <div class="flex flex-wrap items-center gap-6 w-full xl:w-auto">
+                <!-- Navigation & Time Context -->
+                <div class="flex items-center gap-3">
+                    <form action="{{ route('admin.schedules.index') }}" method="GET" class="flex items-center gap-3 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm transition-all hover:border-blue-200">
+                        <input type="hidden" name="type" value="{{ $activeType->id }}">
+                        <div class="relative group">
+                            <i data-lucide="calendar" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors"></i>
+                            <input type="month" name="month" value="{{ $month->format('Y-m') }}" onchange="this.form.submit()" class="pl-11 pr-4 py-2 rounded-xl text-sm font-black text-slate-700 outline-none border-none bg-transparent focus:ring-0">
+                        </div>
+                    </form>
+                    
+                    <!-- Quick Stats Summary -->
+                    <div class="hidden sm:flex flex-col">
+                        <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Total Personel</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm font-black text-slate-900">{{ count($employees) }}</span>
+                            <span class="text-[10px] text-emerald-500 font-bold bg-emerald-50 px-1.5 py-0.5 rounded-md">Aktif</span>
+                        </div>
+                    </div>
                 </div>
-            </form>
 
-            <div class="h-8 w-px bg-slate-100 hidden md:block"></div>
+                <div class="h-10 w-px bg-slate-200/60 hidden xl:block"></div>
 
-            <!-- Quick Search Input -->
-            <div class="relative flex-1 lg:w-64">
-                <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
-                <input type="text" id="gridSearch" placeholder="Cari nama personel..." class="w-full pl-11 pr-4 py-2.5 rounded-2xl text-sm font-bold text-slate-700 outline-none border border-slate-100 bg-slate-50 focus:bg-white focus:border-blue-500 transition-all" onkeyup="filterGrid(this.value)">
+                <!-- Unified Search & Export Cluster -->
+                <div class="flex flex-wrap items-center gap-4 flex-1 xl:flex-none">
+                    <div class="relative grow lg:w-72">
+                        <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"></i>
+                        <input type="text" id="gridSearch" placeholder="Cari nama personel di sini..." class="w-full pl-11 pr-6 py-3.5 rounded-[20px] text-xs font-bold text-slate-700 outline-none border border-slate-100 bg-white/80 focus:bg-white focus:border-blue-500 shadow-sm transition-all placeholder:text-slate-300" onkeyup="filterGrid(this.value)">
+                    </div>
+
+                    <div class="flex bg-white p-1.5 rounded-[20px] border border-slate-100 shadow-sm">
+                        <button onclick="handleDownload('{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'export_type' => 'pdf', 'type' => $activeType->id]) }}', 'jadwal-{{ strtolower(str_replace(' ', '-', $activeType->name)) }}-{{ $month->format('Y-m') }}.pdf')" class="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-50 hover:text-red-600 transition-all flex items-center gap-2 group">
+                            <i data-lucide="file-text" class="w-4 h-4 text-slate-400 group-hover:text-red-500 transition-colors"></i> PDF
+                        </button>
+                        <div class="w-px h-5 bg-slate-100 self-center mx-1.5"></div>
+                        <button onclick="handleDownload('{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'export_type' => 'excel', 'type' => $activeType->id]) }}', 'jadwal-{{ strtolower(str_replace(' ', '-', $activeType->name)) }}-{{ $month->format('Y-m') }}.xlsx')" class="px-5 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-emerald-50 hover:text-emerald-600 transition-all flex items-center gap-2 group">
+                            <i data-lucide="sheet" class="w-4 h-4 text-slate-400 group-hover:text-emerald-500 transition-colors"></i> Excel
+                        </button>
+                    </div>
+                </div>
             </div>
 
-            <div class="flex bg-slate-50 p-1 rounded-2xl border border-slate-100">
-                <button onclick="handleDownload('{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'export_type' => 'pdf', 'type' => $activeType->id]) }}', 'jadwal-{{ strtolower(str_replace(' ', '-', $activeType->name)) }}-{{ $month->format('Y-m') }}.pdf')" class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-red-600 transition-all flex items-center gap-2 group">
-                    <i data-lucide="file-text" class="w-4 h-4 text-slate-400 group-hover:text-red-500 transition-colors"></i> PDF
+            <div class="flex flex-wrap gap-4 w-full xl:w-auto">
+                <a href="{{ route('admin.squads.index') }}" class="flex-1 xl:flex-none px-6 py-3.5 rounded-2xl bg-white text-slate-900 border border-slate-200 font-bold text-[10px] uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-3 card-3d shadow-sm group">
+                    <i data-lucide="users" class="w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors"></i> Kelola Regu
+                </a>
+                <button onclick="confirmResetJadwal()" class="flex-1 xl:flex-none px-6 py-3.5 rounded-2xl bg-red-50 text-red-600 border border-red-100 font-bold text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-3 shadow-sm group">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4 opacity-70 group-hover:rotate-180 transition-transform duration-500"></i> Reset
                 </button>
-                <div class="w-px h-4 bg-slate-200 self-center mx-1"></div>
-                <button onclick="handleDownload('{{ route('admin.schedules.export', ['month' => $month->format('Y-m'), 'export_type' => 'excel', 'type' => $activeType->id]) }}', 'jadwal-{{ strtolower(str_replace(' ', '-', $activeType->name)) }}-{{ $month->format('Y-m') }}.xlsx')" class="px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white hover:text-emerald-600 transition-all flex items-center gap-2 group">
-                    <i data-lucide="sheet" class="w-4 h-4 text-slate-400 group-hover:text-emerald-500 transition-colors"></i> Excel
+                <button onclick="document.getElementById('rosterModal').classList.remove('hidden'); document.getElementById('rosterModal').classList.add('flex');" class="flex-1 xl:flex-none px-10 py-4 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-xl shadow-slate-200 btn-3d flex items-center justify-center gap-3">
+                    <i data-lucide="wand-2" class="w-4 h-4 text-amber-400 animate-pulse"></i> Generate
                 </button>
             </div>
-        </div>
-
-        <div class="flex flex-wrap gap-3 w-full lg:w-auto">
-            <a href="{{ route('admin.squads.index') }}" class="flex-1 lg:flex-none px-6 py-3.5 rounded-2xl bg-white text-slate-900 border border-slate-200 font-bold text-[10px] uppercase tracking-widest hover:border-blue-500 hover:text-blue-600 transition-all flex items-center justify-center gap-3 card-3d">
-                <i data-lucide="users" class="w-4 h-4"></i> Kelola Regu
-            </a>
-            <button onclick="confirmResetJadwal()" class="flex-1 lg:flex-none px-6 py-3.5 rounded-2xl bg-red-50 text-red-600 border border-red-100 font-bold text-[10px] uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all flex items-center justify-center gap-3">
-                <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Reset
-            </button>
-            <button onclick="document.getElementById('rosterModal').classList.remove('hidden')" class="flex-1 lg:flex-none px-8 py-3.5 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-xl btn-3d flex items-center justify-center gap-3">
-                <i data-lucide="wand-2" class="w-4 h-4 text-amber-400"></i> Auto-Generate
-            </button>
         </div>
     </div>
 
-    <!-- Tipe Jadwal Tabs -->
-    <div class="overflow-x-auto custom-scrollbar pb-2">
-        <div class="flex gap-2 min-w-max">
+    <!-- Intelligent Tabs Navigation -->
+    <div class="overflow-x-auto custom-scrollbar pb-4 pt-2">
+        <div class="flex gap-4 min-w-max px-2">
             @foreach($scheduleTypes as $type)
                 <a href="{{ route('admin.schedules.index', ['type' => $type->id, 'month' => $month->format('Y-m')]) }}" 
-                   class="px-5 py-3 rounded-2xl text-xs font-bold transition-all border {{ $activeType->id == $type->id ? 'bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-200' : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400 hover:text-slate-900 card-3d' }}">
-                    {{ $type->name }}
+                   class="relative px-8 py-4 rounded-[24px] text-xs font-black uppercase tracking-widest transition-all border duration-300 {{ $activeType->id == $type->id ? 'bg-slate-900 text-white border-slate-900 shadow-2xl shadow-slate-300 -translate-y-1' : 'bg-white text-slate-400 border-slate-100 hover:border-slate-300 hover:text-slate-900 hover:shadow-lg' }}">
+                    <div class="flex items-center gap-3">
+                        <div class="w-2 h-2 rounded-full {{ $activeType->id == $type->id ? 'bg-amber-400 animate-pulse' : 'bg-slate-200' }}"></div>
+                        {{ $type->name }}
+                    </div>
                 </a>
             @endforeach
         </div>
@@ -202,7 +224,7 @@
                                         @foreach($indicators as $ind)
                                             <div class="w-full h-8 rounded-lg border {{ $ind['class'] }} flex items-center justify-center text-[10px] font-black transition-all cursor-pointer select-none hover:scale-110" 
                                                  title="{{ $emp->full_name }} - {{ $dateStr }}"
-                                                 onclick="openManualAssign({{ $emp->id }}, '{{ $emp->full_name }}', '{{ $dateStr }}', '{{ $ind['id'] ?? '' }}')">
+                                                 onclick="openManualAssign({{ $emp->id }}, '{{ addslashes($emp->full_name) }}', '{{ $dateStr }}', '{{ $ind['id'] ?? '' }}')">
                                                 {{ $ind['label'] }}
                                             </div>
                                         @endforeach
@@ -268,7 +290,7 @@
 </form>
 
 <!-- Roster Generator Modal -->
-<div id="rosterModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-[100] p-6 backdrop-blur-sm">
+<div id="rosterModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-xl rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-200 relative overflow-hidden modal-scrollable">
         <div class="absolute top-0 right-0 w-32 h-32 bg-amber-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
         <div class="relative z-10">
@@ -347,7 +369,7 @@
 
                 <div class="flex gap-4">
                     <button type="button" onclick="document.getElementById('rosterModal').classList.add('hidden')" class="flex-1 py-5 bg-slate-100 text-slate-500 rounded-[24px] font-black text-sm uppercase tracking-widest hover:bg-slate-200 transition-all">Batal</button>
-                    <button type="submit" class="flex-[2] bg-slate-900 text-white py-5 rounded-[24px] font-black text-sm uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl btn-3d">
+                    <button type="submit" class="flex-1 bg-slate-900 text-white py-5 rounded-[24px] font-black text-sm uppercase tracking-[0.2em] hover:bg-blue-600 transition-all shadow-2xl btn-3d">
                         Eksekusi
                     </button>
                 </div>
@@ -357,7 +379,7 @@
 </div>
 
 <!-- Manual Assign Modal -->
-<div id="manualModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+<div id="manualModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-sm rounded-[40px] p-10 shadow-2xl animate-in zoom-in duration-200">
         <h3 class="text-xl font-black text-slate-900 mb-2 italic">Penyesuaian Jadwal</h3>
         <p id="manual_info" class="text-[10px] text-blue-600 font-black uppercase tracking-widest mb-8"></p>
@@ -377,8 +399,8 @@
             </div>
             
             <div class="flex gap-3">
-                <button type="button" onclick="document.getElementById('manualModal').classList.add('hidden')" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">Batal</button>
-                <button type="button" onclick="submitManual()" class="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100">Simpan</button>
+                <button type="button" onclick="document.getElementById('manualModal').classList.add('hidden'); document.getElementById('manualModal').classList.remove('flex');" class="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">Batal</button>
+                <button type="button" onclick="submitManual()" class="flex-1 py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl shadow-blue-100">Simpan</button>
             </div>
         </form>
     </div>

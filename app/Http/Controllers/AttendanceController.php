@@ -111,7 +111,11 @@ class AttendanceController extends Controller
                 } catch (\Exception $e) { continue; }
             }
 
-            DB::beginTransaction();
+            $upsertData = [];
+            $employees = Employee::with('rank_relation')->get()->keyBy('nip');
+            $officeLateThreshold = Setting::getValue('office_late_threshold', '07:30');
+            $now = now();
+
             foreach ($groupedData as $entry) {
                 $emp = $entry['emp'];
                 $date = $entry['date'];
@@ -120,22 +124,36 @@ class AttendanceController extends Controller
                 $minTime = min($times);
                 $maxTime = max($times);
 
-                // REPLACE Logic: Delete existing if any
-                Attendance::where('employee_id', $emp->id)->where('date', $date)->delete();
-
-                $attendance = Attendance::create([
+                // Prepare Data for Upsert
+                $tempAttendance = new \App\Models\Attendance([
                     'employee_id' => $emp->id,
                     'date' => $date,
                     'check_in' => $minTime,
                     'check_out' => $maxTime,
-                    'status' => 'present'
                 ]);
 
-                $this->calculateAttendanceMetrics($attendance, $emp);
-                $attendance->save();
+                $this->calculateAttendanceMetrics($tempAttendance, $emp);
+
+                $upsertData[] = [
+                    'employee_id' => $emp->id,
+                    'date' => $date,
+                    'check_in' => $minTime,
+                    'check_out' => $maxTime,
+                    'status' => $tempAttendance->status,
+                    'late_minutes' => $tempAttendance->late_minutes,
+                    'allowance_amount' => $tempAttendance->allowance_amount,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ];
                 $importedCount++;
             }
-            DB::commit();
+
+            if (!empty($upsertData)) {
+                $chunks = array_chunk($upsertData, 500);
+                foreach ($chunks as $chunk) {
+                    Attendance::upsert($chunk, ['employee_id', 'date'], ['check_in', 'check_out', 'status', 'late_minutes', 'allowance_amount', 'updated_at']);
+                }
+            }
 
             return back()->with('success', "Berhasil memproses $importedCount data absensi.");
 
@@ -201,7 +219,7 @@ class AttendanceController extends Controller
         $monthStr = $request->month ?? now()->format('Y-m');
         $date = Carbon::parse($monthStr);
         
-        $query = Employee::with(['work_unit', 'squad'])->orderBy('full_name');
+        $query = Employee::with(['work_unit', 'squad', 'rank_relation'])->orderBy('full_name');
 
         // Individual Filter
         if ($request->filled('employee_id')) {
@@ -280,6 +298,12 @@ class AttendanceController extends Controller
         } else {
             // Monthly Recap
             $attendances = Attendance::whereMonth('date', $date->month)->whereYear('date', $date->year)->get()->groupBy('employee_id');
+            $query = Employee::with(['work_unit', 'squad', 'rank_relation'])->orderBy('full_name');
+            if ($request->filled('employee_id')) {
+                $query->where('id', $request->employee_id);
+            }
+            $employees = $query->get();
+            
             $data = $employees->map(function($emp) use ($attendances) {
                 $atts = $attendances->get($emp->id) ?? collect();
                 $currentRate = $emp->rank_relation->meal_allowance ?? 0;
