@@ -64,7 +64,7 @@ class AttendanceController extends Controller
 
     public function import(Request $request)
     {
-        set_time_limit(0);
+        set_time_limit(0); // Prevent timeout for large data processing
         ini_set('memory_limit', '512M');
         $request->validate(['file' => 'required']);
 

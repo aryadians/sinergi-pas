@@ -142,6 +142,7 @@ class ScheduleController extends Controller
 
     public function export(Request $request)
     {
+        set_time_limit(0); // Prevent timeout for large exports
         $monthStr = $request->month ?? now()->format('Y-m');
         $date = Carbon::parse($monthStr);
         $type = $request->type ?? 'pdf';
