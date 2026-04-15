@@ -37,7 +37,6 @@
                 <th width="30">NO</th>
                 <th class="text-left">NAMA PEGAWAI</th>
                 <th>NIP</th>
-                <th>KATEGORI</th>
                 <th>MASUK</th>
                 <th>PULANG</th>
                 <th>STATUS</th>
@@ -50,7 +49,6 @@
                 <td>{{ $index + 1 }}</td>
                 <td class="text-left">{{ $item->employee->full_name }}</td>
                 <td>{{ $item->employee->nip }}</td>
-                <td>{{ $item->employee->category_label }}</td>
                 <td>{{ $item->check_in ? \Carbon\Carbon::parse($item->check_in)->format('H:i') : '--:--' }}</td>
                 <td>{{ $item->check_out && $item->check_out != $item->check_in ? \Carbon\Carbon::parse($item->check_out)->format('H:i') : '--:--' }}</td>
                 <td>{{ strtoupper($item->status) }}</td>

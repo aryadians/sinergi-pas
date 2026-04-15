@@ -102,7 +102,6 @@
                     <thead>
                         <tr class="bg-slate-50 border-b border-slate-100">
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pegawai</th>
-                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Kategori</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Hadir (Hari)</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Terlambat (Total)</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Uang Makan</th>
@@ -134,18 +133,15 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <span class="px-2.5 py-1 rounded-lg text-[9px] font-bold uppercase tracking-wider border {{ $emp->category_label === 'Petugas Jaga' ? 'bg-indigo-50 text-indigo-600 border-indigo-100' : 'bg-slate-100 text-slate-600 border-slate-200' }}">
-                                    {{ $emp->category_label }}
-                                </span>
-                            </td>
-                            <td class="px-6 py-4 text-center">
                                 <span class="text-sm font-bold text-slate-900">{{ $totalHadir }} Hari</span>
                             </td>
                             <td class="px-6 py-4 text-center">
                                 @if($totalTelat > 0)
                                     <span class="text-sm font-bold text-red-500">{{ $totalTelat }} Menit</span>
                                 @else
-                                    <span class="text-sm font-bold text-slate-400">-</span>
+                                    <span class="px-3 py-1 rounded-lg bg-emerald-50 text-emerald-600 text-[11px] font-bold border border-emerald-100 italic">
+                                        0 Menit
+                                    </span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 text-right">

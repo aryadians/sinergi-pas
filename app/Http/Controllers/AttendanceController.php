@@ -372,14 +372,13 @@ class AttendanceController extends Controller
                     $i+1, 
                     $item->employee->full_name, 
                     $item->employee->nip, 
-                    $item->employee->category_label,
                     $item->check_in ? Carbon::parse($item->check_in)->format('H:i') : '--:--', 
                     $item->check_out && $item->check_out != $item->check_in ? Carbon::parse($item->check_out)->format('H:i') : '--:--', 
                     strtoupper($item->status), 
                     $item->allowance_amount
                 ]);
             }
-            public function headings(): array { return ['NO', 'NAMA PEGAWAI', 'NIP', 'KATEGORI', 'MASUK', 'PULANG', 'STATUS', 'UANG MAKAN']; }
+            public function headings(): array { return ['NO', 'NAMA PEGAWAI', 'NIP', 'MASUK', 'PULANG', 'STATUS', 'UANG MAKAN']; }
             public function startCell(): string { return 'A7'; }
             public function drawings() {
                 $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();
@@ -411,13 +410,12 @@ class AttendanceController extends Controller
                     $i+1, 
                     $item->employee->full_name, 
                     $item->employee->nip, 
-                    $item->employee->category_label,
                     $item->total_present, 
                     $item->total_late_minutes, 
                     $item->total_allowance
                 ]);
             }
-            public function headings(): array { return ['NO', 'NAMA PEGAWAI', 'NIP', 'KATEGORI', 'TOTAL HADIR (HARI)', 'TOTAL TELAT (MENIT)', 'TOTAL UANG MAKAN']; }
+            public function headings(): array { return ['NO', 'NAMA PEGAWAI', 'NIP', 'TOTAL HADIR (HARI)', 'TOTAL TELAT (MENIT)', 'TOTAL UANG MAKAN']; }
             public function startCell(): string { return 'A7'; }
             public function drawings() {
                 $drawing = new \PhpOffice\PhpSpreadsheet\Worksheet\Drawing();

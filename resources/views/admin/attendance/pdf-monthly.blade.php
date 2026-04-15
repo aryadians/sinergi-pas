@@ -36,7 +36,6 @@
                 <th width="30">NO</th>
                 <th class="text-left">NAMA PEGAWAI</th>
                 <th>NIP</th>
-                <th>KATEGORI</th>
                 <th>TOTAL HADIR (HARI)</th>
                 <th>TOTAL TELAT (MENIT)</th>
                 <th class="text-right">TOTAL UANG MAKAN</th>
@@ -48,7 +47,6 @@
                 <td>{{ $index + 1 }}</td>
                 <td class="text-left">{{ $item->employee->full_name }}</td>
                 <td>{{ $item->employee->nip }}</td>
-                <td>{{ $item->employee->category_label }}</td>
                 <td>{{ $item->total_present }}</td>
                 <td>{{ $item->total_late_minutes }}</td>
                 <td class="text-right">Rp {{ number_format($item->total_allowance, 0, ',', '.') }}</td>
