@@ -113,20 +113,11 @@
                     @endforeach
                 </select>
             </form>
-
-            <form action="{{ route('employees.index') }}" method="GET" class="w-full lg:w-48">
-                <select name="category_id" onchange="this.form.submit()" class="w-full px-4 py-2.5 rounded-xl border border-transparent bg-slate-50 text-sm font-semibold text-slate-700 outline-none focus:bg-white focus:border-blue-500 appearance-none cursor-pointer">
-                    <option value="">Seluruh Kategori</option>
-                    @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}" {{ request('category_id') == $cat->id ? 'selected' : '' }}>{{ $cat->name }}</option>
-                    @endforeach
-                </select>
-            </form>
         </div>
 
         <div id="bulkActionBar" class="hidden flex items-center gap-3 bg-amber-50 px-4 py-2 rounded-2xl border border-amber-100 animate-in slide-in-from-right-4">
             <p class="text-[10px] font-bold text-amber-700 uppercase tracking-widest"><span id="selectedCount">0</span> Pegawai Terpilih</p>
-            <button type="button" onclick="confirmBulkDelete()" class="p-2 bg-white text-red-500 rounded-xl hover:bg-red-500 hover:text-white transition-all shadow-sm border border-amber-200">
+            <button type="button" onclick="confirmBulkDelete()" class="p-2 bg-white text-red-500 rounded-xl hover:bg-red-50 hover:text-white transition-all shadow-sm border border-amber-200">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
         </div>
@@ -172,14 +163,7 @@
                                     @endif
                                 </div>
                                 <div class="min-w-0">
-                                    <div class="flex items-center gap-2">
-                                        <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $employee->full_name }}</p>
-                                        @if($employee->category)
-                                            <span class="px-2 py-0.5 bg-{{ $employee->category->color }}-50 text-{{ $employee->category->color }}-600 border border-{{ $employee->category->color }}-100 text-[8px] font-black uppercase rounded-md tracking-tighter shadow-xs">
-                                                {{ $employee->category->name }}
-                                            </span>
-                                        @endif
-                                    </div>
+                                    <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $employee->full_name }}</p>
                                     <div class="flex flex-col mt-0.5">
                                         <span class="text-[10px] font-mono font-bold text-slate-400 tracking-tight">NIP. {{ $employee->nip }}</span>
                                         @if($employee->phone_number)
@@ -288,20 +272,9 @@
                         <input type="text" name="phone_number" placeholder="628..." class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                     </div>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="space-y-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
-                        <input type="email" name="email" required placeholder="pegawai@sinergipas.id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
-                    </div>
-                    <div class="space-y-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kategori Pegawai</label>
-                        <select name="category_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                            <option value="">-- Tanpa Kategori --</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                            @endforeach
-                        </select>
-                    </div>
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
+                    <input type="email" name="email" required placeholder="pegawai@sinergipas.id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
@@ -407,19 +380,10 @@
                         <select name="rank_id" id="edit_rank_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
                             <option value="">-- Tanpa Golongan --</option>
                             @foreach($ranks as $rank)
-                                <option value="{{ $rank->id }}">{{ $rank->name }} ({{ $rank->class }})</option>
+                                <option value="{{ $rank->id }}">{{ $rank->name }}</option>
                             @endforeach
                         </select>
                     </div>
-                </div>
-                <div class="space-y-1.5">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kategori Pegawai</label>
-                    <select name="category_id" id="edit_category_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                        <option value="">-- Tanpa Kategori --</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
-                        @endforeach
-                    </select>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
@@ -647,7 +611,7 @@
                         }
                     }
                 }).then((res) => {
-                    if (res.isConfirmed) {
+                    if (res.resConfirmed) {
                         document.getElementById('destroyAllForm').submit();
                     }
                 });
@@ -670,7 +634,6 @@
         document.getElementById('edit_role_in_squad').value = employee.role_in_squad || '';
         document.getElementById('edit_position_id').value = employee.position_id;
         document.getElementById('edit_work_unit_id').value = employee.work_unit_id;
-        document.getElementById('edit_category_id').value = employee.category_id || '';
         
         toggleRegu(document.getElementById('edit_employee_type'), 'edit');
         

@@ -39,6 +39,14 @@ class SettingController extends Controller
             Setting::updateOrCreate(['key' => $key], ['value' => $value]);
         }
 
+        // Specifically track who updated the broadcast message
+        if ($request->has('running_text_message')) {
+            Setting::updateOrCreate(
+                ['key' => 'running_text_author'],
+                ['value' => auth()->user()->name]
+            );
+        }
+
         AuditLog::create([
             'user_id' => auth()->id(),
             'activity' => 'update_settings',
@@ -149,5 +157,28 @@ class SettingController extends Controller
         ]);
 
         return back()->with('success', $count . ' unit kerja berhasil dihapus.');
+    }
+
+    public function getRunningText()
+    {
+        $settings = Setting::whereIn('key', [
+            'running_text_message',
+            'broadcast_mode',
+            'running_text_bg',
+            'running_text_color',
+            'running_text_speed',
+            'running_text_size',
+            'running_text_author'
+        ])->pluck('value', 'key');
+
+        return response()->json([
+            'message' => $settings['running_text_message'] ?? null,
+            'author' => $settings['running_text_author'] ?? 'Admin',
+            'mode' => $settings['broadcast_mode'] ?? 'running_text',
+            'bg' => $settings['running_text_bg'] ?? '#0F172A',
+            'color' => $settings['running_text_color'] ?? '#FFFFFF',
+            'speed' => $settings['running_text_speed'] ?? '20',
+            'size' => $settings['running_text_size'] ?? '12',
+        ]);
     }
 }

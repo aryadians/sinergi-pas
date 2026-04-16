@@ -120,6 +120,92 @@
                 </form>
             </section>
 
+            <!-- Siaran & Style -->
+            <section id="siaran" class="space-y-6 pt-10 border-t border-slate-200">
+                <div class="flex items-center gap-3 pb-2 border-b border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-900 uppercase tracking-widest text-xs">Siaran & Visual Style</h3>
+                </div>
+
+                <!-- Running Text Style -->
+                <form action="{{ route('settings.update') }}" method="POST" class="space-y-6">
+                    @csrf
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 card-3d">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                            <i data-lucide="palette" class="w-4 h-4"></i>
+                            Konfigurasi Siaran Utama
+                        </h4>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Mode Siaran</label>
+                                <select name="broadcast_mode" class="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                                    <option value="running_text" {{ ($settings['broadcast_mode'] ?? 'running_text') === 'running_text' ? 'selected' : '' }}>Running Text (Banner Atas)</option>
+                                    <option value="popup" {{ ($settings['broadcast_mode'] ?? 'running_text') === 'popup' ? 'selected' : '' }}>Pop-up Dialog (Saat Login/Refresh)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Ukuran Teks (PX)</label>
+                                <div class="flex items-center gap-4">
+                                    <input type="range" name="running_text_size" min="10" max="24" value="{{ $settings['running_text_size'] ?? '12' }}" class="flex-1 accent-blue-600" oninput="this.nextElementSibling.innerText = this.value + 'px'">
+                                    <span class="text-sm font-black text-blue-600 w-12">{{ $settings['running_text_size'] ?? '12' }}px</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-8">
+                            <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Isi Konten Pesan Siaran</label>
+                            <textarea name="running_text_message" rows="2" class="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all resize-none" placeholder="Masukkan pesan pengumuman di sini...">{{ $settings['running_text_message'] ?? '' }}</textarea>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Kecepatan Jalan (Detik)</label>
+                                <input type="number" name="running_text_speed" value="{{ $settings['running_text_speed'] ?? '20' }}" class="w-full px-5 py-3 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Warna Background</label>
+                                <div class="flex gap-2">
+                                    <input type="color" name="running_text_bg" value="{{ $settings['running_text_bg'] ?? '#0F172A' }}" class="w-12 h-12 rounded-xl border border-slate-200 bg-white cursor-pointer">
+                                    <input type="text" value="{{ $settings['running_text_bg'] ?? '#0F172A' }}" class="flex-1 px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono font-bold" readonly>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Warna Teks</label>
+                                <div class="flex gap-2">
+                                    <input type="color" name="running_text_color" value="{{ $settings['running_text_color'] ?? '#FFFFFF' }}" class="w-12 h-12 rounded-xl border border-slate-200 bg-white cursor-pointer">
+                                    <input type="text" value="{{ $settings['running_text_color'] ?? '#FFFFFF' }}" class="flex-1 px-4 py-2 rounded-xl border border-slate-200 bg-slate-50 text-xs font-mono font-bold" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 p-4 rounded-2xl border border-slate-100 bg-slate-50">
+                            <label class="flex items-center justify-between cursor-pointer group">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center text-blue-600">
+                                        <i data-lucide="shield-check" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <span class="text-xs font-bold text-slate-700 uppercase tracking-wide">Watermark Dokumen</span>
+                                        <p class="text-[9px] text-slate-400 font-bold uppercase tracking-tighter">Tambahkan tanda air pada setiap unduhan PDF</p>
+                                    </div>
+                                </div>
+                                <div class="relative inline-flex items-center">
+                                    <input type="hidden" name="watermark_enabled" value="off">
+                                    <input type="checkbox" name="watermark_enabled" value="on" class="peer sr-only" {{ ($settings['watermark_enabled'] ?? 'on') === 'on' ? 'checked' : '' }}>
+                                    <div class="h-6 w-11 rounded-full bg-slate-200 transition-all peer-checked:bg-blue-600 after:absolute after:left-1 after:top-1 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-5"></div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all btn-3d shadow-xl">
+                            Simpan Style Visual
+                        </button>
+                    </div>
+                </form>
+            </section>
+
             <!-- Absensi & Uang Makan -->
             <section id="absensi" class="space-y-6 pt-10 border-t border-slate-200">
                 <div class="flex items-center gap-3 pb-2 border-b border-slate-200">
@@ -246,6 +332,49 @@
                 </div>
             </section>
         </div>
+    </div>
+</div>
+
+<!-- Modal Add Announcement -->
+<div id="addAnnouncementModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
+        <div class="flex justify-between items-center mb-8">
+            <h3 class="text-xl font-bold text-slate-900 italic">Buat Siaran Baru</h3>
+            <button onclick="document.getElementById('addAnnouncementModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500 transition-colors">
+                <i data-lucide="x" class="w-6 h-6"></i>
+            </button>
+        </div>
+
+        <form action="{{ route('announcements.store') }}" method="POST" class="space-y-6">
+            @csrf
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pesan Siaran</label>
+                <textarea name="message" required rows="3" class="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none transition-all resize-none" placeholder="Tulis pengumuman di sini..."></textarea>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tipe Tampilan</label>
+                <select name="type" required class="w-full px-5 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                    <option value="banner">Running Text (Banner Atas)</option>
+                    <option value="popup" disabled>Popup Dialog (Coming Soon)</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Mulai Tayang</label>
+                    <input type="datetime-local" name="starts_at" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold outline-none focus:border-blue-500">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Berakhir Pada</label>
+                    <input type="datetime-local" name="expires_at" class="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50 text-xs font-bold outline-none focus:border-blue-500">
+                </div>
+            </div>
+
+            <button type="submit" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg btn-3d">
+                Siarkan Sekarang
+            </button>
+        </form>
     </div>
 </div>
 

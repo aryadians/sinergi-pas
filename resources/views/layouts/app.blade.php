@@ -34,7 +34,7 @@
     <link rel="apple-touch-startup-image" href="{{ asset('logo1.png') }}">
 
     <!-- SweetAlert & Progress Bar -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/nprogress/0.2.0/nprogress.min.js"></script>
 
@@ -55,9 +55,9 @@
             --color-surface: #F8FAFC;    /* Clean Background */
             --color-card: #FFFFFF;
             --color-border: #E2E8F0;
-            }
+        }
 
-            body {
+        body {
             font-family: var(--font-body);
             background: var(--color-surface);
             color: var(--color-primary);
@@ -65,97 +65,54 @@
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
-            }
+        }
 
-            h1, h2, h3, h4, h5, h6 { 
+        h1, h2, h3, h4, h5, h6 { 
             font-family: var(--font-display); 
             letter-spacing: -0.02em; 
             font-weight: 700;
-            }
+        }
 
-            /* 3D Animations & Hover Effects */
-            .card-3d {
+        /* 3D Animations & Hover Effects */
+        .card-3d {
             transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
             perspective: 1000px;
-            }
-            .card-3d:hover {
+        }
+        .card-3d:hover {
             transform: translateY(-8px) rotateX(2deg) rotateY(1deg);
             box-shadow: 0 20px 40px -12px rgba(15, 23, 42, 0.12);
-            }
+        }
 
-            .btn-3d {
+        .btn-3d {
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             position: relative;
             overflow: hidden;
-            }
-            .btn-3d:hover {
+        }
+        .btn-3d:hover {
             transform: translateY(-2px);
             box-shadow: 0 8px 20px -6px rgba(15, 23, 42, 0.3);
-            }
-            .btn-3d:active {
+        }
+        .btn-3d:active {
             transform: translateY(0);
-            }
+        }
 
-            .glass-premium {
+        .glass-premium {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.3);
-            }
+        }
 
-            /* Refined Sidebar */
-            .sidebar-item { 
+        /* Refined Sidebar */
+        .sidebar-item { 
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); 
-            }
-            .sidebar-item:hover { 
+        }
+        .sidebar-item:hover { 
             background-color: rgba(15, 23, 42, 0.05); 
-            }
-            .sidebar-item.active { 
+        }
+        .sidebar-item.active { 
             background: var(--color-primary); 
             color: white !important; 
             box-shadow: 0 10px 20px -5px rgba(15, 23, 42, 0.3);
-            }
-            .sidebar-item.active i { color: white !important; }
-
-            /* Component Refinement */
-            .rounded-premium { border-radius: 1.5rem; }
-            .rounded-button { border-radius: 0.875rem; }
-
-            /* Smooth Scrollbar */
-            .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
-            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-            .custom-scrollbar::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 10px; }
-            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
-
-            .page-fade { animation: pageIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
-            @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-
-            /* Mobile Optimizations */
-            @media (max-width: 1024px) {
-                body { padding-bottom: 80px; }
-            }
-
-            .bottom-nav-item.active {
-                color: #3B82F6;
-            }
-            .bottom-nav-item.active i {
-                transform: translateY(-4px);
-                color: #3B82F6;
-            }
-
-            #global-loading {
-                position: fixed;
-                inset: 0;
-                z-index: 9999;
-                background: white;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                transition: opacity 0.5s ease;
-            }
-            .loader-ring {
-                width: 48px;
-                height: 48px;
         }
         .sidebar-item.active i { color: white !important; }
 
@@ -172,17 +129,21 @@
         .page-fade { animation: pageIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
         @keyframes pageIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* Marquee Animation */
+        @keyframes marquee-js {
+            0% { transform: translateX(100vw); }
+            100% { transform: translateX(-100%); }
+        }
+        .animate-marquee-js {
+            display: inline-block;
+            white-space: nowrap;
+            animation: marquee-js linear infinite;
+            will-change: transform;
+        }
+
         /* Mobile Optimizations */
         @media (max-width: 1024px) {
             body { padding-bottom: 80px; }
-        }
-
-        .bottom-nav-item.active {
-            color: #3B82F6;
-        }
-        .bottom-nav-item.active i {
-            transform: translateY(-4px);
-            color: #3B82F6;
         }
 
         #global-loading {
@@ -243,11 +204,6 @@
                     <span class="text-sm font-semibold">Data Pegawai</span>
                 </a>
 
-                <a href="{{ route('admin.categories.index') }}" class="sidebar-item {{ request()->routeIs('admin.categories.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
-                    <i data-lucide="tag" class="w-5 h-5"></i>
-                    <span class="text-sm font-semibold">Kategori Pegawai</span>
-                </a>
-
                 <a href="{{ route('admin.ranks.index') }}" class="sidebar-item {{ request()->routeIs('admin.ranks.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
                     <i data-lucide="shield-check" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Golongan</span>
@@ -261,11 +217,6 @@
                 <a href="{{ route('admin.schedules.index') }}" class="sidebar-item {{ request()->routeIs('admin.schedules.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
                     <i data-lucide="calendar-days" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Jadwal Shift</span>
-                </a>
-
-                <a href="{{ route('admin.schedule-types.index') }}" class="sidebar-item {{ request()->routeIs('admin.schedule-types.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
-                    <i data-lucide="layers" class="w-5 h-5"></i>
-                    <span class="text-sm font-semibold">Master Tipe Piket</span>
                 </a>
 
                 <a href="{{ route('admin.squads.index') }}" class="sidebar-item {{ request()->routeIs('admin.squads.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
@@ -328,27 +279,14 @@
 
         <!-- Main Content -->
         <main class="relative min-h-screen flex-1 min-w-0 lg:ml-64 bg-slate-50">
-            @php 
-                $activeBanner = \App\Models\Announcement::active()->where('type', 'banner')->latest()->first();
-                $bannerBg = \App\Models\Setting::getValue('running_text_bg', '#0F172A');
-                $bannerColor = \App\Models\Setting::getValue('running_text_color', '#FFFFFF');
-                $bannerSpeed = \App\Models\Setting::getValue('running_text_speed', '20');
-            @endphp
-
-            @if($activeBanner)
-            <div class="py-2.5 overflow-hidden relative shadow-sm" style="background-color: {{ $bannerBg }}; color: {{ $bannerColor }};">
-                <div class="whitespace-nowrap animate-marquee inline-block text-[11px] font-semibold">
-                    <span class="mx-12"><i data-lucide="megaphone" class="w-4 h-4 inline mr-2 align-middle"></i> {{ $activeBanner->message }}</span>
-                    <span class="mx-12"><i data-lucide="megaphone" class="w-4 h-4 inline mr-2 align-middle"></i> {{ $activeBanner->message }}</span>
+            <!-- Real-time Broadcast Container -->
+            <div id="broadcast-container" class="z-30 relative hidden">
+                <div id="marquee-wrapper" class="w-full overflow-hidden whitespace-nowrap py-3 shadow-md">
+                    <div id="marquee-content" class="animate-marquee-js inline-block font-black uppercase tracking-widest italic">
+                        <!-- Content will be injected by JS -->
+                    </div>
                 </div>
             </div>
-            @push('styles')
-            <style>
-                @keyframes marquee { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
-                .animate-marquee { animation: marquee {{ $bannerSpeed }}s linear infinite; }
-            </style>
-            @endpush
-            @endif
 
             <header class="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-slate-200 bg-white/80 backdrop-blur-md px-6 lg:px-10">
                 <div class="flex items-center gap-4">
@@ -448,103 +386,65 @@
     </nav>
 
     <script>
-        // PWA Service Worker Registration
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(reg => console.log('SW Registered'))
-                    .catch(err => console.log('SW Error', err));
-            });
-        }
+        let lastMessage = null;
 
-        // Global Toast Notification Helper
-        window.showToast = function(message, icon = 'info') {
-            const Toast = Swal.mixin({
-                toast: true,
-                position: 'top-end',
-                showConfirmButton: false,
-                timer: 3000,
-                timerProgressBar: true,
-                didOpen: (toast) => {
-                    toast.addEventListener('mouseenter', Swal.stopTimer)
-                    toast.addEventListener('mouseleave', Swal.resumeTimer)
+        async function refreshBroadcast() {
+            try {
+                const response = await fetch("{{ route('settings.running-text') }}");
+                const data = await response.json();
+
+                if (!data.message) {
+                    document.getElementById('broadcast-container').classList.add('hidden');
+                    return;
                 }
-            });
-            Toast.fire({ icon: icon, title: message });
-        };
+
+                if (data.mode === 'running_text') {
+                    const container = document.getElementById('broadcast-container');
+                    const wrapper = document.getElementById('marquee-wrapper');
+                    const content = document.getElementById('marquee-content');
+
+                    container.classList.remove('hidden');
+                    wrapper.style.backgroundColor = data.bg;
+                    wrapper.style.color = data.color;
+                    content.style.fontSize = data.size + 'px';
+                    content.style.animationDuration = data.speed + 's';
+                    
+                    const item = `<i data-lucide="megaphone" class="w-4 h-4 inline-block mr-2 align-middle"></i> ${data.message} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;`;
+                    content.innerHTML = item + item + item + item;
+                    lucide.createIcons();
+                } else if (data.mode === 'popup') {
+                    document.getElementById('broadcast-container').classList.add('hidden');
+                    
+                    // Only show popup if message changed or first time
+                    if (lastMessage !== data.message) {
+                        Swal.fire({
+                            title: '<div class="flex items-center justify-center gap-3 text-blue-600"><i data-lucide="megaphone" class="w-8 h-8"></i> PENGUMUMAN</div>',
+                            html: `<div class="text-slate-700 font-bold leading-relaxed py-4" style="font-size: ${data.size}px;">${data.message}</div>`,
+                            confirmButtonText: 'SAYA MENGERTI',
+                            confirmButtonColor: '#0F172A',
+                            customClass: { popup: 'rounded-[40px] p-10 border-4 border-blue-50' },
+                            didOpen: () => { lucide.createIcons(); }
+                        });
+                        lastMessage = data.message;
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch broadcast:', error);
+            }
+        }
 
         window.addEventListener('DOMContentLoaded', () => {
             lucide.createIcons();
             const loader = document.getElementById('global-loading');
             loader.style.opacity = '0';
             setTimeout(() => loader.style.display = 'none', 500);
+            
+            // Initial fetch
+            refreshBroadcast();
+            
+            // Poll every 60 seconds
+            setInterval(refreshBroadcast, 60000);
         });
-
-        window.addEventListener('beforeunload', (e) => {
-            // Check if the clicked element is a download link or has no-loader class
-            const activeElement = document.activeElement;
-            if (activeElement && (activeElement.hasAttribute('download') || activeElement.classList.contains('no-loader') || activeElement.target === '_blank')) {
-                return;
-            }
-            NProgress.start();
-        });
-
-        // Instant click feel for links
-        document.addEventListener('click', (e) => {
-            const link = e.target.closest('a');
-            if (link && !link.hasAttribute('download') && !link.classList.contains('no-loader') && link.target !== '_blank' && link.href && link.href.startsWith(window.location.origin)) {
-                // We don't use full SPA here to keep it stable, but we can prefetch
-                const prefetch = document.createElement('link');
-                prefetch.rel = 'prefetch';
-                prefetch.href = link.href;
-                document.head.appendChild(prefetch);
-            }
-        });
-
-        // Global Download Handler with SweetAlert2
-        window.handleDownload = async function(url, filename) {
-            Swal.fire({
-                title: 'Mempersiapkan Dokumen',
-                html: 'Mohon tunggu sebentar, sistem sedang menggenerate berkas Anda...',
-                allowOutsideClick: false,
-                didOpen: () => {
-                    Swal.showLoading();
-                },
-                customClass: { popup: 'rounded-[32px]' }
-            });
-
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error('Download failed');
-                
-                const blob = await response.blob();
-                const downloadUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = downloadUrl;
-                a.download = filename || 'document';
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(downloadUrl);
-                a.remove();
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil Didownload',
-                    text: 'Dokumen Anda telah berhasil diunduh.',
-                    timer: 2000,
-                    showConfirmButton: false,
-                    customClass: { popup: 'rounded-[32px]' }
-                });
-            } catch (error) {
-                console.error(error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Download Gagal',
-                    text: 'Terjadi kesalahan saat mengunduh dokumen. Silakan coba lagi.',
-                    customClass: { popup: 'rounded-[32px]' }
-                });
-            }
-        };
 
         function toggleNotifications() {
             document.getElementById('notificationDropdown').classList.toggle('hidden');

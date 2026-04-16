@@ -78,6 +78,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::get('/settings/running-text', [SettingController::class, 'getRunningText'])->name('settings.running-text');
 
         // Rank Management
         Route::delete('/admin/ranks/bulk', [\App\Http\Controllers\Admin\RankController::class, 'bulkDestroy'])->name('admin.ranks.bulk-destroy');
@@ -140,7 +141,5 @@ Route::middleware('auth')->group(function () {
             Route::delete('/reset', [ScheduleController::class, 'reset'])->name('reset');
             Route::get('/export', [ScheduleController::class, 'export'])->name('export');
         });
-
-        Route::resource('admin/schedule-types', \App\Http\Controllers\Admin\ScheduleTypeController::class)->names('admin.schedule-types');
     });
 });

@@ -26,7 +26,6 @@
                 <tr class="bg-slate-50 border-b border-slate-100">
                     <th class="px-6 py-5 w-10"></th>
                     <th class="px-6 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Nama Golongan</th>
-                    <th class="px-6 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Pangkat / Keterangan</th>
                     <th class="px-6 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Uang Makan</th>
                     <th class="px-6 py-5 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Aksi</th>
                 </tr>
@@ -39,9 +38,6 @@
                     </td>
                     <td class="px-6 py-4">
                         <span class="text-sm font-black text-slate-900">{{ $rank->name }}</span>
-                    </td>
-                    <td class="px-6 py-4">
-                        <span class="text-sm font-medium text-slate-500">{{ $rank->description ?? '-' }}</span>
                     </td>
                     <td class="px-6 py-4 text-center">
                         <span class="px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-black border border-emerald-100">
@@ -64,7 +60,7 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="5" class="px-6 py-20 text-center">
+                    <td colspan="4" class="px-6 py-20 text-center">
                         <p class="text-xs font-bold text-slate-400 uppercase tracking-widest italic">Belum ada data golongan</p>
                     </td>
                 </tr>
@@ -89,10 +85,6 @@
                 <input type="text" name="name" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none">
             </div>
             <div class="space-y-1.5">
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Keterangan (Pangkat)</label>
-                <input type="text" name="description" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none">
-            </div>
-            <div class="space-y-1.5">
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Rate Uang Makan (Per Hari)</label>
                 <div class="relative">
                     <span class="absolute left-5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">Rp</span>
@@ -114,10 +106,6 @@
             <div class="space-y-1.5">
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Nama Golongan</label>
                 <input type="text" name="name" id="edit_name" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none">
-            </div>
-            <div class="space-y-1.5">
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Keterangan</label>
-                <input type="text" name="description" id="edit_description" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none">
             </div>
             <div class="space-y-1.5">
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Rate Uang Makan</label>
@@ -193,11 +181,15 @@
 
     function openEditRankModal(rank) {
         const form = document.getElementById('editRankForm');
-        form.action = `/admin/ranks/${rank.id}`;
+        // Construct the URL manually to avoid route helper limitations in JS
+        form.action = '/admin/ranks/' + rank.id;
+        
         document.getElementById('edit_name').value = rank.name;
-        document.getElementById('edit_description').value = rank.description || '';
         document.getElementById('edit_meal_allowance').value = rank.meal_allowance || 0;
-        document.getElementById('editRankModal').classList.remove('hidden');
+        
+        // Show modal
+        const modal = document.getElementById('editRankModal');
+        modal.classList.remove('hidden');
     }
 </script>
 
