@@ -51,8 +51,8 @@ Route::middleware('auth')->group(function () {
     
     // Profile Settings
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
-    Route::post('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.photo.destroy');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.delete-photo');
     Route::post('/profile/report', [ProfileController::class, 'report'])->name('profile.report');
 
     // Notifications

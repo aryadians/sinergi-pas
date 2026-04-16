@@ -9,6 +9,8 @@ use App\Models\ReportIssue;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Drivers\Gd\Driver;
 
 class ProfileController extends Controller
 {
@@ -28,7 +30,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
-            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:10240', // Relaxed to 10MB for server-side compression
             'password' => 'nullable|min:8|confirmed',
         ]);
 
@@ -45,14 +47,24 @@ class ProfileController extends Controller
         }
 
         if ($request->hasFile('photo')) {
-            $image = $request->file('photo');
-            $path = $image->store('photos', 'public');
+            $file = $request->file('photo');
+            
+            // Automatic Compression using Intervention Image V3 Manager
+            $manager = new ImageManager(new Driver());
+            $image = $manager->read($file->getRealPath());
+            
+            // Resize if too large while maintaining aspect ratio (800px max)
+            $image->scaleDown(width: 800, height: 800);
+            
+            // Encode as JPG with 70% quality
+            $encoded = $image->toJpeg(70);
+            $base64 = 'data:image/jpeg;base64,' . base64_encode($encoded->toString());
 
             // Ensure employee record exists
             if (!$employee) {
                 $employee = Employee::create([
                     'user_id' => $user->id,
-                    'nip' => 'ADMIN-' . $user->id, // Default NIP for admin if not exists
+                    'nip' => 'ADMIN-' . $user->id,
                     'full_name' => $user->name,
                     'position' => 'Administrator',
                 ]);
@@ -63,7 +75,7 @@ class ProfileController extends Controller
                 Storage::disk('public')->delete($employee->getRawOriginal('photo'));
             }
 
-            $employee->update(['photo' => $path]);
+            $employee->update(['photo' => $base64]);
             $changes[] = 'foto profil';
         }
 

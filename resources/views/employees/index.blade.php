@@ -133,70 +133,95 @@
     </div>
 
     <!-- Table Section -->
-    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden card-3d">
+    <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden card-3d">
         <div class="overflow-x-auto">
             <table class="w-full text-left border-collapse" id="employeeTable">
                 <thead>
-                    <tr class="bg-slate-50/50 border-b border-slate-100">
-                        <th class="px-6 py-4 w-10">
-                            <input type="checkbox" id="selectAll" class="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
+                    <tr class="bg-slate-50/80 border-b border-slate-100">
+                        <th class="px-6 py-5 w-12 text-center">
+                            <input type="checkbox" id="selectAll" class="w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-0 cursor-pointer transition-all">
                         </th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Identitas Pegawai</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Unit & Jabatan</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Tipe & Gol</th>
-                        <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Aksi</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Profil Petugas</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Penempatan</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Status & Golongan</th>
+                        <th class="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-50">
                     @forelse($employees as $employee)
-                    <tr class="hover:bg-slate-50/50 transition-colors group employee-row" data-name="{{ $employee->full_name }}">
-                        <td class="px-6 py-4">
-                            <input type="checkbox" name="ids[]" value="{{ $employee->id }}" class="emp-checkbox w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-0 cursor-pointer">
+                    <tr class="hover:bg-blue-50/30 transition-all duration-300 group employee-row" data-name="{{ $employee->full_name }}">
+                        <td class="px-6 py-4 text-center">
+                            <input type="checkbox" name="ids[]" value="{{ $employee->id }}" class="emp-checkbox w-5 h-5 rounded-lg border-slate-300 text-blue-600 focus:ring-0 cursor-pointer transition-all">
                         </td>
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-4">
-                                <div class="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center text-slate-400 font-bold group-hover:scale-105 transition-transform shrink-0">
-                                    @if($employee->photo)
-                                        <img src="{{ $employee->photo }}" class="w-full h-full object-cover">
-                                    @else
-                                        <i data-lucide="user" class="w-6 h-6 opacity-30"></i>
+                                <div class="relative shrink-0">
+                                    <div class="w-14 h-14 rounded-2xl bg-slate-100 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center text-slate-400 group-hover:scale-105 transition-all duration-500 ring-1 ring-slate-200">
+                                        @if($employee->photo)
+                                            <img src="{{ $employee->photo }}" class="w-full h-full object-cover">
+                                        @else
+                                            <div class="w-full h-full bg-linear-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+                                                <i data-lucide="user" class="w-6 h-6 opacity-20"></i>
+                                            </div>
+                                        @endif
+                                    </div>
+                                    @if($employee->picket_regu)
+                                        <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 border-2 border-white rounded-lg flex items-center justify-center shadow-sm">
+                                            <span class="text-[9px] font-black text-white">{{ $employee->picket_regu }}</span>
+                                        </div>
                                     @endif
                                 </div>
-                                    <p class="text-sm font-bold text-slate-900 group-hover:text-blue-600 transition-colors truncate name-field">{{ $employee->full_name }}</p>
-                                    <div class="flex items-center gap-2 mt-0.5">
-                                        <p class="text-[10px] font-mono font-bold text-slate-400 tracking-tight">NIP. {{ $employee->nip }}</p>
+                                <div class="min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $employee->full_name }}</p>
                                         @if($employee->category)
-                                            <span class="px-1.5 py-0.5 bg-{{ $employee->category->color }}-50 text-{{ $employee->category->color }}-600 border border-{{ $employee->category->color }}-100 text-[8px] font-black uppercase rounded-md tracking-tighter">
+                                            <span class="px-2 py-0.5 bg-{{ $employee->category->color }}-50 text-{{ $employee->category->color }}-600 border border-{{ $employee->category->color }}-100 text-[8px] font-black uppercase rounded-md tracking-tighter shadow-xs">
                                                 {{ $employee->category->name }}
                                             </span>
                                         @endif
                                     </div>
-                                    <p class="text-[9px] font-bold text-green-600 mt-0.5 uppercase">WA: {{ $employee->phone_number ?? '-' }}</p>
+                                    <div class="flex flex-col mt-0.5">
+                                        <span class="text-[10px] font-mono font-bold text-slate-400 tracking-tight">NIP. {{ $employee->nip }}</span>
+                                        @if($employee->phone_number)
+                                            <a href="https://wa.me/{{ $employee->phone_number }}" target="_blank" class="flex items-center gap-1 text-[10px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors mt-0.5">
+                                                <i data-lucide="phone" class="w-3 h-3"></i>
+                                                {{ $employee->phone_number }}
+                                            </a>
+                                        @endif
+                                    </div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">
-                            <span class="px-3 py-1 bg-blue-50 text-blue-600 text-[9px] font-bold uppercase rounded-lg border border-blue-100 inline-block mb-1">{{ $employee->work_unit->name ?? '-' }}</span>
-                            <p class="text-[10px] font-semibold text-slate-500 truncate max-w-[150px] mx-auto">{{ $employee->position }}</p>
-                        </td>
-                        <td class="px-6 py-4 text-center">
-                            <div class="flex flex-col items-center">
-                                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 text-[9px] font-bold border border-slate-200 uppercase mb-1">{{ str_replace('_', ' ', $employee->employee_type) }}</span>
-                                <span class="text-[9px] font-bold text-amber-600 uppercase">Gol. {{ $employee->rank_relation->name ?? $employee->rank_class ?? '-' }}</span>
-                                @if($employee->picket_regu)
-                                    <span class="text-[8px] font-extrabold text-blue-500 mt-1 uppercase">Regu {{ $employee->picket_regu }}</span>
-                                @endif
+                            <div class="inline-flex flex-col gap-1">
+                                <span class="px-3 py-1 bg-slate-100 text-slate-600 text-[9px] font-black uppercase rounded-full border border-slate-200/50 group-hover:bg-blue-100 group-hover:text-blue-700 group-hover:border-blue-200 transition-all">
+                                    {{ $employee->work_unit->name ?? 'Unit Belum Set' }}
+                                </span>
+                                <span class="text-[10px] font-bold text-slate-400 italic">{{ $employee->position ?? 'Jabatan Kosong' }}</span>
                             </div>
                         </td>
-                        <td class="px-6 py-4">
-                            <div class="flex justify-center items-center gap-2">
-                                <a href="{{ route('employees.show', $employee->id) }}" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center" title="Detail & Riwayat">
-                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex flex-col items-center gap-1.5">
+                                <div class="flex items-center gap-1.5">
+                                    <span class="w-1.5 h-1.5 rounded-full {{ $employee->employee_type === 'regu_jaga' ? 'bg-indigo-500' : 'bg-amber-500' }}"></span>
+                                    <span class="text-[10px] font-black text-slate-700 uppercase tracking-tighter">
+                                        {{ str_replace('_', ' ', $employee->employee_type) }}
+                                    </span>
+                                </div>
+                                <div class="px-2.5 py-1 rounded-lg bg-amber-50 border border-amber-100 text-amber-700 text-[9px] font-black shadow-xs">
+                                    GOL. {{ $employee->rank_relation->name ?? $employee->rank_class ?? '-' }}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex justify-center items-center gap-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                                <a href="{{ route('employees.show', $employee->id) }}" class="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-blue-600 hover:bg-blue-50 hover:border-blue-200 transition-all flex items-center justify-center shadow-sm active:scale-90" title="Lihat Profil">
+                                    <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
                                 </a>
-                                <button onclick='openEditModal(@json($employee), "{{ $employee->user->email }}")' class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-amber-600 hover:bg-amber-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center" title="Edit Profil">
-                                    <i data-lucide="pencil" class="w-4 h-4"></i>
+                                <button onclick='openEditModal(@json($employee), "{{ $employee->user->email ?? '' }}")' class="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-amber-600 hover:bg-amber-50 hover:border-amber-200 transition-all flex items-center justify-center shadow-sm active:scale-90" title="Edit Data">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
                                 </button>
-                                <button type="button" onclick="confirmDelete({{ $employee->id }})" class="w-9 h-9 rounded-xl border border-slate-200 text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all btn-3d bg-white shadow-sm flex items-center justify-center">
+                                <button type="button" onclick="confirmDelete({{ $employee->id }})" class="w-9 h-9 rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-red-600 hover:bg-red-50 hover:border-red-200 transition-all flex items-center justify-center shadow-sm active:scale-90" title="Hapus Permanen">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </button>
                                 <form id="deleteForm-{{ $employee->id }}" action="{{ route('employees.destroy', $employee->id) }}" method="POST" class="hidden no-loader">
@@ -207,11 +232,13 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="5" class="px-6 py-20 text-center">
-                            <div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-dashed border-slate-200">
-                                <i data-lucide="users" class="w-8 h-8 text-slate-300"></i>
+                        <td colspan="5" class="px-6 py-24 text-center">
+                            <div class="relative w-20 h-24 mx-auto mb-6">
+                                <div class="absolute inset-0 bg-blue-500/10 blur-2xl rounded-full animate-pulse"></div>
+                                <i data-lucide="users-2" class="relative w-20 h-20 text-slate-200 mx-auto"></i>
                             </div>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-widest italic">Belum ada data pegawai</p>
+                            <h4 class="text-lg font-black text-slate-900 italic">Database Kosong</h4>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mt-1">Belum ada entitas pegawai yang terdaftar</p>
                         </td>
                     </tr>
                     @endforelse
@@ -265,8 +292,6 @@
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
                         <input type="email" name="email" required placeholder="pegawai@sinergipas.id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
-                    </div>
-                        </select>
                     </div>
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kategori Pegawai</label>
@@ -377,17 +402,24 @@
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Email</label>
                         <input type="email" name="email" id="edit_email" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none transition-all">
                     </div>
-                        </select>
-                    </div>
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kategori Pegawai</label>
-                        <select name="category_id" id="edit_category_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
-                            <option value="">-- Tanpa Kategori --</option>
-                            @foreach($categories as $cat)
-                                <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Pangkat/Golongan</label>
+                        <select name="rank_id" id="edit_rank_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                            <option value="">-- Tanpa Golongan --</option>
+                            @foreach($ranks as $rank)
+                                <option value="{{ $rank->id }}">{{ $rank->name }} ({{ $rank->class }})</option>
                             @endforeach
                         </select>
                     </div>
+                </div>
+                <div class="space-y-1.5">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Kategori Pegawai</label>
+                    <select name="category_id" id="edit_category_id" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none appearance-none cursor-pointer">
+                        <option value="">-- Tanpa Kategori --</option>
+                        @foreach($categories as $cat)
+                            <option value="{{ $cat->id }}">{{ $cat->name }}</option>
+                        @endforeach
+                    </select>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
@@ -450,11 +482,11 @@
 </div>
 
 <!-- Import Modal -->
-<div id="createModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-6 backdrop-blur-sm">
+<div id="importModal" class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-50 p-6 backdrop-blur-sm">
     <div class="bg-white w-full max-w-md rounded-[32px] p-10 shadow-2xl animate-in zoom-in duration-200">
         <div class="flex justify-between items-center mb-8">
             <h3 class="text-xl font-bold text-slate-900">Import Batch Pegawai</h3>
-            <button onclick="document.getElementById('rosterModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500">
+            <button onclick="document.getElementById('importModal').classList.add('hidden')" class="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 hover:text-red-500">
                 <i data-lucide="x" class="w-6 h-6"></i>
             </button>
         </div>
