@@ -264,9 +264,9 @@
                 <p class="text-xs font-medium text-slate-500 leading-relaxed">
                     Pastikan Anda keluar jika menggunakan perangkat bersama untuk menjaga keamanan data kepegawaian Anda.
                 </p>
-                <form action="{{ route('logout') }}" method="POST" class="no-loader">
+                <form id="logout-form-profile" action="{{ route('logout') }}" method="POST" class="no-loader">
                     @csrf
-                    <button type="submit" class="w-full py-4 bg-slate-900 text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl hover:bg-red-600 transition-all transform active:scale-95 btn-3d flex items-center justify-center gap-3">
+                    <button type="button" onclick="confirmLogout('logout-form-profile')" class="w-full py-4 bg-slate-900 text-white text-xs font-black uppercase tracking-[0.2em] rounded-2xl shadow-xl hover:bg-red-600 transition-all transform active:scale-95 btn-3d flex items-center justify-center gap-3">
                         <i data-lucide="power" class="w-4 h-4"></i>
                         Keluar dari Aplikasi
                     </button>

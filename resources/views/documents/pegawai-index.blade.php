@@ -195,14 +195,6 @@
 <form id="deleteDocForm" action="" method="POST" class="hidden no-loader">@csrf @method('DELETE')</form>
 
 <script>
-    function handleDownload(url, filename) {
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
     function updateFileName(input) {
         if (input.files && input.files[0]) {
             document.getElementById('uploadFileName').textContent = input.files[0].name;

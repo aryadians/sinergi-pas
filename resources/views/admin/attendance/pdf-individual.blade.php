@@ -36,7 +36,7 @@
         <tr><td>NAMA LENGKAP</td><td>: {{ strtoupper($emp->full_name) }}</td></tr>
         <tr><td>NIP</td><td>: {{ $emp->nip }}</td></tr>
         <tr><td>JABATAN</td><td>: {{ strtoupper($emp->position) }}</td></tr>
-        <tr><td>PERIODE</td><td>: {{ strtoupper($date->translatedFormat('F Y')) }}</td></tr>
+        <tr><td>PERIODE</td><td>: {{ strtoupper(\Carbon\Carbon::parse($logs->first()?->date ?? now())->translatedFormat('F Y')) }}</td></tr>
     </table>
 
     <table class="main">

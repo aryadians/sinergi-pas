@@ -180,10 +180,10 @@
                 <h3 class="text-2xl font-bold tracking-tight leading-snug">Unduh Slip Gaji<br>Periode Berjalan.</h3>
                 <div class="mt-8">
                     @if($latestSalary)
-                        <button onclick="handleDownload('{{ route('documents.download', $latestSalary->id) }}', 'Slip-Gaji-{{ auth()->user()->name }}.pdf')" class="inline-flex w-full items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-amber-600 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg btn-3d no-loader">
+                        <a href="{{ route('documents.download', $latestSalary->id) }}" download="Slip-Gaji-{{ auth()->user()->name }}.pdf" class="inline-flex w-full items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-amber-600 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg btn-3d no-loader">
                             <i data-lucide="download-cloud" class="w-5 h-5"></i>
                             Download PDF
-                        </button>
+                        </a>
                     @else
                         <div class="px-6 py-4 rounded-2xl bg-white/5 border border-white/5 text-center text-[10px] font-bold uppercase text-slate-500 italic">
                             Belum diunggah bendahara

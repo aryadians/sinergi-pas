@@ -116,6 +116,14 @@
         }
         .sidebar-item.active i { color: white !important; }
 
+        .bottom-nav-item.active {
+            color: var(--color-primary) !important;
+        }
+        .bottom-nav-item.active i {
+            color: var(--color-primary) !important;
+            transform: translateY(-2px);
+        }
+
         /* Component Refinement */
         .rounded-premium { border-radius: 1.5rem; }
         .rounded-button { border-radius: 0.875rem; }
@@ -267,9 +275,9 @@
             </nav>
 
             <div class="pt-6 mt-auto border-t border-slate-100">
-                <form action="{{ route('logout') }}" method="POST" class="no-loader">
+                <form id="logout-form-sidebar" action="{{ route('logout') }}" method="POST" class="no-loader">
                     @csrf
-                    <button type="submit" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors text-sm font-bold">
+                    <button type="button" onclick="confirmLogout('logout-form-sidebar')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-500 hover:bg-red-50 transition-colors text-sm font-bold">
                         <i data-lucide="log-out" class="w-5 h-5"></i>
                         <span>Keluar</span>
                     </button>
@@ -361,9 +369,9 @@
                                     <i data-lucide="user-circle" class="w-4 h-4"></i>
                                     <span>Profil Saya</span>
                                 </a>
-                                <form action="{{ route('logout') }}" method="POST" class="no-loader">
+                                <form id="logout-form-header" action="{{ route('logout') }}" method="POST" class="no-loader">
                                     @csrf
-                                    <button type="submit" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all">
+                                    <button type="button" onclick="confirmLogout('logout-form-header')" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-all">
                                         <i data-lucide="log-out" class="w-4 h-4"></i>
                                         <span>Keluar Aplikasi</span>
                                     </button>
@@ -374,30 +382,42 @@
                 </div>
             </header>
             
-            <div class="page-fade p-6 lg:p-10">@yield('content')</div>
+            <div class="page-fade p-6 lg:p-10 pb-32 lg:pb-10">@yield('content')</div>
         </main>
     </div>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 z-50 lg:hidden bg-white/90 backdrop-blur-xl border-t border-slate-200 flex items-center justify-around px-4 py-3 pb-safe-area shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
-        <a href="{{ route('dashboard') }}" class="bottom-nav-item {{ request()->routeIs('dashboard') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
+    <nav class="fixed bottom-0 left-0 right-0 z-[100] lg:hidden bg-white/95 backdrop-blur-2xl border-t border-slate-200 flex items-center justify-around px-4 pt-3 pb-safe shadow-[0_-10px_40px_rgba(15,23,42,0.1)]">
+        <a href="{{ route('dashboard') }}" class="bottom-nav-item {{ request()->routeIs('dashboard') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group transition-all">
             <i data-lucide="layout-dashboard" class="w-6 h-6 transition-transform group-active:scale-90"></i>
             <span class="text-[9px] font-bold uppercase tracking-widest">Beranda</span>
         </a>
         
-        <a href="{{ route('documents.index') }}" class="bottom-nav-item {{ request()->routeIs('documents.*') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
+        @if(auth()->user()->role === 'superadmin')
+        <a href="{{ route('employees.index') }}" class="bottom-nav-item {{ request()->routeIs('employees.*') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group transition-all">
+            <i data-lucide="users" class="w-6 h-6 transition-transform group-active:scale-90"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Pegawai</span>
+        </a>
+        @else
+        <a href="{{ route('documents.index') }}" class="bottom-nav-item {{ request()->routeIs('documents.*') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group transition-all">
             <i data-lucide="folder-open" class="w-6 h-6 transition-transform group-active:scale-90"></i>
             <span class="text-[9px] font-bold uppercase tracking-widest">Arsip</span>
         </a>
+        @endif
 
-        <a href="{{ route('profile.index') }}" class="bottom-nav-item {{ request()->routeIs('profile.index') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group">
+        <a href="{{ auth()->user()->role === 'superadmin' ? route('admin.attendance.index') : route('dashboard') }}" class="bottom-nav-item {{ request()->routeIs('admin.attendance.*') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group transition-all">
+            <i data-lucide="fingerprint" class="w-6 h-6 transition-transform group-active:scale-90"></i>
+            <span class="text-[9px] font-bold uppercase tracking-widest">Absensi</span>
+        </a>
+
+        <a href="{{ route('profile.index') }}" class="bottom-nav-item {{ request()->routeIs('profile.index') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group transition-all">
             <i data-lucide="user-circle" class="w-6 h-6 transition-transform group-active:scale-90"></i>
             <span class="text-[9px] font-bold uppercase tracking-widest">Profil</span>
         </a>
 
-        <form action="{{ route('logout') }}" method="POST" class="no-loader">
+        <form id="logout-form-mobile" action="{{ route('logout') }}" method="POST" class="no-loader">
             @csrf
-            <button type="submit" class="flex flex-col items-center gap-1 group text-red-400">
+            <button type="button" onclick="confirmLogout('logout-form-mobile')" class="flex flex-col items-center gap-1 group text-red-500/70 active:text-red-600 transition-all">
                 <i data-lucide="log-out" class="w-6 h-6 transition-transform group-active:scale-90"></i>
                 <span class="text-[9px] font-bold uppercase tracking-widest">Keluar</span>
             </button>
@@ -406,6 +426,39 @@
 
     <script>
         let lastMessage = null;
+
+        // Global handleDownload function
+        function handleDownload(url, filename) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', filename);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Global confirmLogout function
+        function confirmLogout(formId) {
+            Swal.fire({
+                title: 'Konfirmasi Keluar',
+                text: "Apakah Anda yakin ingin mengakhiri sesi ini?",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#EF4444',
+                cancelButtonColor: '#64748B',
+                confirmButtonText: 'Ya, Keluar',
+                cancelButtonText: 'Batal',
+                customClass: {
+                    popup: 'rounded-[32px]',
+                    confirmButton: 'rounded-xl px-6 py-3 font-bold',
+                    cancelButton: 'rounded-xl px-6 py-3 font-bold'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(formId).submit();
+                }
+            });
+        }
 
         async function refreshBroadcast() {
             try {
