@@ -65,6 +65,7 @@
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
             overflow-x: hidden;
+            width: 100%;
         }
 
         h1, h2, h3, h4, h5, h6 { 
@@ -151,7 +152,16 @@
 
         /* Mobile Optimizations */
         @media (max-width: 1024px) {
-            body { padding-bottom: 80px; }
+            body { padding-bottom: 90px !important; }
+            .mobile-bottom-nav {
+                position: fixed !important;
+                bottom: 0 !important;
+                left: 0 !important;
+                right: 0 !important;
+                z-index: 9999 !important;
+                transform: translateZ(0); /* Force GPU acceleration */
+                -webkit-transform: translateZ(0);
+            }
         }
 
         #global-loading {
@@ -387,7 +397,7 @@
     </div>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="fixed bottom-0 left-0 right-0 z-[100] lg:hidden bg-white/95 backdrop-blur-2xl border-t border-slate-200 flex items-center justify-around px-4 pt-3 pb-safe shadow-[0_-10px_40px_rgba(15,23,42,0.1)]">
+    <nav class="mobile-bottom-nav lg:hidden bg-white/95 backdrop-blur-2xl border-t border-slate-200 flex items-center justify-around px-4 pt-3 pb-safe shadow-[0_-10px_40px_rgba(15,23,42,0.1)]">
         <a href="{{ route('dashboard') }}" class="bottom-nav-item {{ request()->routeIs('dashboard') ? 'active' : 'text-slate-400' }} flex flex-col items-center gap-1 group transition-all">
             <i data-lucide="layout-dashboard" class="w-6 h-6 transition-transform group-active:scale-90"></i>
             <span class="text-[9px] font-bold uppercase tracking-widest">Beranda</span>

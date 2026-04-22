@@ -12,7 +12,7 @@
         </a>
         <div class="flex items-center gap-3">
             <a href="{{ $employee->whatsapp_link }}" target="_blank" class="px-5 py-2.5 rounded-xl bg-green-50 text-green-600 border border-green-100 font-bold text-[10px] uppercase tracking-widest hover:bg-green-600 hover:text-white transition-all flex items-center gap-2 shadow-sm">
-                <i data-lucide="message-circle" class="w-4 h-4"></i> WhatsApp
+                <i data-lucide="message-circle" class="w-4 h-4"></i> Hubungi WhatsApp
             </a>
         </div>
     </div>
@@ -32,7 +32,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="pt-16 pb-8 px-8 text-center">
+                <div class="pt-16 pb-8 px-8 text-center border-b border-slate-50">
                     <h3 class="text-xl font-black text-slate-900 italic leading-tight">{{ $employee->full_name }}</h3>
                     <p class="text-[10px] font-bold text-blue-600 uppercase tracking-[0.2em] mt-1">NIP. {{ $employee->nip }}</p>
                     
@@ -41,40 +41,68 @@
                             <span class="h-1.5 w-1.5 rounded-full {{ $employee->employee_type === 'regu_jaga' ? 'bg-indigo-500' : 'bg-emerald-500' }}"></span>
                             {{ $employee->employee_type_label }}
                         </div>
-                        @if($employee->category)
-                        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-{{ $employee->category->color }}-50 border border-{{ $employee->category->color }}-100 text-[9px] font-black uppercase tracking-widest text-{{ $employee->category->color }}-600">
-                            <i data-lucide="tag" class="w-2.5 h-2.5"></i>
-                            {{ $employee->category->name }}
-                        </div>
-                        @endif
                     </div>
                 </div>
-                <div class="border-t border-slate-50 p-8 space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Jabatan</span>
-                        <span class="text-xs font-black text-slate-700 uppercase text-right">{{ $employee->position }}</span>
+
+                <div class="p-8 space-y-6">
+                    <div class="space-y-4">
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Informasi Kontak</h4>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                                <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-blue-500 shadow-sm">
+                                    <i data-lucide="mail" class="w-4 h-4"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Email Instansi</p>
+                                    <p class="text-xs font-black text-slate-700 truncate">{{ $employee->user->email ?? '-' }}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100">
+                                <div class="w-8 h-8 rounded-xl bg-white flex items-center justify-center text-green-500 shadow-sm">
+                                    <i data-lucide="phone" class="w-4 h-4"></i>
+                                </div>
+                                <div class="min-w-0">
+                                    <p class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Nomor Telepon</p>
+                                    <p class="text-xs font-black text-slate-700 truncate">{{ $employee->phone_number ?? '-' }}</p>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Golongan</span>
-                        <span class="text-xs font-black text-slate-700 uppercase">{{ $employee->rank_class ?? '-' }}</span>
+
+                    <div class="space-y-4">
+                        <h4 class="text-[10px] font-black text-slate-400 uppercase tracking-widest px-1">Detail Identitas</h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center px-1">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">NIK (KTP)</span>
+                                <span class="text-xs font-black text-slate-700">{{ $employee->nik ?? '-' }}</span>
+                            </div>
+                            <div class="flex justify-between items-center px-1">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Jabatan</span>
+                                <span class="text-xs font-black text-slate-700 uppercase text-right">{{ $employee->position }}</span>
+                            </div>
+                            <div class="flex justify-between items-center px-1">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Golongan</span>
+                                <span class="text-xs font-black text-slate-700 uppercase">{{ $employee->rank_class ?? '-' }}</span>
+                            </div>
+                            <div class="flex justify-between items-center px-1">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Unit Kerja</span>
+                                <span class="text-xs font-black text-slate-700 uppercase">{{ $employee->work_unit->name ?? '-' }}</span>
+                            </div>
+                            @if($employee->employee_type === 'regu_jaga')
+                            <div class="flex justify-between items-center px-1">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Regu Picket</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase">{{ $employee->picket_regu ?? '-' }}</span>
+                            </div>
+                            @endif
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Unit Kerja</span>
-                        <span class="text-xs font-black text-slate-700 uppercase">{{ $employee->work_unit->name ?? '-' }}</span>
-                    </div>
-                    @if($employee->category)
-                    <div class="flex justify-between items-center">
-                        <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kategori</span>
-                        <span class="text-xs font-black text-indigo-600 uppercase">{{ $employee->category->name }}</span>
-                    </div>
-                    @endif
                 </div>
             </div>
         </div>
 
         <!-- Right: Tabs (History) -->
         <div class="lg:col-span-2 space-y-8">
-            <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-[600px] card-3d">
+            <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden flex flex-col h-full min-h-[600px] card-3d">
                 <div class="p-8 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center shrink-0">
                     <h3 class="text-[10px] font-black text-slate-900 uppercase tracking-[0.3em] flex items-center gap-3">
                         <i data-lucide="history" class="w-5 h-5 text-blue-600"></i>
@@ -85,7 +113,7 @@
                 
                 <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
                     @if($history->isEmpty())
-                        <div class="h-full flex flex-col items-center justify-center text-center opacity-40">
+                        <div class="h-full flex flex-col items-center justify-center text-center opacity-40 py-20">
                             <i data-lucide="database-zap" class="w-12 h-12 mb-4"></i>
                             <p class="text-xs font-bold uppercase tracking-widest">Belum ada riwayat tercatat</p>
                         </div>
@@ -98,7 +126,11 @@
                                 <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 p-5 rounded-3xl border border-slate-100 bg-slate-50/30 hover:bg-white hover:shadow-xl hover:border-blue-200 transition-all">
                                     <div class="space-y-2 flex-1">
                                         <div class="flex items-center gap-3">
-                                            <span class="text-[10px] font-black text-slate-900 uppercase tracking-widest">{{ $log->activity === 'create_employee' ? 'Pendaftaran Awal' : 'Pembaruan Profil' }}</span>
+                                            <span class="text-[10px] font-black text-slate-900 uppercase tracking-widest">
+                                                @if($log->activity === 'create_employee') Pendaftaran Awal 
+                                                @elseif($log->activity === 'update_employee') Pembaruan Profil
+                                                @else Aktivitas Sistem @endif
+                                            </span>
                                             <span class="text-[9px] font-bold text-slate-400 italic">{{ $log->created_at->diffForHumans() }}</span>
                                         </div>
                                         <p class="text-[11px] font-medium text-slate-500 leading-relaxed">{{ $log->details }}</p>
@@ -106,13 +138,15 @@
                                         @if($log->old_values && $log->new_values)
                                         <div class="mt-4 p-4 rounded-2xl bg-slate-900/5 border border-slate-100 space-y-3">
                                             @php
-                                                $keysToTrack = ['position', 'rank_class', 'work_unit_id', 'picket_regu', 'employee_type'];
+                                                $keysToTrack = ['position', 'rank_class', 'work_unit_id', 'picket_regu', 'employee_type', 'phone_number', 'nik'];
                                                 $labels = [
                                                     'position' => 'Jabatan',
                                                     'rank_class' => 'Golongan',
                                                     'work_unit_id' => 'ID Unit',
                                                     'picket_regu' => 'Regu',
-                                                    'employee_type' => 'Tipe'
+                                                    'employee_type' => 'Tipe',
+                                                    'phone_number' => 'No. Telp',
+                                                    'nik' => 'NIK'
                                                 ];
                                             @endphp
                                             @foreach($keysToTrack as $key)
