@@ -9,70 +9,104 @@
     <input type="hidden" name="action" id="bulkActionInput" value="">
 
     <!-- Sub Header & Tabs -->
-    <div class="mb-12 flex flex-col md:flex-row items-center justify-between gap-8">
-        <div class="flex items-center gap-3 text-sm">
-            <a href="{{ route('documents.index') }}" class="text-[#8A8A8A] hover:text-[#EAB308] transition-all font-bold uppercase tracking-widest text-[10px]">Pusat Dokumen</a>
-            <span class="text-[#8A8A8A]">/</span>
-            <span class="text-[#EAB308] font-black italic">{{ $employee->full_name }}</span>
+    <div class="mb-10 flex flex-col md:flex-row items-center justify-between gap-8">
+        <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-3 text-sm mb-1">
+                <a href="{{ route('documents.index') }}" class="text-[#8A8A8A] hover:text-[#EAB308] transition-all font-bold uppercase tracking-widest text-[9px] flex items-center gap-1.5 group">
+                    <i data-lucide="chevron-left" class="w-3 h-3 transition-transform group-hover:-translate-x-0.5"></i>
+                    Pusat Dokumen
+                </a>
+                <span class="text-slate-300">/</span>
+                <span class="text-slate-400 font-bold uppercase tracking-widest text-[9px]">Arsip Pegawai</span>
+            </div>
+            <h1 class="text-3xl font-black text-[#0F172A] tracking-tighter italic">
+                {{ $employee->full_name }}
+                <span class="text-[#EAB308] font-mono text-sm ml-2 not-italic opacity-60 tracking-normal">/ {{ $employee->nip }}</span>
+            </h1>
         </div>
         
-        <div class="flex gap-3 items-center">
+        <div class="flex gap-3 items-center w-full md:w-auto">
             <!-- Dynamic Bulk Actions -->
-            <div id="bulkActions" class="hidden gap-3 animate-in fade-in zoom-in duration-300">
-                <button type="button" onclick="submitBulk('unlock')" class="bg-gray-100 text-[#0F172A] px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-gray-200 transition-all border border-[#EFEFEF]">
-                    Buka Kunci
+            <div id="bulkActions" class="hidden gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
+                <button type="button" onclick="submitBulk('unlock')" class="bg-white text-[#0F172A] px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-50 transition-all border border-slate-200 shadow-sm flex items-center gap-2">
+                    <i data-lucide="unlock" class="w-3.5 h-3.5 text-blue-600"></i> Buka Kunci
                 </button>
-                <button type="button" onclick="submitBulk('lock')" class="bg-blue-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
-                    Kunci
+                <button type="button" onclick="submitBulk('lock')" class="bg-[#0F172A] text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-800 transition-all shadow-lg flex items-center gap-2">
+                    <i data-lucide="lock" class="w-3.5 h-3.5 text-amber-400"></i> Kunci
                 </button>
-                <button type="button" onclick="submitBulk('delete')" class="bg-red-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100">
-                    Hapus
+                <button type="button" onclick="submitBulk('delete')" class="bg-red-600 text-white px-5 py-3 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 transition-all shadow-lg shadow-red-100 flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus
                 </button>
             </div>
 
             <button type="button" onclick="document.getElementById('uploadModal').classList.remove('hidden')" 
-                class="bg-[#EAB308] text-white px-8 py-3.5 rounded-2xl font-black hover:bg-[#CA8A04] transition-all flex items-center gap-2 shadow-xl shadow-red-100 active:scale-90">
+                class="bg-[#EAB308] text-white px-8 py-4 rounded-2xl font-black hover:bg-[#CA8A04] transition-all flex items-center gap-3 shadow-xl shadow-amber-100 active:scale-95 ml-auto md:ml-0">
                 <i data-lucide="upload-cloud" class="w-5 h-5"></i>
-                Unggah File
+                <span class="uppercase tracking-widest text-[11px]">Unggah File</span>
             </button>
         </div>
     </div>
 
-    <!-- Category Tabs -->
-    <div class="flex bg-white p-1.5 rounded-[24px] border border-[#EFEFEF] shadow-sm overflow-x-auto max-w-full mb-10 inline-flex">
-        <a href="{{ route('documents.employee', $employee->id) }}" 
-            class="px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all {{ !request('category_id') ? 'bg-[#0F172A] text-white shadow-lg' : 'text-[#8A8A8A] hover:bg-[#F1F5F9]' }}">
-            Semua File
-        </a>
-        @foreach($categories as $cat)
-        <a href="{{ route('documents.employee', ['employee' => $employee->id, 'category_id' => $cat->id]) }}" 
-            class="px-8 py-3 rounded-[20px] text-[10px] font-black uppercase tracking-widest transition-all {{ request('category_id') == $cat->id ? 'bg-[#EAB308] text-white shadow-lg' : 'text-[#8A8A8A] hover:bg-[#F1F5F9]' }}">
-            {{ $cat->name }}
-        </a>
-        @endforeach
+    <!-- Category Tabs - Polished -->
+    <div class="relative mb-12">
+        <div class="flex bg-slate-100/50 p-1.5 rounded-[28px] border border-slate-200/60 shadow-inner overflow-x-auto max-w-full custom-scrollbar no-scrollbar-mobile">
+            <a href="{{ route('documents.employee', $employee->id) }}" 
+                class="relative px-8 py-3.5 rounded-[22px] text-[10px] font-black uppercase tracking-widest transition-all shrink-0 flex items-center gap-3 {{ !request('category_id') ? 'bg-white text-[#0F172A] shadow-md border border-slate-100' : 'text-slate-500 hover:text-[#0F172A] hover:bg-slate-200/50' }}">
+                <i data-lucide="layout-grid" class="w-3.5 h-3.5 {{ !request('category_id') ? 'text-[#EAB308]' : 'opacity-40' }}"></i>
+                Semua File
+                <span class="px-2 py-0.5 rounded-full text-[8px] {{ !request('category_id') ? 'bg-[#0F172A] text-white' : 'bg-slate-200 text-slate-600' }}">{{ $totalDocs }}</span>
+            </a>
+            
+            <div class="w-px h-6 bg-slate-200 my-auto mx-2 shrink-0"></div>
+
+            @foreach($categories as $cat)
+            <a href="{{ route('documents.employee', ['employee' => $employee->id, 'category_id' => $cat->id]) }}" 
+                class="relative px-8 py-3.5 rounded-[22px] text-[10px] font-black uppercase tracking-widest transition-all shrink-0 flex items-center gap-3 {{ request('category_id') == $cat->id ? 'bg-white text-[#0F172A] shadow-md border border-slate-100' : 'text-slate-500 hover:text-[#0F172A] hover:bg-slate-200/50' }}">
+                @php
+                    $icon = 'file-text';
+                    if(str_contains(strtolower($cat->name), 'gaji')) $icon = 'banknote';
+                    if(str_contains(strtolower($cat->name), 'sk')) $icon = 'award';
+                    if(str_contains(strtolower($cat->name), 'ijazah')) $icon = 'graduation-cap';
+                    if(str_contains(strtolower($cat->name), 'ktp') || str_contains(strtolower($cat->name), 'identitas')) $icon = 'contact-2';
+                @endphp
+                <i data-lucide="{{ $icon }}" class="w-3.5 h-3.5 {{ request('category_id') == $cat->id ? 'text-[#EAB308]' : 'opacity-40' }}"></i>
+                {{ $cat->name }}
+                @if($cat->documents_count > 0)
+                <span class="px-2 py-0.5 rounded-full text-[8px] {{ request('category_id') == $cat->id ? 'bg-[#EAB308] text-white' : 'bg-slate-200 text-slate-600' }}">{{ $cat->documents_count }}</span>
+                @endif
+            </a>
+            @endforeach
+        </div>
+        
+        <!-- Subtle mobile scroll indicator -->
+        <div class="md:hidden absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1 opacity-20">
+            <div class="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+            <div class="w-4 h-1.5 rounded-full bg-slate-400"></div>
+            <div class="w-1.5 h-1.5 rounded-full bg-slate-400"></div>
+        </div>
     </div>
 
     <!-- Files Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-        @foreach($documents as $doc)
-        <div class="group relative bg-white p-8 rounded-[40px] border border-[#EFEFEF] hover:border-[#EAB308] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 flex flex-col justify-between h-[280px]">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+        @forelse($documents as $doc)
+        <div class="group relative bg-white p-8 rounded-[40px] border border-slate-100 hover:border-[#EAB308] hover:shadow-2xl transition-all duration-500 transform hover:-translate-y-2 flex flex-col justify-between h-[300px] card-3d">
             <!-- Checkbox for Bulk (Always Visible for Easy Interaction) -->
-            <div class="absolute top-6 left-6 z-10">
-                <input type="checkbox" name="ids[]" value="{{ $doc->id }}" class="doc-checkbox w-6 h-6 rounded-xl border-2 border-[#EFEFEF] text-[#EAB308] focus:ring-0 cursor-pointer transition-all checked:border-[#EAB308]">
+            <div class="absolute top-7 left-7 z-10">
+                <input type="checkbox" name="ids[]" value="{{ $doc->id }}" class="doc-checkbox w-6 h-6 rounded-xl border-2 border-slate-200 text-[#EAB308] focus:ring-0 cursor-pointer transition-all checked:border-[#EAB308]">
             </div>
 
             <div class="flex justify-end items-start mb-4">
-                <div class="flex gap-1 flex-wrap justify-end opacity-0 group-hover:opacity-100 transition-all duration-300">
+                <div class="flex gap-1.5 flex-wrap justify-end opacity-0 group-hover:opacity-100 transition-all duration-300">
                     @if($doc->status === 'pending')
-                    <button type="button" onclick="verifyDoc({{ $doc->id }})" class="p-2 text-green-600 bg-green-50 hover:bg-green-600 hover:text-white rounded-xl transition-all" title="Verifikasi">
+                    <button type="button" onclick="verifyDoc({{ $doc->id }})" class="p-2.5 text-green-600 bg-green-50 hover:bg-green-600 hover:text-white rounded-xl transition-all shadow-sm" title="Verifikasi">
                         <i data-lucide="check-circle" class="w-4 h-4"></i>
                     </button>
-                    <button type="button" onclick="rejectDoc({{ $doc->id }})" class="p-2 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white rounded-xl transition-all" title="Tolak">
+                    <button type="button" onclick="rejectDoc({{ $doc->id }})" class="p-2.5 text-red-600 bg-red-50 hover:bg-red-600 hover:text-white rounded-xl transition-all shadow-sm" title="Tolak">
                         <i data-lucide="x-circle" class="w-4 h-4"></i>
                     </button>
                     @endif
                     
-                    <button type="button" onclick="toggleLock({{ $doc->id }})" class="p-2 {{ $doc->is_locked ? 'text-red-600 bg-red-100' : 'text-gray-400 bg-gray-50' }} hover:bg-red-600 hover:text-white rounded-xl transition-all" title="Kunci/Buka">
+                    <button type="button" onclick="toggleLock({{ $doc->id }})" class="p-2.5 {{ $doc->is_locked ? 'text-red-600 bg-red-100' : 'text-slate-400 bg-slate-50' }} hover:bg-red-600 hover:text-white rounded-xl transition-all shadow-sm" title="Kunci/Buka">
                         <i data-lucide="{{ $doc->is_locked ? 'lock' : 'unlock' }}" class="w-4 h-4"></i>
                     </button>
 
@@ -81,17 +115,17 @@
                         $extension = strtolower(pathinfo($doc->file_path, PATHINFO_EXTENSION));
                         $isImage = in_array($extension, ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp']);
                     @endphp
-                    <button type="button" onclick="showDoc('{{ route('documents.view', $doc->id) }}', '{{ $doc->title }}', {{ $isImage ? 'true' : 'false' }})" class="p-2 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl transition-all" title="Lihat">
+                    <button type="button" onclick="showDoc('{{ route('documents.view', $doc->id) }}', '{{ $doc->title }}', {{ $isImage ? 'true' : 'false' }})" class="p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-600 hover:text-white rounded-xl transition-all shadow-sm" title="Lihat">
                         <i data-lucide="eye" class="w-4 h-4"></i>
                     </button>
                     @endif
                     
                     @if(!$doc->is_locked)
-                    <a href="{{ route('documents.download', $doc->id) }}" class="p-2 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader" title="Unduh">
+                    <a href="{{ route('documents.download', $doc->id) }}" class="p-2.5 text-purple-600 bg-purple-50 hover:bg-purple-600 hover:text-white rounded-xl no-loader shadow-sm" title="Unduh">
                         <i data-lucide="download" class="w-4 h-4"></i>
                     </a>
                     @else
-                    <div class="p-2 text-gray-300 bg-gray-50 rounded-xl cursor-not-allowed border border-gray-100" title="Unduhan dikunci">
+                    <div class="p-2.5 text-slate-300 bg-slate-50 rounded-xl cursor-not-allowed border border-slate-100" title="Unduhan dikunci">
                         <i data-lucide="download" class="w-4 h-4 opacity-50"></i>
                     </div>
                     @endif
@@ -99,38 +133,50 @@
             </div>
 
             <div class="flex flex-col items-center justify-center flex-1 mb-4">
-                <div class="w-16 h-16 bg-[#F1F5F9] rounded-3xl flex items-center justify-center text-[#8A8A8A] group-hover:bg-[#EAB308] group-hover:text-white transition-all duration-500 shadow-sm">
+                <div class="w-20 h-20 bg-slate-50 rounded-[28px] flex items-center justify-center text-slate-400 group-hover:bg-[#EAB308] group-hover:text-white transition-all duration-500 shadow-sm border border-slate-100 group-hover:border-[#EAB308]">
                     @if(str_contains($doc->file_path, '.pdf'))
-                        <i data-lucide="file-text" class="w-8 h-8 text-red-500 group-hover:text-white"></i>
+                        <i data-lucide="file-text" class="w-10 h-10 text-red-500 group-hover:text-white"></i>
                     @elseif(str_contains($doc->file_path, '.xls') || str_contains($doc->file_path, '.xlsx'))
-                        <i data-lucide="file-spreadsheet" class="w-8 h-8 text-green-600 group-hover:text-white"></i>
+                        <i data-lucide="file-spreadsheet" class="w-10 h-10 text-green-600 group-hover:text-white"></i>
                     @elseif(str_contains($doc->file_path, '.csv'))
-                        <i data-lucide="file-type" class="w-8 h-8 text-blue-400 group-hover:text-white"></i>
+                        <i data-lucide="file-type" class="w-10 h-10 text-blue-400 group-hover:text-white"></i>
                     @elseif(str_contains($doc->file_path, '.doc') || str_contains($doc->file_path, '.docx'))
-                        <i data-lucide="file-text" class="w-8 h-8 text-blue-600 group-hover:text-white"></i>
+                        <i data-lucide="file-text" class="w-10 h-10 text-blue-600 group-hover:text-white"></i>
                     @elseif(str_contains($doc->file_path, '.jpg') || str_contains($doc->file_path, '.jpeg') || str_contains($doc->file_path, '.png'))
-                        <i data-lucide="image" class="w-8 h-8 text-blue-500 group-hover:text-white"></i>
+                        <i data-lucide="image" class="w-10 h-10 text-amber-500 group-hover:text-white"></i>
                     @else
-                        <i data-lucide="file" class="w-8 h-8"></i>
+                        <i data-lucide="file" class="w-10 h-10"></i>
                     @endif
                 </div>
             </div>
 
-            <div>
-                <h4 class="text-sm font-black text-[#0F172A] truncate text-center mb-2" title="{{ $doc->title }}">{{ $doc->title }}</h4>
-                <div class="flex items-center justify-between mt-4 pt-4 border-t border-[#F1F5F9]">
+            <div class="space-y-4">
+                <div class="text-center">
+                    <h4 class="text-sm font-black text-[#0F172A] truncate px-2" title="{{ $doc->title }}">{{ $doc->title }}</h4>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">{{ $doc->category->name ?? 'Tanpa Kategori' }}</p>
+                </div>
+                
+                <div class="flex items-center justify-between pt-4 border-t border-slate-50">
                     @if($doc->status === 'verified')
-                        <span class="text-[9px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 italic">Verified</span>
+                        <span class="text-[8px] font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 italic">Verified</span>
                     @elseif($doc->status === 'rejected')
-                        <span class="text-[9px] font-black text-red-600 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-md border border-red-100 italic cursor-help" title="Alasan: {{ $doc->rejection_reason }}">Rejected</span>
+                        <span class="text-[8px] font-black text-red-600 uppercase tracking-widest bg-red-50 px-2 py-0.5 rounded-md border border-red-100 italic cursor-help" title="Alasan: {{ $doc->rejection_reason }}">Rejected</span>
                     @else
-                        <span class="text-[9px] font-black text-[#8A8A8A] uppercase tracking-widest bg-gray-50 px-2 py-0.5 rounded-md border border-gray-100 italic">Pending</span>
+                        <span class="text-[8px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 px-2 py-0.5 rounded-md border border-slate-100 italic">Pending</span>
                     @endif
-                    <span class="text-[9px] font-bold text-[#ABABAB]">{{ $doc->created_at->format('d/m/y') }}</span>
+                    <span class="text-[9px] font-bold text-slate-300 italic">{{ $doc->created_at->format('d/m/y') }}</span>
                 </div>
             </div>
         </div>
-        @endforeach
+        @empty
+        <div class="col-span-full py-20 flex flex-col items-center justify-center bg-white rounded-[48px] border border-dashed border-slate-200">
+            <div class="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                <i data-lucide="folder-search" class="w-10 h-10 text-slate-300"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 tracking-tight italic">Belum Ada Dokumen</h3>
+            <p class="text-sm font-medium text-slate-400 mt-2">Tidak ditemukan file di kategori ini untuk pegawai tersebut.</p>
+        </div>
+        @endforelse
     </div>
 </form>
 
@@ -156,6 +202,11 @@
         </div>
     </div>
 </div>
+
+<style>
+    .no-scrollbar-mobile::-webkit-scrollbar { display: none; }
+    @media (min-width: 768px) { .no-scrollbar-mobile::-webkit-scrollbar { display: block; } }
+</style>
 
 <script>
     const docCheckboxes = document.querySelectorAll('.doc-checkbox');
@@ -183,17 +234,14 @@
         document.body.removeChild(link);
     }
 
-    function showDoc(id, title, url) {
+    function showDoc(url, title, isImage) {
         const modal = document.getElementById('viewModal');
         const iframe = document.getElementById('viewIframe');
         const imgContainer = document.getElementById('imageContainer');
         const img = document.getElementById('viewImage');
         document.getElementById('viewModalTitle').innerText = title;
 
-        const extension = url.split('.').pop().toLowerCase();
-        
-        // Check if it's an image
-        if (url.match(/\.(jpeg|jpg|gif|png)$/) || url.includes('type=image')) {
+        if (isImage) {
             iframe.classList.add('hidden');
             imgContainer.classList.remove('hidden');
             img.src = url;
@@ -215,7 +263,7 @@
             showCancelButton: true,
             confirmButtonColor: '#EAB308',
             confirmButtonText: 'Ya, Jalankan!',
-            customClass: { popup: 'rounded-[32px]' }
+            customClass: { popup: 'rounded-[40px]' }
         }).then((result) => {
             if (result.isConfirmed) {
                 document.getElementById('bulkActionInput').value = action;
@@ -232,7 +280,7 @@
             showCancelButton: true,
             confirmButtonColor: '#0F172A',
             confirmButtonText: 'Ya, Verifikasi!',
-            customClass: { popup: 'rounded-[32px]' }
+            customClass: { popup: 'rounded-[40px]' }
         }).then((result) => {
             if (result.isConfirmed) {
                 const form = document.createElement('form');
@@ -256,7 +304,7 @@
             confirmButtonColor: '#EAB308',
             confirmButtonText: 'Tolak Dokumen',
             cancelButtonText: 'Batal',
-            customClass: { popup: 'rounded-[32px]' },
+            customClass: { popup: 'rounded-[40px]' },
             inputValidator: (value) => {
                 if (!value) return 'Alasan harus diisi!'
             }

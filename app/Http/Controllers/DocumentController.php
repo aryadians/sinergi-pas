@@ -79,8 +79,15 @@ class DocumentController extends Controller
         }
         
         $documents = $query->latest()->get();
-        $categories = DocumentCategory::all();
-        return view('documents.show-folder', compact('employee', 'documents', 'categories', 'watermarkEnabled', 'watermarkText'));
+
+        // Get categories with document counts for THIS specific employee
+        $categories = DocumentCategory::withCount(['documents' => function($q) use ($employee) {
+            $q->where('employee_id', $employee->id);
+        }])->get();
+
+        $totalDocs = Document::where('employee_id', $employee->id)->count();
+
+        return view('documents.show-folder', compact('employee', 'documents', 'categories', 'watermarkEnabled', 'watermarkText', 'totalDocs'));
     }
 
     public function verify(Document $document)
