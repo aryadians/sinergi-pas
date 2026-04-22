@@ -159,6 +159,8 @@ class DashboardController extends Controller
 
     public function exportPdf(Request $request)
     {
+        ini_set('memory_limit', '512M');
+        set_time_limit(120);
         $data = $this->getDashboardData();
 
         AuditLog::create([
