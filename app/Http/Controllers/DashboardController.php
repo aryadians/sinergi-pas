@@ -26,90 +26,8 @@ class DashboardController extends Controller
 
         // --- ADMIN VIEW DATA ---
         if ($user->role === 'superadmin') {
-            $employeeQuery = Employee::query();
-            if ($workUnitId) { $employeeQuery->where('work_unit_id', $workUnitId); }
-
-            $totalEmployees = (clone $employeeQuery)->count();
-            $totalDocuments = Document::count();
-            $docsToday = Document::whereDate('created_at', now())->count();
-            $pendingDocs = Document::where('status', 'pending')->count();
-            $openIssues = ReportIssue::where('status', 'open')->count();
-
-            // Storage Analytics
-            $totalSizeBytes = 0;
-            $disk = Storage::disk('private');
-            if ($disk->exists('documents')) {
-                $files = $disk->allFiles('documents');
-                foreach ($files as $file) {
-                    $totalSizeBytes += $disk->size($file);
-                }
-            }
-            $storageUsed = round($totalSizeBytes / (1024 * 1024), 2); // MB
-
-            // Compliance Tracking
-            $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get(['id', 'name']);
-            if ($mandatoryCategories->isEmpty()) {
-                DocumentCategory::where('slug', 'like', '%gaji%')
-                    ->orWhere('slug', 'like', '%sk-%')
-                    ->update(['is_mandatory' => true]);
-                $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get();
-            }
-
-            $mandatoryCategoryIds = $mandatoryCategories->pluck('id');
-            $totalMandatoryCategories = $mandatoryCategoryIds->count();
-
-            $nonCompliantEmployees = collect();
-            if ($totalMandatoryCategories > 0) {
-                $complianceQuery = Employee::with([
-                    'user',
-                    'documents' => function ($query) use ($mandatoryCategoryIds) {
-                        $query->select('id', 'employee_id', 'document_category_id')
-                            ->whereIn('document_category_id', $mandatoryCategoryIds)
-                            ->where('status', 'verified');
-                    },
-                ])->whereHas('user', function($q) {
-                    $q->where('role', 'pegawai');
-                });
-
-                if ($workUnitId) { $complianceQuery->where('work_unit_id', $workUnitId); }
-
-                $whatsAppNumber = $this->normalizeWhatsAppNumber(
-                    Setting::getValue('compliance_whatsapp_number', '628123456789')
-                );
-
-                $nonCompliantEmployees = $complianceQuery
-                    ->get()
-                    ->map(function ($employee) use ($totalMandatoryCategories, $whatsAppNumber) {
-                        $uploadedCount = $employee->documents->pluck('document_category_id')->unique()->count();
-                        if ($uploadedCount >= $totalMandatoryCategories) return null;
-
-                        $employee->setAttribute('uploaded_mandatory_count', $uploadedCount);
-                        $employee->setAttribute('total_mandatory_count', $totalMandatoryCategories);
-                        $employee->setAttribute('compliance_percent', (int) round(($uploadedCount / $totalMandatoryCategories) * 100));
-                        $employee->setAttribute('whatsapp_link', $this->buildWhatsAppReminderLink($whatsAppNumber, $employee->full_name));
-                        return $employee;
-                    })
-                    ->filter()
-                    ->values();
-            }
-
-            $nonCompliantEmployeesTotal = $nonCompliantEmployees->count();
-            // Show all for scrolling widget
-            $nonCompliantEmployees = $nonCompliantEmployees->values();
-
-            $unitPerformance = WorkUnit::withCount('employees')->get();
-            $latestEmployees = (clone $employeeQuery)->with(['user', 'work_unit'])->latest()->take(5)->get();
-            $recentLogs = AuditLog::with('user')->latest()->take(5)->get();
-            $chartData = DocumentCategory::withCount('documents')->get();
-            $workUnits = WorkUnit::all();
-            $widgets = Setting::where('key', 'like', 'widget_%')->pluck('value', 'key');
-
-            return view('dashboard', compact(
-                'totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 
-                'openIssues', 'storageUsed', 'unitPerformance', 
-                'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees',
-                'nonCompliantEmployeesTotal', 'widgets', 'recentLogs', 'totalMandatoryCategories'
-            ));
+            $data = $this->getDashboardData($workUnitId);
+            return view('dashboard', $data);
         } 
         
         // --- PEGAWAI VIEW DATA ---
@@ -161,7 +79,7 @@ class DashboardController extends Controller
     {
         ini_set('memory_limit', '512M');
         set_time_limit(120);
-        $data = $this->getDashboardData();
+        $data = $this->getDashboardData($request->work_unit_id, true);
 
         AuditLog::create([
             'user_id' => auth()->id(),
@@ -177,7 +95,7 @@ class DashboardController extends Controller
 
     public function exportExcel(Request $request)
     {
-        $data = $this->getDashboardData();
+        $data = $this->getDashboardData($request->work_unit_id, true);
 
         AuditLog::create([
             'user_id' => auth()->id(),
@@ -249,14 +167,18 @@ class DashboardController extends Controller
         }, 'laporan-sinergi-pas.xlsx');
     }
 
-    private function getDashboardData()
+    private function getDashboardData($workUnitId = null, $includeAll = false)
     {
-        $totalEmployees = Employee::count();
+        $employeeQuery = Employee::query();
+        if ($workUnitId) { $employeeQuery->where('work_unit_id', $workUnitId); }
+
+        $totalEmployees = (clone $employeeQuery)->count();
         $totalDocuments = Document::count();
         $docsToday = Document::whereDate('created_at', now())->count();
         $pendingDocs = Document::where('status', 'pending')->count();
         $openIssues = ReportIssue::where('status', 'open')->count();
 
+        // Storage Analytics
         $totalSizeBytes = 0;
         $disk = Storage::disk('private');
         if ($disk->exists('documents')) {
@@ -265,9 +187,74 @@ class DashboardController extends Controller
                 $totalSizeBytes += $disk->size($file);
             }
         }
-        $storageUsed = round($totalSizeBytes / (1024 * 1024), 2);
+        $storageUsed = round($totalSizeBytes / (1024 * 1024), 2); // MB
 
-        return compact('totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 'openIssues', 'storageUsed');
+        // Compliance Tracking
+        $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get(['id', 'name']);
+        if ($mandatoryCategories->isEmpty()) {
+            DocumentCategory::where('slug', 'like', '%gaji%')
+                ->orWhere('slug', 'like', '%sk-%')
+                ->update(['is_mandatory' => true]);
+            $mandatoryCategories = DocumentCategory::where('is_mandatory', true)->get();
+        }
+
+        $mandatoryCategoryIds = $mandatoryCategories->pluck('id');
+        $totalMandatoryCategories = $mandatoryCategoryIds->count();
+
+        $nonCompliantEmployees = collect();
+        if ($totalMandatoryCategories > 0) {
+            $complianceQuery = Employee::with([
+                'user',
+                'documents' => function ($query) use ($mandatoryCategoryIds) {
+                    $query->select('id', 'employee_id', 'document_category_id')
+                        ->whereIn('document_category_id', $mandatoryCategoryIds)
+                        ->where('status', 'verified');
+                },
+            ])->whereHas('user', function($q) {
+                $q->where('role', 'pegawai');
+            });
+
+            if ($workUnitId) { $complianceQuery->where('work_unit_id', $workUnitId); }
+
+            $whatsAppNumber = $this->normalizeWhatsAppNumber(
+                Setting::getValue('compliance_whatsapp_number', '628123456789')
+            );
+
+            $nonCompliantEmployees = $complianceQuery
+                ->get()
+                ->map(function ($employee) use ($totalMandatoryCategories, $whatsAppNumber, $includeAll) {
+                    $uploadedCount = $employee->documents->pluck('document_category_id')->unique()->count();
+                    
+                    // Filter out compliant employees only if $includeAll is false
+                    if (!$includeAll && $uploadedCount >= $totalMandatoryCategories) return null;
+
+                    $employee->setAttribute('uploaded_mandatory_count', $uploadedCount);
+                    $employee->setAttribute('total_mandatory_count', $totalMandatoryCategories);
+                    $employee->setAttribute('compliance_percent', $totalMandatoryCategories > 0 ? (int) round(($uploadedCount / $totalMandatoryCategories) * 100) : 100);
+                    $employee->setAttribute('whatsapp_link', $this->buildWhatsAppReminderLink($whatsAppNumber, $employee->full_name));
+                    return $employee;
+                })
+                ->filter()
+                ->sortBy('compliance_percent')
+                ->values();
+        }
+
+        $nonCompliantEmployeesTotal = $nonCompliantEmployees->count();
+        $nonCompliantEmployees = $nonCompliantEmployees->values();
+
+        $unitPerformance = WorkUnit::withCount('employees')->get();
+        $latestEmployees = (clone $employeeQuery)->with(['user', 'work_unit'])->latest()->take(5)->get();
+        $recentLogs = AuditLog::with('user')->latest()->take(5)->get();
+        $chartData = DocumentCategory::withCount('documents')->get();
+        $workUnits = WorkUnit::all();
+        $widgets = Setting::where('key', 'like', 'widget_%')->pluck('value', 'key');
+
+        return compact(
+            'totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 
+            'openIssues', 'storageUsed', 'unitPerformance', 
+            'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees',
+            'nonCompliantEmployeesTotal', 'widgets', 'recentLogs', 'totalMandatoryCategories'
+        );
     }
 
     private function normalizeWhatsAppNumber(?string $number): string

@@ -53,7 +53,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($nonCompliantEmployees->take(15) as $index => $emp)
+                @foreach($nonCompliantEmployees as $index => $emp)
                 <tr>
                     <td class="text-center">{{ $index + 1 }}</td>
                     <td class="font-bold">{{ $emp->full_name }}</td>
@@ -66,8 +66,5 @@
                 @endforeach
             </tbody>
         </table>
-        @if($nonCompliantEmployees->count() > 15)
-            <p style="font-size: 8px; font-style: italic; color: #64748b; margin-top: 5px;">* Menampilkan 15 dari {{ $nonCompliantEmployees->count() }} pegawai dengan kepatuhan terendah.</p>
-        @endif
     </div>
 @endsection
