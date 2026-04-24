@@ -115,6 +115,12 @@ class AttendanceController extends Controller
         // Optimized Summary Calculation with Schedule Sync
         $allAttendancesInRange = Attendance::with(['employee.rank_relation'])
             ->whereBetween('date', [$startDate, $endDate])
+            ->when($search, function($q) use ($search) {
+                $q->whereHas('employee', function($eq) use ($search) {
+                    $eq->where('full_name', 'like', "%$search%")
+                       ->orWhere('nip', 'like', "%$search%");
+                });
+            })
             ->get();
 
         $totalPresent = 0;
