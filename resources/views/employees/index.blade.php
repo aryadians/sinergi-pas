@@ -302,7 +302,7 @@
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
-                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Jabatan Struktural</label>
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Jabatan</label>
                         <select name="position_id" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-semibold focus:border-blue-500 outline-none appearance-none cursor-pointer">
                             @foreach($positions as $pos)
                                 <option value="{{ $pos->id }}">{{ $pos->name }}</option>
