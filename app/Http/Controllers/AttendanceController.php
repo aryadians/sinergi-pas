@@ -73,27 +73,62 @@ class AttendanceController extends Controller
             ->orderBy('full_name')
             ->paginate(50)->withQueryString();
 
-        $employees->getCollection()->transform(function($emp) use ($checkIsScheduled) {
-            $validDays = 0;
-            $totalAllowance = 0;
-            $rate = $emp->rank_relation->meal_allowance ?? 0;
+        // --- CALCULATE SUMMARY FROM THE FILTERED EMPLOYEES ---
+        // Note: For accurate global summary (not just current page), we need the full filtered set
+        $allFilteredEmployees = Employee::whereHas('user')
+            ->when($search, function($q) use ($search) {
+                $q->where('full_name', 'like', "%$search%")
+                  ->orWhere('nip', 'like', "%$search%");
+            })
+            ->with(['attendances' => function($q) use ($startDate, $endDate) {
+                $q->whereBetween('date', [$startDate, $endDate]);
+            }])
+            ->get();
+
+        $totalPresent = 0;
+        $totalValidDays = 0;
+        $totalLate = 0;
+        $totalAllowance = 0;
+
+        foreach ($allFilteredEmployees as $emp) {
+            $empRate = $emp->rank_relation->meal_allowance ?? 0;
+            $empValidDays = 0;
+            $empTotalAllowance = 0;
 
             foreach ($emp->attendances as $att) {
-                if ($att->status !== 'absent' && $checkIsScheduled($emp, $att->date)) {
-                    $validDays++;
-                    $totalAllowance += $rate;
+                if ($att->status !== 'absent') {
+                    $totalPresent++;
+                    if ($att->late_minutes > 0) $totalLate++;
+
+                    if ($checkIsScheduled($emp, $att->date)) {
+                        $empValidDays++;
+                        $empTotalAllowance += $empRate;
+                    }
                 }
             }
+            
+            $totalValidDays += $empValidDays;
+            $totalAllowance += $empTotalAllowance;
 
-            $emp->setAttribute('valid_attendance_count', $validDays);
-            $emp->setAttribute('corrected_total_allowance', $totalAllowance);
-            return $emp;
-        });
+            // Also update the paginated collection attributes if they are on the current page
+            $paginatedEmp = $employees->getCollection()->where('id', $emp->id)->first();
+            if ($paginatedEmp) {
+                $paginatedEmp->setAttribute('valid_attendance_count', $empValidDays);
+                $paginatedEmp->setAttribute('corrected_total_allowance', $empTotalAllowance);
+            }
+        }
+
+        $summary = (object)[
+            'total_present' => $totalPresent,
+            'total_valid_days' => $totalValidDays,
+            'total_late' => $totalLate,
+            'total_allowance' => $totalAllowance
+        ];
+        // -------------------------------------------------------
 
         $allEmployees = Employee::whereHas('user')->orderBy('full_name')->get();
 
-        // --- SHARED BASE QUERY FOR LOGS AND SUMMARY ---
-        $baseAttendanceQuery = Attendance::whereHas('employee')
+        $attendanceLogs = Attendance::whereHas('employee')
             ->with(['employee.rank_relation'])
             ->whereBetween('date', [$startDate, $endDate])
             ->when($search, function($q) use ($search) {
@@ -101,10 +136,7 @@ class AttendanceController extends Controller
                     $eq->where('full_name', 'like', "%$search%")
                        ->orWhere('nip', 'like', "%$search%");
                 });
-            });
-
-        // 1. Get Paginated Logs
-        $attendanceLogs = (clone $baseAttendanceQuery)
+            })
             ->orderBy('date', 'desc')
             ->orderBy('check_in', 'asc')
             ->paginate(50, ['*'], 'log_page')->withQueryString();
@@ -116,47 +148,10 @@ class AttendanceController extends Controller
             return $log;
         });
 
-        // 2. Calculate Summary from ALL filtered attendances (not paginated)
-        $summaryAttendances = Attendance::whereHas('employee', function($q) use ($search) {
-                if ($search) {
-                    $q->where('full_name', 'like', "%$search%")
-                      ->orWhere('nip', 'like', "%$search%");
-                }
-            })
-            ->with(['employee.rank_relation'])
-            ->whereBetween('date', [$startDate, $endDate])
-            ->get();
-
-        $totalPresent = 0;
-        $totalValidDays = 0;
-        $totalLate = 0;
-        $totalAllowance = 0;
-
-        foreach ($summaryAttendances as $att) {
-            $emp = $att->employee;
-            if (!$emp) continue;
-
-            if ($att->status !== 'absent') {
-                $totalPresent++;
-                if ($att->late_minutes > 0) $totalLate++;
-
-                if ($checkIsScheduled($emp, $att->date)) {
-                    $totalValidDays++;
-                    $totalAllowance += ($emp->rank_relation->meal_allowance ?? 0);
-                }
-            }
-        }
-
-        $summary = (object)[
-            'total_present' => $totalPresent,
-            'total_valid_days' => $totalValidDays,
-            'total_late' => $totalLate,
-            'total_allowance' => $totalAllowance
-        ];
-
         $rangeTitle = Carbon::parse($startDate)->translatedFormat('d M') . ' - ' . Carbon::parse($endDate)->translatedFormat('d M Y');
 
         return view('admin.attendance.index', compact('employees', 'allEmployees', 'attendanceLogs', 'summary', 'startDate', 'endDate', 'rangeTitle', 'monthStr'));
+    }
     }
 
     public function import(Request $request)
