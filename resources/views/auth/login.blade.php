@@ -25,15 +25,36 @@
         body {
             font-family: var(--font-custom);
             background: #F8FAFC;
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.05) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(234, 179, 8, 0.05) 0px, transparent 50%);
             overflow: hidden;
+            position: relative;
         }
+
+        /* Animated Background Blobs */
+        .blob {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.1) 100%);
+            filter: blur(80px);
+            border-radius: 50%;
+            z-index: -1;
+            animation: move 25s infinite alternate;
+        }
+        .blob-1 { top: -100px; left: -100px; animation-delay: 0s; }
+        .blob-2 { bottom: -100px; right: -100px; background: linear-gradient(135deg, rgba(234, 179, 8, 0.08) 0%, rgba(202, 138, 4, 0.08) 100%); animation-delay: -5s; }
+        .blob-3 { top: 20%; right: 20%; width: 300px; height: 300px; background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(79, 70, 229, 0.05) 100%); animation-delay: -10s; }
+
+        @keyframes move {
+            0% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(100px, 50px) scale(1.1); }
+            66% { transform: translate(-50px, 150px) scale(0.9); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
         .login-card {
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
             transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .login-card:hover {
@@ -57,13 +78,22 @@
     </style>
 </head>
 <body class="antialiased min-h-screen flex items-center justify-center p-6">
-    <div class="w-full max-w-[420px] space-y-8 relative z-10">
-        <div class="text-center space-y-4 animate-float">
-            <img src="{{ asset('logo1.png') }}" class="w-16 h-16 mx-auto drop-shadow-2xl">
-            <div>
-                <h1 class="text-2xl font-[800] text-slate-900 tracking-tight uppercase tracking-widest">SINERGI PAS</h1>
-                <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Lapas Kelas IIB Jombang</p>
-                <p class="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em] mt-3">Digitalisasi Data, Wujudkan SDM Prima</p>
+    <!-- Background Blobs -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+
+    <div class="w-full max-w-[420px] space-y-10 relative z-10">
+        <div class="text-center space-y-6 animate-float">
+            <img src="{{ asset('logo1.png') }}" class="w-20 h-20 mx-auto drop-shadow-2xl">
+            <div class="space-y-2">
+                <h1 class="text-3xl font-black text-slate-900 tracking-tight uppercase tracking-[0.1em]">SINERGI PAS</h1>
+                <p class="text-sm font-bold text-slate-500 uppercase tracking-widest">Lapas Kelas IIB Jombang</p>
+                <div class="pt-2">
+                    <p class="text-xs font-black text-blue-600 uppercase tracking-[0.3em] inline-block px-4 py-2 bg-blue-50 rounded-full">
+                        Digitalisasi Data, Wujudkan SDM Prima
+                    </p>
+                </div>
             </div>
         </div>
 
