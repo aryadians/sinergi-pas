@@ -1,99 +1,72 @@
 <div align="center">
   <img src="public/logo1.png" alt="Sinergi PAS Logo" width="120">
   
-  # 🚀 Sinergi PAS
+  # 🚀 Sinergi PAS v2.0
   ### Sistem Informasi Manajemen Kepegawaian & Payroll Terpadu
   **Lembaga Pemasyarakatan Kelas IIB Jombang**
 
   [![Laravel](https://img.shields.io/badge/Framework-Laravel%2011-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
   [![PHP](https://img.shields.io/badge/PHP-8.2+-777BB4?style=for-the-badge&logo=php)](https://php.net)
-  [![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql)](https://mysql.com)
+  [![WIB](https://img.shields.io/badge/Timezone-Asia%2FJakarta-00AA13?style=for-the-badge)](https://time.is)
   [![TailwindCSS](https://img.shields.io/badge/UI-Tailwind%20CSS-06B6D4?style=for-the-badge&logo=tailwindcss)](https://tailwindcss.com)
 </div>
 
 ---
 
 ## 📝 Tentang Proyek
-**Sinergi PAS** adalah platform internal untuk manajemen database kepegawaian di Lapas Jombang. Sistem ini dirancang untuk menggantikan perhitungan manual menjadi otomatis, mencakup pengelolaan data pegawai, jadwal shift regu jaga, absensi fingerprint, hingga perhitungan **Tunjangan Kinerja (Tunkin)** dan **Uang Makan** secara real-time.
+**Sinergi PAS** adalah ekosistem digital internal Lapas Jombang yang menyinkronkan seluruh data kepegawaian (Profil, Jadwal, Absensi) menjadi sistem **Payroll Otomatis**. Proyek ini memastikan perhitungan Tunjangan Kinerja dan Uang Makan dilakukan secara transparan, akurat, dan sesuai dengan regulasi kementerian terbaru.
 
 ---
 
-## ✨ Fitur Unggulan
+## ✨ Fitur Unggulan Terbaru
 
-### 🛡️ 1. Payroll & Tunkin Engine (Permenkumham No. 10 Th 2021)
-Mesin perhitungan otomatis yang menyinkronkan data kehadiran dengan hak finansial:
-- 📊 **17 Kelas Jabatan (Grade):** Pengaturan nominal dasar tunkin per grade.
-- 📉 **Potongan TL & PSW Otomatis:** Perhitungan 0,5% s.d 1,5% berdasarkan menit keterlambatan riil.
-- 🤒 **Sakit Progresif:** Deteksi akumulasi hari sakit (Hari 3-6: 2,5%, Hari 7+: 10%).
-- 🚫 **Mangkir Detection:** Sinkronisasi Jadwal vs Absen; Jika bolos jadwal otomatis potong 5%.
-- ⚠️ **Pelanggaran System:** Peringatan otomatis jika telat > 8 kali dalam sebulan.
+### 🛡️ 1. Smart Payroll Engine (Permenkumham 10/2021)
+Sistem perhitungan akumulatif harian yang sangat presisi:
+- 📈 **Status Khusus:** Kalkulasi otomatis untuk **CPNS (80%)**, **Tugas Belajar (Potong 100%)**, dan insentif **Plt/Plh (+20%)**.
+- ⏱️ **Kompensasi Waktu:** Deteksi otomatis "Tebus Telat" sesuai aturan (Telat < 30m bisa diganti dengan pulang lebih lambat 30m).
+- 📉 **Potongan Akumulatif:** Perhitungan TL 1-4, PSW, Mangkir harian, dan Sakit Progresif yang langsung memotong Pagu Bulanan.
+- 🍱 **Uang Makan (PMK):** Sinkronisasi otomatis tarif per golongan berdasarkan kehadiran riil di hari kerja valid.
 
-### 🍱 2. Uang Makan (PMK Standar)
-- 💰 **Tarif Berdasarkan Golongan:** Sinkronisasi otomatis (Gol IV: 41k, III: 37k, I/II: 35k).
-- ✅ **Validasi Kehadiran Riil:** Hanya membayar pada hari kerja valid (menghindari double payment saat dinas luar).
+### ⚙️ 2. Master Aturan Dinamis (Control Center)
+Admin memiliki kendali penuh melalui satu pintu:
+- 🔧 **Custom Percentages:** Ubah persentase potongan TL/PSW/Mangkir tanpa menyentuh kode.
+- ⏰ **Flexible Work Hours:** Atur jam masuk/pulang kantor secara global (mendukung jam khusus hari Jumat).
+- 📅 **Quota Management:** Pengaturan kuota maksimal telat bulanan (Default: 8x).
 
-### 📅 3. Manajemen Regu & Jadwal Shift
-- 👥 **Struktur Unit:** Pengelompokan pegawai ke dalam Regu Pengamanan (RUPAM) dan P2U.
-- 🔄 **Jadwal Dinamis:** Pengaturan shift Pagi, Siang, Malam, dan Libur yang langsung terhubung ke payroll.
+### 👤 3. Employee Self-Service (Portal Mandiri)
+Memberikan transparansi penuh kepada seluruh 109 pegawai:
+- 💰 **Tunkin Saya:** Rincian estimasi gaji bulan berjalan, lengkap dengan daftar pelanggaran harian.
+- 📱 **Monitor Absensi:** Pantau log scan fingerprint harian (Valid vs Luar Jadwal).
+- 📂 **Digital Slip Gaji:** Unduh Slip Gaji resmi PDF yang diunggah Bendahara langsung dari dashboard.
 
-### 🖥️ 4. Dashboard & Reporting
-- 📊 **Real-time Recap:** Monitor THP (Take Home Pay) seluruh pegawai dalam satu layar.
-- 📄 **Official Export:** Cetak Slip Gaji (PDF) dan Rekapitulasi (Excel/PDF) dengan Kop Surat Resmi Lapas Jombang.
-- ⚙️ **Master Rules:** Kendali penuh bagi admin untuk mengubah jam kerja dan persentase potongan secara live.
-
----
-
-## 🛠️ Tech Stack
-- **Backend:** Laravel 11 (PHP 8.2)
-- **Frontend:** Blade Templating + Tailwind CSS
-- **Icons:** Lucide Icons & FontAwesome
-- **Components:** SweetAlert2 (Notifikasi Premium), AOS (Animate on Scroll)
-- **Export Engine:** Barryvdh DomPDF & Maatwebsite Excel
+### 📊 4. Admin & Analytics Dashboard
+- 📈 **Real-time Monitoring:** Pantau kepatuhan dokumen dan statistik keterlambatan secara instan.
+- 📑 **Official Reporting:** Export Rekapitulasi bulanan ke Excel atau PDF dengan Kop Surat Resmi Lapas Jombang.
+- ⚡ **High-Performance Export:** Dioptimalkan untuk memproses ratusan data pegawai dalam hitungan detik (N+1 Query Optimized).
 
 ---
 
-## 🚀 Instalasi Cepat
-
-1. **Clone Repositori**
-   ```bash
-   git clone https://github.com/username/sinergi-pas.git
-   cd sinergi-pas
-   ```
-
-2. **Instal Dependencies**
-   ```bash
-   composer install
-   npm install && npm run build
-   ```
-
-3. **Konfigurasi Environment**
-   ```bash
-   cp .env.example .env
-   php artisan key:generate
-   ```
-
-4. **Setup Database**
-   ```bash
-   php artisan migrate --seed
-   ```
-
-5. **Jalankan Aplikasi**
-   ```bash
-   php artisan serve
-   ```
-
----
-
-## 📜 Alur Kerja Sinkronisasi Data
+## 📜 Alur Kerja Terintegrasi
 ```mermaid
-graph TD
-    A[Data Pegawai & Grade] --> D[Payroll Engine]
-    B[Jadwal Shift/Regu] --> D
-    C[Absensi Fingerprint] --> D
-    D --> E[Rekap Tunkin Bulanan]
-    D --> F[Slip Gaji Individu PDF]
-    D --> G[Export Laporan Keuangan]
+graph LR
+    A[Master Aturan] --> B(Logic Engine)
+    C[Jadwal Regu/Piket] --> B
+    D[Absen Fingerprint] --> B
+    E[Status Khusus: CPNS/Plt] --> B
+    B --> F{Output}
+    F --> G[Slip Gaji Pegawai]
+    F --> H[Rekap Keuangan Admin]
+    F --> I[Dashboard Analytics]
 ```
+
+---
+
+## 🛠️ Tech Stack & Optimization
+- **Core:** Laravel 11, PHP 8.2, MySQL
+- **Frontend:** Blade, Tailwind CSS, Lucide Icons, SweetAlert2
+- **PDF Engine:** Barryvdh DomPDF (Optimized with Base64 Assets & Memory Boost)
+- **Excel Engine:** Maatwebsite Excel
+- **Timezone:** Asia/Jakarta (WIB)
 
 ---
 
@@ -105,5 +78,5 @@ graph TD
 
 ---
 <div align="center">
-  Dibuat dengan ❤️ untuk kemajuan birokrasi digital di lingkungan PAS
+  Dibuat dengan ❤️ untuk Transformasi Digital Pemasyarakatan
 </div>

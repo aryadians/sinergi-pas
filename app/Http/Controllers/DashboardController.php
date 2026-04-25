@@ -249,11 +249,20 @@ class DashboardController extends Controller
         $workUnits = WorkUnit::all();
         $widgets = Setting::where('key', 'like', 'widget_%')->pluck('value', 'key');
 
+        // Fetch Latest Salary Slips from Digital Archive
+        $salarySlipCategoryId = 1; // Category: Slip Gaji
+        $latestSalarySlips = Document::with(['employee', 'category'])
+            ->where('document_category_id', $salarySlipCategoryId)
+            ->latest()
+            ->take(5)
+            ->get();
+
         return compact(
             'totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 
             'openIssues', 'storageUsed', 'unitPerformance', 
             'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees',
-            'nonCompliantEmployeesTotal', 'widgets', 'recentLogs', 'totalMandatoryCategories'
+            'nonCompliantEmployeesTotal', 'widgets', 'recentLogs', 'totalMandatoryCategories',
+            'latestSalarySlips'
         );
     }
 

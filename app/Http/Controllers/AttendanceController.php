@@ -153,9 +153,12 @@ class AttendanceController extends Controller
             return $log;
         });
 
+        // Get max late count from settings for any UI indicators
+        $maxLateCount = (int)\App\Models\Setting::getValue('payroll_max_late_count', 8);
+
         $rangeTitle = Carbon::parse($startDate)->translatedFormat('d M') . ' - ' . Carbon::parse($endDate)->translatedFormat('d M Y');
 
-        return view('admin.attendance.index', compact('employees', 'allEmployees', 'attendanceLogs', 'summary', 'startDate', 'endDate', 'rangeTitle', 'monthStr'));
+        return view('admin.attendance.index', compact('employees', 'allEmployees', 'attendanceLogs', 'summary', 'startDate', 'endDate', 'rangeTitle', 'monthStr', 'maxLateCount'));
     }
 
     public function import(Request $request)
@@ -194,18 +197,30 @@ class AttendanceController extends Controller
                     if ($checkIn == $checkOut) $checkOut = null;
 
                     $validation = $this->scheduleService->validateAttendanceForAllowance($emp, $date, $checkIn->format('H:i:s'));
-                    $status = 'present'; $lateMinutes = 0; $allowance = 0;
+                    $status = $validation['status'] ?? 'present'; 
+                    $lateMinutes = 0; 
+                    $earlyMinutes = 0; 
+                    $allowance = 0;
 
                     if ($validation['is_valid']) {
                         if ($validation['is_night_shift'] && !str_contains($validation['reason'], 'Kepulangan')) continue; 
                         
-                        $status = $validation['status'] ?? 'present';
                         $shift = $validation['schedule']['shift'] ?? null;
+                        
                         if ($shift && !in_array($status, ['on_leave', 'sick'])) {
                             $startTime = Carbon::parse($date . ' ' . $shift->start_time);
-                            if ($checkIn->gt($startTime->copy()->addMinutes(1))) {
-                                $lateMinutes = $checkIn->diffInMinutes($startTime);
-                                $status = 'late';
+                            $actualIn = Carbon::parse($date . ' ' . $checkIn->format('H:i:s'));
+                            
+                            if ($actualIn->gt($startTime)) {
+                                $lateMinutes = $actualIn->diffInMinutes($startTime);
+                            }
+
+                            if ($checkOut) {
+                                $endTime = Carbon::parse($date . ' ' . $shift->end_time);
+                                $actualOut = Carbon::parse($date . ' ' . $checkOut->format('H:i:s'));
+                                if ($actualOut->lt($endTime)) {
+                                    $earlyMinutes = $endTime->diffInMinutes($actualOut);
+                                }
                             }
                         }
                         $allowance = $emp->rank_relation->meal_allowance ?? 0;
@@ -218,6 +233,7 @@ class AttendanceController extends Controller
                         'check_out' => $checkOut ? $checkOut->format('H:i:s') : null,
                         'status' => $status,
                         'late_minutes' => $lateMinutes,
+                        'early_minutes' => $earlyMinutes,
                         'allowance_amount' => $allowance,
                         'created_at' => $now,
                         'updated_at' => $now,

@@ -170,6 +170,42 @@
                     @endif
                 </div>
             </div>
+
+            <!-- Latest Salary Slips from Archive -->
+            <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden flex flex-col card-3d">
+                <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
+                    <h3 class="text-sm font-black text-slate-900 flex items-center gap-3 uppercase tracking-widest">
+                        <i data-lucide="banknote" class="w-5 h-5 text-emerald-500"></i>
+                        Unggahan Slip Gaji Terbaru
+                    </h3>
+                    <a href="{{ route('documents.index') }}?category_id=1" class="text-[10px] font-black text-emerald-600 uppercase tracking-widest hover:underline">Arsip Slip Gaji</a>
+                </div>
+                <div class="p-8">
+                    <div class="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                        @forelse($latestSalarySlips as $slip)
+                        <div class="flex items-center justify-between p-5 rounded-3xl border border-slate-100 bg-slate-50/50 hover:bg-white hover:border-emerald-200 hover:shadow-xl transition-all group">
+                            <div class="flex items-center gap-5">
+                                <div class="w-12 h-12 rounded-2xl bg-white border border-slate-200 flex items-center justify-center text-emerald-500 shadow-sm">
+                                    <i data-lucide="file-text" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-black text-slate-900 group-hover:text-emerald-600 transition-colors">{{ $slip->employee->full_name ?? 'Pegawai' }}</h4>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{{ $slip->title }} • {{ $slip->created_at->diffForHumans() }}</p>
+                                </div>
+                            </div>
+                            <a href="{{ route('documents.download', $slip->id) }}" class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-600 hover:text-white transition-all shadow-sm active:scale-95 no-loader" title="Download Slip">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                            </a>
+                        </div>
+                        @empty
+                        <div class="py-12 text-center opacity-40">
+                            <i data-lucide="folder-search" class="w-12 h-12 mx-auto mb-4"></i>
+                            <p class="text-xs font-bold uppercase tracking-widest">Belum ada slip gaji diunggah</p>
+                        </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Right: Audit Trail -->

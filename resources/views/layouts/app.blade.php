@@ -211,6 +211,20 @@
                     <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Dashboard</span>
                 </a>
+
+                <div class="pt-4 pb-2 px-4">
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Informasi Saya</p>
+                </div>
+
+                <a href="{{ route('my.payroll') }}" class="sidebar-item {{ request()->routeIs('my.payroll*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
+                    <i data-lucide="wallet" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Tunkin Saya</span>
+                </a>
+
+                <a href="{{ route('my.attendance') }}" class="sidebar-item {{ request()->routeIs('my.attendance*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
+                    <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Monitor Absensi</span>
+                </a>
                 
                 @if(auth()->user()->role === 'superadmin')
                 <div class="pt-4 pb-2 px-4">

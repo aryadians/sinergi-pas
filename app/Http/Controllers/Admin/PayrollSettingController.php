@@ -26,11 +26,6 @@ class PayrollSettingController extends Controller
             'staff_in' => Setting::getValue('payroll_staff_in', '07:30'),
             'staff_out_mon_thu' => Setting::getValue('payroll_staff_out_mon_thu', '16:00'),
             'staff_out_fri' => Setting::getValue('payroll_staff_out_fri', '16:30'),
-            
-            // Tarif Uang Makan
-            'meal_gol_1_2' => Setting::getValue('payroll_meal_gol_1_2', 35000),
-            'meal_gol_3' => Setting::getValue('payroll_meal_gol_3', 37000),
-            'meal_gol_4' => Setting::getValue('payroll_meal_gol_4', 41000),
         ];
 
         return view('admin.settings.payroll', compact('settings'));
@@ -52,9 +47,6 @@ class PayrollSettingController extends Controller
             'payroll_staff_in' => 'required|string',
             'payroll_staff_out_mon_thu' => 'required|string',
             'payroll_staff_out_fri' => 'required|string',
-            'payroll_meal_gol_1_2' => 'required|numeric|min:0',
-            'payroll_meal_gol_3' => 'required|numeric|min:0',
-            'payroll_meal_gol_4' => 'required|numeric|min:0',
         ]);
 
         foreach ($data as $key => $value) {

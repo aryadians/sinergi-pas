@@ -95,41 +95,6 @@
         </div>
     </section>
 
-    <!-- Attendance Today Status -->
-    <div class="bg-white rounded-[40px] border border-slate-200 p-8 shadow-sm card-3d flex flex-col md:flex-row items-center gap-8">
-        <div class="w-20 h-20 rounded-3xl {{ $myAttendanceToday ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600' }} flex items-center justify-center shrink-0">
-            <i data-lucide="{{ $myAttendanceToday ? 'fingerprint' : 'alert-circle' }}" class="w-10 h-10"></i>
-        </div>
-        <div class="flex-1 text-center md:text-left">
-            <h3 class="text-xs font-black text-slate-400 uppercase tracking-[0.3em] mb-2">Status Presensi Hari Ini</h3>
-            @if($myAttendanceToday)
-                <div class="flex flex-col md:flex-row md:items-center gap-4 md:gap-8">
-                    <div>
-                        <p class="text-2xl font-black text-slate-900">SUDAH ABSEN</p>
-                        <p class="text-xs font-bold text-green-600 uppercase">Tercatat pada {{ Carbon\Carbon::parse($myAttendanceToday->check_in)->format('H:i') }} WIB</p>
-                    </div>
-                    <div class="h-10 w-px bg-slate-100 hidden md:block"></div>
-                    <div>
-                        <p class="text-xs font-bold text-slate-400 uppercase mb-1">Status Kehadiran</p>
-                        @if($myAttendanceToday->status === 'late')
-                            <span class="px-3 py-1 bg-amber-50 text-amber-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-amber-100">Terlambat ({{ $myAttendanceToday->late_minutes }}m)</span>
-                        @else
-                            <span class="px-3 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-black uppercase tracking-wider border border-green-100">Tepat Waktu</span>
-                        @endif
-                    </div>
-                </div>
-            @else
-                <p class="text-2xl font-black text-red-500">BELUM TERCATAT</p>
-                <p class="text-xs font-medium text-slate-400 italic">Silakan lakukan scan pada mesin fingerprint kantor.</p>
-            @endif
-        </div>
-        <div class="shrink-0">
-            <a href="{{ route('documents.index') }}?tab=absensi" class="px-6 py-3 rounded-2xl bg-slate-900 text-white text-[10px] font-bold uppercase tracking-widest hover:bg-blue-600 transition-all flex items-center gap-2">
-                Riwayat Lengkap <i data-lucide="arrow-right" class="w-4 h-4"></i>
-            </a>
-        </div>
-    </div>
-
     <div class="grid gap-8 xl:grid-cols-[1fr,350px]">
         <!-- Left Side: Recent Activity -->
         <div class="space-y-8">
@@ -171,24 +136,29 @@
 
         <!-- Right Side -->
         <div class="space-y-8">
-            <!-- Salary Card -->
             <div class="bg-slate-900 rounded-[40px] p-8 text-white relative overflow-hidden shadow-xl card-3d group">
                 <div class="absolute -right-4 -bottom-4 opacity-10 group-hover:scale-110 transition-transform duration-500">
                     <i data-lucide="banknote" class="w-32 h-32 text-amber-400"></i>
                 </div>
-                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">Slip Gaji Terakhir</h4>
-                <h3 class="text-2xl font-bold tracking-tight leading-snug">Unduh Slip Gaji<br>Periode Berjalan.</h3>
-                <div class="mt-8">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">Slip Gaji Terbaru</h4>
+                <h3 class="text-2xl font-bold tracking-tight leading-snug">
                     @if($latestSalary)
-                        <a href="{{ route('documents.download', $latestSalary->id) }}" download="Slip-Gaji-{{ auth()->user()->name }}.pdf" class="inline-flex w-full items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-amber-600 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg btn-3d no-loader">
-                            <i data-lucide="download-cloud" class="w-5 h-5"></i>
-                            Download PDF
-                        </a>
+                        Unduh slip periode<br>{{ $latestSalary->created_at->translatedFormat('F Y') }}.
                     @else
-                        <div class="px-6 py-4 rounded-2xl bg-white/5 border border-white/5 text-center text-[10px] font-bold uppercase text-slate-500 italic">
-                            Belum diunggah bendahara
-                        </div>
+                        Belum ada slip<br>gaji yang diunggah.
                     @endif
+                </h3>
+                <div class="mt-8 flex flex-col gap-3">
+                    @if($latestSalary)
+                        <a href="{{ route('documents.download', $latestSalary->id) }}" class="inline-flex w-full items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-amber-600 text-white font-black text-xs uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg btn-3d no-loader">
+                            <i data-lucide="download-cloud" class="w-5 h-5"></i>
+                            Unduh PDF
+                        </a>
+                    @endif
+                    <a href="{{ route('my.payroll') }}" class="inline-flex w-full items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-white/5 border border-white/10 text-white font-black text-xs uppercase tracking-widest hover:bg-white/10 transition-all">
+                        <i data-lucide="external-link" class="w-4 h-4"></i>
+                        Lihat Rincian Tunkin
+                    </a>
                 </div>
             </div>
 

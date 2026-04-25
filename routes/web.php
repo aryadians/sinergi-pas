@@ -14,6 +14,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\Admin\SquadController;
 use App\Http\Controllers\Admin\PayrollSettingController;
 use App\Http\Controllers\TunkinController;
+use App\Http\Controllers\SelfServiceController;
 use Illuminate\Support\Facades\Route;
 
 // Guest Routes
@@ -57,6 +58,13 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile/photo', [ProfileController::class, 'deletePhoto'])->name('profile.delete-photo');
     Route::post('/profile/report', [ProfileController::class, 'report'])->name('profile.report');
+
+    // Self-Service Routes (Pegawai)
+    Route::prefix('my')->name('my.')->group(function() {
+        Route::get('/payroll', [SelfServiceController::class, 'myPayroll'])->name('payroll');
+        Route::get('/payroll/download', [SelfServiceController::class, 'downloadMySlip'])->name('payroll.download');
+        Route::get('/attendance', [SelfServiceController::class, 'myAttendance'])->name('attendance');
+    });
 
     // Notifications
     Route::post('/notifications/mark-read', function() {

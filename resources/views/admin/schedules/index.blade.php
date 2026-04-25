@@ -135,7 +135,10 @@
                                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Status</label>
                                     <div class="relative">
                                         <select name="status" id="statusSelect" required onchange="toggleShiftSelect(this.value)" class="w-full pl-4 pr-10 py-4 rounded-xl bg-white/5 border border-white/10 text-white focus:bg-white/10 focus:border-blue-500 outline-none transition-all font-bold text-sm appearance-none cursor-pointer">
-                                            <option value="picket" class="bg-slate-900">PIKET</option>
+                                            <option value="picket" class="bg-slate-900">PIKET / KERJA</option>
+                                            <option value="duty_full" class="bg-slate-900">DINAS LUAR (FULL)</option>
+                                            <option value="duty_half" class="bg-slate-900">DINAS LUAR (HALF)</option>
+                                            <option value="tubel" class="bg-slate-900">TUGAS BELAJAR</option>
                                             <option value="leave" class="bg-slate-900">CUTI</option>
                                             <option value="sick" class="bg-slate-900">SAKIT</option>
                                             <option value="off" class="bg-slate-900">LIBUR</option>
@@ -234,6 +237,18 @@
                                                             $label = 'LIBUR';
                                                             $colorClass = 'bg-slate-100 text-slate-400 border-slate-200';
                                                             $icon = 'home';
+                                                        } elseif ($status === 'tubel') {
+                                                            $label = 'TUGAS BELAJAR';
+                                                            $colorClass = 'bg-purple-100 text-indigo-600 border-indigo-200';
+                                                            $icon = 'graduation-cap';
+                                                        } elseif ($status === 'duty_full') {
+                                                            $label = 'DINAS LUAR (FULL)';
+                                                            $colorClass = 'bg-cyan-100 text-cyan-700 border-cyan-200';
+                                                            $icon = 'plane';
+                                                        } elseif ($status === 'duty_half') {
+                                                            $label = 'DINAS LUAR (HALF)';
+                                                            $colorClass = 'bg-sky-100 text-sky-700 border-sky-200';
+                                                            $icon = 'map-pin';
                                                         } elseif (str_contains(strtoupper($label), 'PAGI')) {
                                                             $colorClass = 'bg-amber-100 text-amber-600 border-amber-200';
                                                             $icon = 'sun';
@@ -274,7 +289,7 @@
     function toggleShiftSelect(status) {
         const container = document.getElementById('shiftContainer');
         const select = document.getElementById('shiftSelect');
-        if (status === 'picket') {
+        if (status === 'picket' || status === 'duty_half') {
             container.classList.remove('hidden');
             select.setAttribute('required', 'required');
         } else {

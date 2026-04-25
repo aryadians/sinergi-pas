@@ -200,6 +200,17 @@
                                     GRADE {{ $employee->tunkin->grade }}
                                 </div>
                                 @endif
+                                
+                                <!-- Special Status Badges -->
+                                @if($employee->is_cpns)
+                                    <div class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[9px] font-black shadow-xs uppercase">CPNS</div>
+                                @endif
+                                @if($employee->is_tubel)
+                                    <div class="px-2.5 py-1 rounded-lg bg-amber-500 text-white text-[9px] font-black shadow-xs uppercase">Tubel</div>
+                                @endif
+                                @if($employee->acting_tunkin_id)
+                                    <div class="px-2.5 py-1 rounded-lg bg-indigo-600 text-white text-[9px] font-black shadow-xs uppercase">Plt/Plh</div>
+                                @endif
                             </div>
                         </td>
                         <td class="px-6 py-4 text-center">
@@ -325,6 +336,36 @@
                         </select>
                     </div>
                 </div>
+
+                <div class="bg-slate-50 p-6 rounded-[32px] border border-slate-100 space-y-6">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status Khusus (Permenkumham 10/2021)</p>
+                    <div class="flex flex-wrap gap-8">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" name="is_cpns" value="1" class="w-5 h-5 rounded-lg border-2 border-slate-200 text-blue-600 focus:ring-blue-500/20 transition-all">
+                            <span class="text-sm font-bold text-slate-600 group-hover:text-blue-600">CPNS (80%)</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <input type="checkbox" name="is_tubel" value="1" class="w-5 h-5 rounded-lg border-2 border-slate-200 text-amber-600 focus:ring-amber-500/20 transition-all">
+                            <span class="text-sm font-bold text-slate-600 group-hover:text-amber-600">Tugas Belajar</span>
+                        </label>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-slate-200">
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Jabatan Plt/Plh</label>
+                            <select name="acting_tunkin_id" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold focus:border-blue-500 outline-none">
+                                <option value="">-- Tidak Ada --</option>
+                                @foreach($tunkins as $tk)
+                                    <option value="{{ $tk->id }}">Plt/Plh Kelas {{ $tk->grade }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tgl Mulai Plt/Plh</label>
+                            <input type="date" name="acting_start_date" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 bg-white text-xs font-bold focus:border-blue-500 outline-none">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Jabatan</label>
@@ -418,8 +459,47 @@
                             @endforeach
                         </select>
                     </div>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    </div>
+
+                    <!-- Special Statuses Section (Edit) -->
+                    <div class="bg-slate-50 p-6 rounded-[32px] border border-slate-100 space-y-6">
+                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status Kepegawaian Khusus (Permenkumham 10/2021)</p>
+                    <div class="flex flex-wrap gap-8">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <div class="relative w-6 h-6">
+                                <input type="checkbox" name="is_cpns" id="edit_is_cpns" value="1" class="peer hidden">
+                                <div class="w-full h-full rounded-lg border-2 border-slate-200 peer-checked:border-blue-500 peer-checked:bg-blue-500 transition-all flex items-center justify-center">
+                                    <i data-lucide="check" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-all"></i>
+                                </div>
+                            </div>
+                            <span class="text-sm font-bold text-slate-600 group-hover:text-blue-600 transition-colors">CPNS (Pagu 80%)</span>
+                        </label>
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <div class="relative w-6 h-6">
+                                <input type="checkbox" name="is_tubel" id="edit_is_tubel" value="1" class="peer hidden">
+                                <div class="w-full h-full rounded-lg border-2 border-slate-200 peer-checked:border-amber-500 peer-checked:bg-amber-500 transition-all flex items-center justify-center">
+                                    <i data-lucide="check" class="w-4 h-4 text-white opacity-0 peer-checked:opacity-100 transition-all"></i>
+                                </div>
+                            </div>
+                            <span class="text-sm font-bold text-slate-600 group-hover:text-amber-600 transition-colors">Tugas Belajar (Potong 100%)</span>
+                        </label>
+                    </div>
+
+                    <div class="space-y-3 pt-2 border-t border-slate-200">
+                        <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Rangkap Jabatan (Plt / Plh > 1 Bulan)</label>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <select name="acting_tunkin_id" id="edit_acting_tunkin_id" class="w-full px-5 py-3.5 rounded-2xl border border-white bg-white text-sm font-bold focus:border-blue-500 outline-none shadow-sm">
+                                <option value="">-- Tidak Merangkap --</option>
+                                @foreach($tunkins as $tk)
+                                    <option value="{{ $tk->id }}">Plt/Plh Kelas {{ $tk->grade }} (+20%)</option>
+                                @endforeach
+                            </select>
+                            <input type="date" name="acting_start_date" id="edit_acting_start_date" class="w-full px-5 py-3.5 rounded-2xl border border-white bg-white text-sm font-bold focus:border-blue-500 outline-none shadow-sm">
+                        </div>
+                    </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="space-y-1.5">
                         <label class="text-[10px] font-bold text-slate-500 uppercase tracking-widest ml-1">Tipe Pegawai</label>
                         <select name="employee_type" id="edit_employee_type" required class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:border-blue-500 outline-none" onchange="toggleRegu(this, 'edit')">
@@ -664,6 +744,10 @@
         document.getElementById('edit_email').value = email;
         document.getElementById('edit_rank_id').value = employee.rank_id || '';
         document.getElementById('edit_tunkin_id').value = employee.tunkin_id || '';
+        document.getElementById('edit_is_cpns').checked = employee.is_cpns == 1;
+        document.getElementById('edit_is_tubel').checked = employee.is_tubel == 1;
+        document.getElementById('edit_acting_tunkin_id').value = employee.acting_tunkin_id || '';
+        document.getElementById('edit_acting_start_date').value = employee.acting_start_date || '';
         document.getElementById('edit_employee_type').value = employee.employee_type || 'non_regu_jaga';
         document.getElementById('edit_picket_regu').value = employee.picket_regu || '';
         document.getElementById('edit_role_in_squad').value = employee.role_in_squad || '';

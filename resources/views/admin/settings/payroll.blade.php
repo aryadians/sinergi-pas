@@ -154,37 +154,6 @@
                     </div>
                 </div>
             </div>
-
-            <!-- Section 4: Tarif Uang Makan -->
-            <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden card-3d">
-                <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
-                    <i data-lucide="utensils" class="w-5 h-5 text-emerald-500"></i>
-                    <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Tarif Uang Makan (PMK)</h4>
-                </div>
-                <div class="p-8 space-y-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Golongan I & II</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">Rp</span>
-                            <input type="number" name="payroll_meal_gol_1_2" value="{{ $settings['meal_gol_1_2'] }}" class="w-full pl-12 pr-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Golongan III</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">Rp</span>
-                            <input type="number" name="payroll_meal_gol_3" value="{{ $settings['meal_gol_3'] }}" class="w-full pl-12 pr-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
-                        </div>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Golongan IV</label>
-                        <div class="relative">
-                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">Rp</span>
-                            <input type="number" name="payroll_meal_gol_4" value="{{ $settings['meal_gol_4'] }}" class="w-full pl-12 pr-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
-                        </div>
-                    </div>
-                </div>
-            </div>
         </div>
 
         <!-- Submit Button Row -->

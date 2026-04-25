@@ -23,6 +23,10 @@ class Employee extends Model
         'rank_id',
         'rank_class',
         'tunkin_id',
+        'is_cpns',
+        'is_tubel',
+        'acting_tunkin_id',
+        'acting_start_date',
         'employee_type',
         'picket_regu',
         'photo',
@@ -46,6 +50,11 @@ class Employee extends Model
     public function tunkin(): BelongsTo
     {
         return $this->belongsTo(Tunkin::class);
+    }
+
+    public function actingTunkin(): BelongsTo
+    {
+        return $this->belongsTo(Tunkin::class, 'acting_tunkin_id');
     }
 
     public function squad(): BelongsTo

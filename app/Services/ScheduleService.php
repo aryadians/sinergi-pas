@@ -51,15 +51,21 @@ class ScheduleService
         }
 
         // 3. Jadwal Default Staff (Hanya Senin-Jumat)
-        $dayOfWeek = Carbon::parse($date)->dayOfWeek;
+        $dateObj = Carbon::parse($date);
+        $dayOfWeek = $dateObj->dayOfWeek;
+
         if ($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) {
-            // Kita buat objek "virtual" shift untuk staff
+            $inTime = Setting::getValue('payroll_staff_in', '07:30');
+            $outTime = ($dayOfWeek === Carbon::FRIDAY) 
+                ? Setting::getValue('payroll_staff_out_fri', '16:30')
+                : Setting::getValue('payroll_staff_out_mon_thu', '16:00');
+
             return [
                 'type' => 'office',
                 'shift' => (object)[
                     'name' => 'Staff Kantor',
-                    'start_time' => Setting::getValue('office_start_time', '07:30:00'),
-                    'end_time' => Setting::getValue('office_end_time', '16:00:00'),
+                    'start_time' => $inTime . ':00',
+                    'end_time' => $outTime . ':00',
                 ],
                 'is_picket' => false
             ];
@@ -117,10 +123,14 @@ class ScheduleService
             
             // Beri toleransi masuk (misal 2 jam sebelum shift mulai masih dianggap valid)
             if ($checkIn->diffInHours($shiftStart, false) <= 2) {
+                // Tentukan status: Jika jam masuk > jam mulai, maka 'late', jika tidak maka 'present' atau 'picket'
+                $isLate = $checkIn->gt($shiftStart);
+                $status = $isLate ? 'late' : ($schedule['is_picket'] ? 'picket' : 'present');
+
                 return [
                     'is_valid' => true,
                     'reason' => 'Sesuai Jadwal: ' . $schedule['shift']->name,
-                    'status' => $schedule['is_picket'] ? 'picket' : 'present',
+                    'status' => $status,
                     'schedule' => $schedule,
                     'is_night_shift' => str_contains(strtoupper($schedule['shift']->name), 'MALAM')
                 ];

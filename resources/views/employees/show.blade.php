@@ -94,6 +94,33 @@
                                 <span class="px-2 py-0.5 rounded-lg bg-indigo-50 text-indigo-600 text-[10px] font-black uppercase">{{ $employee->picket_regu ?? '-' }}</span>
                             </div>
                             @endif
+                            <div class="h-px bg-slate-100 my-2"></div>
+                            @if($employee->is_cpns)
+                            <div class="flex justify-between items-center px-1">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status Khusus</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-slate-900 text-white text-[10px] font-black uppercase">CPNS (80%)</span>
+                            </div>
+                            @endif
+                            @if($employee->is_tubel)
+                            <div class="flex justify-between items-center px-1">
+                                <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status Khusus</span>
+                                <span class="px-2 py-0.5 rounded-lg bg-amber-500 text-white text-[10px] font-black uppercase">Tugas Belajar</span>
+                            </div>
+                            @endif
+                            @if($employee->actingTunkin)
+                            <div class="space-y-2 mt-2">
+                                <div class="flex justify-between items-center px-1">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Jabatan Plt/Plh</span>
+                                    <span class="px-2 py-0.5 rounded-lg bg-indigo-600 text-white text-[10px] font-black uppercase">Grade {{ $employee->actingTunkin->grade }} (+20%)</span>
+                                </div>
+                                @if($employee->acting_start_date)
+                                <div class="flex justify-between items-center px-1">
+                                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Mulai Sejak</span>
+                                    <span class="text-xs font-black text-slate-700 uppercase">{{ \Carbon\Carbon::parse($employee->acting_start_date)->translatedFormat('d F Y') }}</span>
+                                </div>
+                                @endif
+                            </div>
+                            @endif
                         </div>
                     </div>
                 </div>

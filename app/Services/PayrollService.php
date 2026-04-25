@@ -13,7 +13,7 @@ class PayrollService
 {
     /**
      * Menghitung rincian Tukin dan Uang Makan untuk satu pegawai dalam satu bulan.
-     * Logika ini diselaraskan 100% dengan AttendanceController.
+     * Logika sangat dioptimalkan untuk kecepatan eksekusi tinggi (Bebas N+1 Query).
      */
     public function calculateMonthlyPayroll(Employee $employee, $monthStr)
     {
@@ -22,146 +22,188 @@ class PayrollService
         $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
         $daysInMonth = $date->daysInMonth;
 
-        // Fetch Dynamic Rules from Settings
+        // 1. Pre-fetch All Settings in ONE Query
+        $allSettings = Setting::where('key', 'like', 'payroll_%')->get()->pluck('value', 'key');
+        
         $rules = [
-            'tl_1' => Setting::getValue('payroll_tl_1_percent', 0.5),
-            'tl_2' => Setting::getValue('payroll_tl_2_percent', 1.0),
-            'tl_3' => Setting::getValue('payroll_tl_3_percent', 1.25),
-            'tl_4' => Setting::getValue('payroll_tl_4_percent', 1.5),
-            'max_late' => Setting::getValue('payroll_max_late_count', 8),
-            'mangkir' => Setting::getValue('payroll_mangkir_percent', 5.0),
-            'lupa_absen' => Setting::getValue('payroll_lupa_absen_percent', 1.5),
-            'sakit_3_6' => Setting::getValue('payroll_sakit_3_6_percent', 2.5),
-            'sakit_7' => Setting::getValue('payroll_sakit_7_plus_percent', 10.0),
-            'apel' => Setting::getValue('payroll_apel_percent', 0.5),
+            'tl_1' => (float)($allSettings['payroll_tl_1_percent'] ?? 0.5),
+            'tl_2' => (float)($allSettings['payroll_tl_2_percent'] ?? 1.0),
+            'tl_3' => (float)($allSettings['payroll_tl_3_percent'] ?? 1.25),
+            'tl_4' => (float)($allSettings['payroll_tl_4_percent'] ?? 1.5),
+            'max_late' => (int)($allSettings['payroll_max_late_count'] ?? 8),
+            'mangkir' => (float)($allSettings['payroll_mangkir_percent'] ?? 5.0),
+            'lupa_absen' => (float)($allSettings['payroll_lupa_absen_percent'] ?? 1.5),
+            'sakit_3_6' => (float)($allSettings['payroll_sakit_3_6_percent'] ?? 2.5),
+            'sakit_7' => (float)($allSettings['payroll_sakit_7_plus_percent'] ?? 10.0),
+            'apel' => (float)($allSettings['payroll_apel_percent'] ?? 0.5),
+            'staff_in' => $allSettings['payroll_staff_in'] ?? '07:30',
+            'staff_out_mon_thu' => $allSettings['payroll_staff_out_mon_thu'] ?? '16:00',
+            'staff_out_fri' => $allSettings['payroll_staff_out_fri'] ?? '16:30',
         ];
         
-        // 1. Ambil data Absensi
+        // 2. Pre-fetch Attendances
         $attendances = Attendance::where('employee_id', $employee->id)
             ->whereBetween('date', [$startDate, $endDate])
             ->get()
-            ->keyBy(function($item) {
-                return Carbon::parse($item->date)->format('Y-m-d');
-            });
+            ->keyBy(fn($item) => Carbon::parse($item->date)->format('Y-m-d'));
 
-        // 2. Ambil data Jadwal (Unified Logic from AttendanceController)
-        $squadSchedules = SquadSchedule::where('squad_id', $employee->squad_id)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->pluck('date')
-            ->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))
-            ->toArray();
-
-        $individualSchedules = Schedule::where('employee_id', $employee->id)
+        // 3. Pre-fetch ALL Schedules (INDIVIDUAL & SQUAD) in single queries
+        $individualSchedules = Schedule::with('shift')
+            ->where('employee_id', $employee->id)
             ->whereBetween('date', [$startDate, $endDate])
             ->get()
             ->keyBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d'));
-
-        // Helper checkIsScheduled (Sama persis dengan AttendanceController)
-        $checkIsScheduled = function($emp, $dateStr) use ($squadSchedules, $individualSchedules) {
-            // 1. Individual Override
-            if (isset($individualSchedules[$dateStr])) {
-                return !in_array($individualSchedules[$dateStr]->status, ['off', 'leave', 'sick']);
-            }
-            // 2. Squad Schedule
-            if ($emp->squad_id && in_array($dateStr, $squadSchedules)) {
-                return true;
-            }
-            // 3. Default Office (Staff only, Mon-Fri)
-            if (!$emp->squad_id) {
-                $dayNum = Carbon::parse($dateStr)->dayOfWeek;
-                return ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY);
-            }
-            return false;
-        };
+            
+        $squadSchedules = [];
+        if ($employee->squad_id) {
+            $squadSchedules = SquadSchedule::with('shift')
+                ->where('squad_id', $employee->squad_id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->get()
+                ->keyBy(fn($s) => Carbon::parse($s->date)->format('Y-m-d'));
+        }
 
         $stats = [
             'total_present' => 0,
-            'total_alpha' => 0,
-            'total_sick' => 0,
-            'total_leave' => 0,
             'late_count' => 0,
-            'early_leave_count' => 0,
+            'compensation_count' => 0,
             'deduction_percentage' => 0.0,
             'meal_allowance_days' => 0,
             'details' => [],
-            'processed_logs' => [], // Tambahkan ini untuk rincian tabel
-            'violation_note' => null
+            'processed_logs' => [],
+            'violation_note' => null,
+            'is_tubel' => $employee->is_tubel,
+            'is_cpns' => $employee->is_cpns,
+            'is_acting' => false
         ];
 
         $sickCounter = 0;
-        $baseTunkin = $employee->tunkin->nominal ?? 0;
-        $mealRate = $employee->rank_relation->meal_allowance ?? 0;
+        
+        // 4. Dasar Tunkin & Penyesuaian
+        $baseTunkin = (float)($employee->tunkin->nominal ?? 0);
+        if ($employee->is_cpns) {
+            $baseTunkin = 0.8 * $baseTunkin;
+            $stats['details'][] = ['type' => 'Status CPNS', 'info' => 'Pagu Dasar 80%', 'date' => null, 'percent' => 0, 'rupiah' => 0];
+        }
 
+        $actingBonus = 0;
+        if ($employee->acting_tunkin_id && $employee->acting_start_date) {
+            $startDateObj = Carbon::parse($employee->acting_start_date);
+            if ($date->diffInMonths($startDateObj) >= 1) {
+                $actingTunkin = $employee->actingTunkin->nominal ?? 0;
+                $actingBonus = 0.2 * $actingTunkin;
+                $stats['is_acting'] = true;
+                $stats['details'][] = ['type' => 'Bonus Plt/Plh', 'info' => 'Tambahan 20%', 'date' => null, 'percent' => 0, 'rupiah' => $actingBonus];
+            }
+        }
+
+        if ($employee->is_tubel) {
+            $stats['deduction_percentage'] = 100;
+            $stats['details'][] = ['type' => 'Tugas Belajar', 'info' => 'Potong 100%', 'date' => null, 'percent' => 100, 'rupiah' => $baseTunkin];
+            $baseTunkin = 0;
+            $actingBonus = 0;
+        }
+
+        $mealRate = (float)($employee->rank_relation->meal_allowance ?? 0);
+
+        // 5. Main Processing Loop (No DB queries inside this loop)
         for ($d = 1; $d <= $daysInMonth; $d++) {
-            $currentDate = $date->copy()->day($d)->format('Y-m-d');
+            $currentDateObj = $date->copy()->day($d);
+            $currentDate = $currentDateObj->format('Y-m-d');
+            $dayOfWeek = $currentDateObj->dayOfWeek;
+            
             $attendance = $attendances->get($currentDate);
-            $isScheduled = $checkIsScheduled($employee, $currentDate);
+            
+            // Logic Prioritas Jadwal (Memory Based)
+            $isScheduled = false;
+            $scheduledOutTime = null;
+            $specialStatus = null; 
+
+            if ($individualSchedules->has($currentDate)) {
+                $indiv = $individualSchedules->get($currentDate);
+                $specialStatus = $indiv->status ?? 'picket';
+                $isScheduled = !in_array($specialStatus, ['off', 'leave', 'sick']);
+                $scheduledOutTime = $indiv->shift->end_time ?? null;
+            } elseif ($employee->squad_id && isset($squadSchedules[$currentDate])) {
+                $isScheduled = true;
+                $scheduledOutTime = $squadSchedules[$currentDate]->shift->end_time ?? null;
+            } elseif (!$employee->squad_id && $dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) {
+                $isScheduled = true;
+                $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['staff_out_fri'] : $rules['staff_out_mon_thu'];
+            }
+
+            // A. LOGIKA STATUS KHUSUS
+            if ($specialStatus && in_array($specialStatus, ['duty_full', 'duty_half', 'tubel'])) {
+                $isEligibleMeal = ($specialStatus === 'duty_half');
+                $stats['processed_logs'][] = [
+                    'date' => $currentDate, 'status' => $specialStatus, 'check_in' => 'DINAS', 'check_out' => 'LUAR', 'is_scheduled' => true, 'meal_amount' => $isEligibleMeal ? $mealRate : 0
+                ];
+                if ($isEligibleMeal) { $stats['meal_allowance_days']++; $stats['total_present']++; }
+                if ($specialStatus === 'tubel') { $stats['deduction_percentage'] += 100; }
+                continue;
+            }
 
             if ($attendance) {
                 $status = $attendance->status;
                 $isEligibleMeal = in_array($status, ['present', 'late', 'duty_half', 'picket']) && $isScheduled;
 
-                // Tambahkan ke processed_logs untuk tampilan tabel
                 $stats['processed_logs'][] = [
                     'date' => $currentDate,
                     'status' => $status,
-                    'check_in' => $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i')) : '--:--',
-                    'check_out' => $attendance->check_out ? (is_string($attendance->check_out) ? $attendance->check_out : $attendance->check_out->format('H:i')) : '--:--',
+                    'check_in' => $attendance->check_in ? (is_string($attendance->check_in) ? substr($attendance->check_in, 0, 5) : $attendance->check_in->format('H:i')) : '--:--',
+                    'check_out' => $attendance->check_out ? (is_string($attendance->check_out) ? substr($attendance->check_out, 0, 5) : $attendance->check_out->format('H:i')) : '--:--',
                     'is_scheduled' => $isScheduled,
                     'meal_amount' => $isEligibleMeal ? $mealRate : 0
                 ];
 
-                // --- UANG MAKAN ---
-                if ($isEligibleMeal) {
-                    $stats['meal_allowance_days']++;
-                    $stats['total_present']++;
-                }
+                if ($isEligibleMeal) { $stats['meal_allowance_days']++; $stats['total_present']++; }
 
-                // --- POTONGAN TUKIN ---
                 if ($isScheduled) {
-                    if ($status === 'late' || $attendance->late_minutes > 0) {
+                    $lateMin = abs($attendance->late_minutes ?? 0);
+                    $earlyMin = abs($attendance->early_minutes ?? 0);
+
+                    if ($status === 'late' || $lateMin > 0) {
                         $stats['late_count']++;
-                        
-                        $p = $this->getLatePSWPercentage($attendance->late_minutes, $rules);
-                        
-                        $stats['deduction_percentage'] += $p;
-                        $stats['details'][] = [
-                            'type' => 'Terlambat (TL)',
-                            'info' => $attendance->late_minutes > 0 ? "{$attendance->late_minutes}m" : "Status Terlambat",
-                            'date' => $currentDate,
-                            'percent' => $p,
-                            'rupiah' => ($p / 100) * $baseTunkin
-                        ];
-                    }
-                    
-                    if ($attendance->early_minutes > 0) {
-                        $stats['early_leave_count']++;
-                        $p = $this->getLatePSWPercentage($attendance->early_minutes, $rules);
-                        $stats['deduction_percentage'] += $p;
-                        $stats['details'][] = [
-                            'type' => 'Pulang Cepat (PSW)',
-                            'info' => "{$attendance->early_minutes}m",
-                            'date' => $currentDate,
-                            'percent' => $p,
-                            'rupiah' => ($p / 100) * $baseTunkin
-                        ];
+                        $p = $this->getLatePSWPercentage($lateMin ?: 1, $rules);
+                        $canCompensate = false;
+                        if ($lateMin <= 30 && $stats['compensation_count'] < 8 && $attendance->check_out && $scheduledOutTime) {
+                            $outTimeString = is_string($attendance->check_out) ? $attendance->check_out : $attendance->check_out->format('H:i:s');
+                            $actualOut = Carbon::parse($currentDate . ' ' . $outTimeString);
+                            $schedOutStr = is_string($scheduledOutTime) ? $scheduledOutTime : $scheduledOutTime;
+                            $requiredOut = Carbon::parse($currentDate . ' ' . $schedOutStr)->addMinutes(30);
+                            if ($actualOut->greaterThanOrEqualTo($requiredOut)) { $canCompensate = true; }
+                        }
+
+                        if ($canCompensate) {
+                            $stats['compensation_count']++;
+                            $outDisplay = is_string($attendance->check_out) ? substr($attendance->check_out, 0, 5) : $attendance->check_out->format('H:i');
+                            $stats['details'][] = ['type' => 'TL Diganti (Kompensasi)', 'info' => "Telat {$lateMin}m, Pulang {$outDisplay}", 'date' => $currentDate, 'percent' => 0, 'rupiah' => 0];
+                        } else {
+                            $stats['deduction_percentage'] += $p;
+                            $stats['details'][] = ['type' => 'Terlambat (TL)', 'info' => "{$lateMin}m", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                        }
+
+                        if ($attendance->check_in && Carbon::parse($attendance->check_in)->format('H:i') > $rules['staff_in']) {
+                            $stats['deduction_percentage'] += $rules['apel'];
+                            $stats['details'][] = ['type' => 'Tidak Ikut Apel', 'info' => "Masuk > {$rules['staff_in']}", 'date' => $currentDate, 'percent' => $rules['apel'], 'rupiah' => ($rules['apel'] / 100) * $baseTunkin];
+                        }
                     }
 
-                    if (in_array($status, ['present', 'late']) && (!$attendance->check_in || !$attendance->check_out)) {
+                    if ($earlyMin > 0) {
+                        $p = $this->getLatePSWPercentage($earlyMin, $rules);
+                        $stats['deduction_percentage'] += $p;
+                        $stats['details'][] = ['type' => 'Pulang Cepat (PSW)', 'info' => "{$earlyMin}m", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                    }
+
+                    $hasOnlyOneScan = (empty($attendance->check_in) || empty($attendance->check_out) || $attendance->check_in == $attendance->check_out);
+                    if (in_array($status, ['present', 'late']) && $hasOnlyOneScan) {
                         $p = $rules['lupa_absen'];
                         $stats['deduction_percentage'] += $p;
-                        $stats['details'][] = [
-                            'type' => 'Lupa Absen',
-                            'info' => "Data tidak lengkap",
-                            'date' => $currentDate,
-                            'percent' => $p,
-                            'rupiah' => ($p / 100) * $baseTunkin
-                        ];
+                        $stats['details'][] = ['type' => 'Lupa Absen', 'info' => (empty($attendance->check_in) ? "Tanpa Masuk" : "Tanpa Pulang"), 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                     }
                 }
 
                 if ($status === 'sick') {
-                    $stats['total_sick']++;
                     $sickCounter++;
                     $p = ($sickCounter >= 3 && $sickCounter <= 6) ? $rules['sakit_3_6'] : (($sickCounter >= 7) ? $rules['sakit_7'] : 0);
                     if ($p > 0) {
@@ -171,29 +213,29 @@ class PayrollService
                 }
 
                 if ($status === 'absent') {
-                    $stats['total_alpha']++;
                     $p = $rules['mangkir'];
                     $stats['deduction_percentage'] += $p;
                     $stats['details'][] = ['type' => 'Mangkir', 'info' => "Tanpa Keterangan", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
 
             } else {
-                // TIDAK ABSEN
                 if ($isScheduled) {
-                    $stats['total_alpha']++;
                     $p = $rules['mangkir'];
                     $stats['deduction_percentage'] += $p;
-                    $stats['details'][] = ['type' => 'Mangkir (Jadwal)', 'info' => "Bolos Shift", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                    $stats['details'][] = ['type' => 'Mangkir (Otomatis)', 'info' => "Bolos Jadwal", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
             }
         }
 
         if ($stats['late_count'] > $rules['max_late']) $stats['violation_note'] = "PELANGGARAN: Telat {$stats['late_count']}x";
 
-        $stats['total_potongan_rupiah'] = ($stats['deduction_percentage'] / 100) * $baseTunkin;
-        $stats['tunkin_final'] = max(0, $baseTunkin - $stats['total_potongan_rupiah']);
+        $finalPercent = min(100, $stats['deduction_percentage']);
+        $stats['total_potongan_rupiah'] = ($finalPercent / 100) * $baseTunkin;
+        $stats['tunkin_final'] = max(0, ($baseTunkin + $actingBonus) - $stats['total_potongan_rupiah']);
         $stats['total_meal_allowance'] = $stats['meal_allowance_days'] * $mealRate;
         $stats['grand_total'] = $stats['tunkin_final'] + $stats['total_meal_allowance'];
+        $stats['base_tunkin'] = $baseTunkin;
+        $stats['total_potongan_rupiah'] = ($finalPercent / 100) * $baseTunkin;
 
         return $stats;
     }
@@ -207,4 +249,3 @@ class PayrollService
         return $rules['tl_4'];
     }
 }
-
