@@ -49,6 +49,11 @@ class SelfServiceController extends Controller
         
         $user = auth()->user();
         $employee = $user->employee;
+
+        if (!$employee) {
+            return back()->with('error', 'Data pegawai tidak ditemukan.');
+        }
+
         $monthStr = $request->month ?? now()->format('Y-m');
         $date = Carbon::parse($monthStr . '-01');
 
@@ -82,6 +87,11 @@ class SelfServiceController extends Controller
     {
         $user = auth()->user();
         $employee = $user->employee;
+
+        if (!$employee) {
+            return back()->with('error', 'Data pegawai tidak ditemukan.');
+        }
+
         $monthStr = $request->month ?? now()->format('Y-m');
         
         $payroll = $this->payrollService->calculateMonthlyPayroll($employee, $monthStr);

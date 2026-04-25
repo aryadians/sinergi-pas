@@ -212,6 +212,7 @@
                     <span class="text-sm font-semibold">Dashboard</span>
                 </a>
 
+                @if(auth()->user()->role === 'pegawai')
                 <div class="pt-4 pb-2 px-4">
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Informasi Saya</p>
                 </div>
@@ -225,6 +226,7 @@
                     <i data-lucide="calendar-check" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Monitor Absensi</span>
                 </a>
+                @endif
                 
                 @if(auth()->user()->role === 'superadmin')
                 <div class="pt-4 pb-2 px-4">

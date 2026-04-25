@@ -131,7 +131,7 @@
                     </div>
 
                     <div class="flex flex-wrap items-center justify-end gap-4 pt-4">
-                        @if($employee->getRawOriginal('photo'))
+                        @if($employee && $employee->getRawOriginal('photo'))
                         <button type="button" onclick="confirmDeletePhoto()" class="px-6 py-4 text-xs font-black text-red-500 uppercase tracking-widest hover:bg-red-50 rounded-2xl transition-all">
                             Hapus Foto Profil
                         </button>
