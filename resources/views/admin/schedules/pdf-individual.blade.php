@@ -35,7 +35,13 @@
                     <td class="font-bold">{{ strtoupper($s->employee->full_name) }}</td>
                     <td class="text-center">{{ $s->employee->nip }}</td>
                     <td class="text-center">
-                        <span class="shift-label">{{ $s->shift->name }}</span>
+                        @if($s->shift)
+                            <span class="shift-label">{{ $s->shift->name }}</span>
+                        @else
+                            <span class="shift-label" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1;">
+                                {{ strtoupper(str_replace('_', ' ', $s->status)) }}
+                            </span>
+                        @endif
                     </td>
                 </tr>
             @empty

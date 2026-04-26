@@ -107,7 +107,11 @@ class AttendanceController extends Controller
                             $totalLate++;
                         }
                         $empValidDays++;
-                        $empTotalAllowance += $empRate;
+                        
+                        // KHUSUS: Dinas Luar Full & Tubel tidak dapat Uang Makan
+                        if ($att->status !== 'duty_full' && $att->status !== 'tubel') {
+                            $empTotalAllowance += $empRate;
+                        }
                     }
                 }
             }
@@ -149,7 +153,11 @@ class AttendanceController extends Controller
         $attendanceLogs->getCollection()->transform(function($log) use ($checkIsScheduled) {
             $emp = $log->employee;
             $isScheduled = $checkIsScheduled($emp, $log->date);
-            $log->allowance_amount = ($isScheduled && $log->status !== 'absent') ? ($emp->rank_relation->meal_allowance ?? 0) : 0;
+            
+            // Logika Uang Makan Real-time di Tabel Log
+            $hasMeal = $isScheduled && !in_array($log->status, ['absent', 'duty_full', 'tubel', 'on_leave', 'sick']);
+            $log->allowance_amount = $hasMeal ? ($emp->rank_relation->meal_allowance ?? 0) : 0;
+            
             return $log;
         });
 
