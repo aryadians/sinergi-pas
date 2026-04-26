@@ -23,11 +23,19 @@
             <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden card-3d">
                 <div class="h-32 bg-slate-900 relative">
                     <div class="absolute -bottom-12 left-1/2 -translate-x-1/2">
-                        <div class="w-24 h-24 rounded-3xl bg-white border-4 border-white shadow-xl overflow-hidden flex items-center justify-center text-slate-300 font-black text-2xl">
-                            @if($employee->photo)
-                                <img src="{{ $employee->photo }}" class="w-full h-full object-cover">
-                            @else
-                                {{ substr($employee->full_name, 0, 1) }}
+                        <div class="relative w-24 h-24 rounded-3xl bg-white border-4 border-white shadow-xl overflow-visible flex items-center justify-center text-slate-300 font-black text-2xl">
+                            <div class="w-full h-full rounded-3xl overflow-hidden flex items-center justify-center">
+                                @if($employee->photo)
+                                    <img src="{{ $employee->photo }}" class="w-full h-full object-cover">
+                                @else
+                                    {{ substr($employee->full_name, 0, 1) }}
+                                @endif
+                            </div>
+
+                            @if($employee->is_cpns)
+                                <div class="absolute -top-2 -right-2 px-2 py-1 bg-slate-900 text-white text-[8px] font-black uppercase rounded-lg shadow-lg border border-slate-700 z-10">
+                                    CPNS
+                                </div>
                             @endif
                         </div>
                     </div>

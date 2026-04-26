@@ -147,20 +147,29 @@
                         <td class="px-6 py-4">
                             <div class="flex items-center gap-4">
                                 <div class="relative shrink-0">
-                                    <div class="w-14 h-14 rounded-2xl bg-slate-100 border-2 border-white shadow-sm overflow-hidden flex items-center justify-center text-slate-400 group-hover:scale-105 transition-all duration-500 ring-1 ring-slate-200">
-                                        @if($employee->photo)
-                                            <img src="{{ $employee->photo }}" class="w-full h-full object-cover">
-                                        @else
-                                            <div class="w-full h-full bg-linear-to-br from-slate-50 to-slate-100 flex items-center justify-center">
-                                                <i data-lucide="user" class="w-6 h-6 opacity-20"></i>
+                                    <div class="relative w-14 h-14 rounded-2xl bg-slate-100 border-2 border-white shadow-sm overflow-visible flex items-center justify-center text-slate-400 group-hover:scale-105 transition-all duration-500 ring-1 ring-slate-200">
+                                        <div class="w-full h-full rounded-2xl overflow-hidden flex items-center justify-center">
+                                            @if($employee->photo)
+                                                <img src="{{ $employee->photo }}" class="w-full h-full object-cover">
+                                            @else
+                                                <div class="w-full h-full bg-linear-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+                                                    <i data-lucide="user" class="w-6 h-6 opacity-20"></i>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        
+                                        @if($employee->is_cpns)
+                                            <div class="absolute -top-1.5 -right-1.5 px-1.5 py-0.5 bg-slate-900 text-white text-[7px] font-black uppercase rounded-md shadow-lg border border-slate-700 z-10">
+                                                CPNS
+                                            </div>
+                                        @endif
+
+                                        @if($employee->picket_regu)
+                                            <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 border-2 border-white rounded-lg flex items-center justify-center shadow-sm">
+                                                <span class="text-[9px] font-black text-white">{{ $employee->picket_regu }}</span>
                                             </div>
                                         @endif
                                     </div>
-                                    @if($employee->picket_regu)
-                                        <div class="absolute -bottom-1 -right-1 w-6 h-6 bg-blue-600 border-2 border-white rounded-lg flex items-center justify-center shadow-sm">
-                                            <span class="text-[9px] font-black text-white">{{ $employee->picket_regu }}</span>
-                                        </div>
-                                    @endif
                                 </div>
                                 <div class="min-w-0">
                                     <p class="text-sm font-black text-slate-900 group-hover:text-blue-600 transition-colors truncate">{{ $employee->full_name }}</p>

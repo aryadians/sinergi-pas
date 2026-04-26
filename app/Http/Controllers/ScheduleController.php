@@ -119,23 +119,25 @@ class ScheduleController extends Controller
         elseif ($request->status === 'duty_half') $attendanceStatus = 'duty_half';
         elseif ($request->status === 'tubel') $attendanceStatus = 'tubel';
 
+        $cleanDate = \Carbon\Carbon::parse($request->date)->format('Y-m-d');
+
         if ($attendanceStatus) {
             \App\Models\Attendance::updateOrCreate(
-                ['employee_id' => $request->employee_id, 'date' => $request->date],
+                ['employee_id' => $request->employee_id, 'date' => $cleanDate],
                 [
                     'status' => $attendanceStatus,
                     'check_in' => null,
                     'check_out' => null,
                     'late_minutes' => 0,
-                    'allowance_amount' => 0 // Cuti/Sakit biasanya tidak dapat uang makan
+                    'allowance_amount' => 0 
                 ]
             );
         } else {
-            // Jika statusnya Piket atau Libur, hapus record Attendance manual jika ada
-            // agar nanti diisi oleh Import Finger atau dianggap absent
+            // Jika statusnya Piket atau Libur, hapus record Attendance STATUS KHUSUS jika ada
+            // agar nanti bisa diisi ulang oleh Import Finger atau dianggap mangkir biasa
             \App\Models\Attendance::where('employee_id', $request->employee_id)
-                ->where('date', $request->date)
-                ->whereIn('status', ['on_leave', 'sick'])
+                ->where('date', $cleanDate)
+                ->whereIn('status', ['on_leave', 'sick', 'duty_full', 'duty_half', 'tubel'])
                 ->delete();
         }
 
@@ -146,12 +148,15 @@ class ScheduleController extends Controller
     {
         $schedule = Schedule::find($id);
         if ($schedule) {
-            // Jika yang dihapus adalah Cuti/Sakit, hapus juga di Attendance
-            if (in_array($schedule->status, ['leave', 'sick'])) {
-                \App\Models\Attendance::where('employee_id', $schedule->employee_id)
-                    ->where('date', $schedule->date)
-                    ->delete();
-            }
+            $cleanDate = \Carbon\Carbon::parse($schedule->date)->format('Y-m-d');
+            
+            // Hapus record di Attendance jika statusnya adalah salah satu status sinkronisasi
+            // Gunakan whereIn status untuk memastikan record 'buatan' ini hilang total
+            \App\Models\Attendance::where('employee_id', $schedule->employee_id)
+                ->where('date', $cleanDate)
+                ->whereIn('status', ['on_leave', 'sick', 'duty_full', 'duty_half', 'tubel'])
+                ->delete();
+
             $schedule->delete();
         }
         return back()->with('success', 'Jadwal penugasan berhasil dihapus.');
