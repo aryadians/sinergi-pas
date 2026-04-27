@@ -64,6 +64,8 @@ class EmployeeController extends Controller
         $request->validate([
             'full_name' => 'required|string|max:255',
             'nip' => 'required|string|unique:employees,nip',
+            'nik' => 'nullable|string|max:20',
+            'phone_number' => 'nullable|string|max:20',
             'email' => 'required|email|unique:users,email',
             'position_id' => 'required|exists:positions,id',
             'work_unit_id' => 'required|exists:work_units,id',
@@ -96,8 +98,10 @@ class EmployeeController extends Controller
 
         $employee = Employee::create([
             'user_id' => $user->id,
-            'nip' => $request->nip,
+            'nip' => trim($request->nip),
+            'nik' => trim($request->nik),
             'full_name' => $request->full_name,
+            'phone_number' => trim($request->phone_number),
             'position' => $position->name,
             'position_id' => $request->position_id,
             'work_unit_id' => $request->work_unit_id,
@@ -132,6 +136,8 @@ class EmployeeController extends Controller
         $request->validate([
             'full_name' => 'required|string|max:255',
             'nip' => 'required|string|unique:employees,nip,' . $employee->id,
+            'nik' => 'nullable|string|max:20',
+            'phone_number' => 'nullable|string|max:20',
             'email' => 'required|email|unique:users,email,' . $employee->user_id,
             'position_id' => 'required|exists:positions,id',
             'work_unit_id' => 'required|exists:work_units,id',
@@ -167,8 +173,10 @@ class EmployeeController extends Controller
         $employeeType = $isJaga ? 'regu_jaga' : 'non_regu_jaga';
 
         $employee->update([
-            'nip' => $request->nip,
+            'nip' => trim($request->nip),
+            'nik' => trim($request->nik),
             'full_name' => $request->full_name,
+            'phone_number' => trim($request->phone_number),
             'position' => $position->name,
             'position_id' => $request->position_id,
             'work_unit_id' => $request->work_unit_id,

@@ -1,4 +1,5 @@
 <?php
+// VERSION 4.0 - FINAL REFINED TL LOGIC (ROBUST CARBON COMPARISON)
 
 namespace App\Services;
 
@@ -13,7 +14,7 @@ class PayrollService
 {
     /**
      * Menghitung rincian Tukin dan Uang Makan untuk satu pegawai dalam satu bulan.
-     * Logika sangat dioptimalkan untuk kecepatan eksekusi tinggi (Bebas N+1 Query).
+     * Menggunakan kalkulasi Real-time yang disinkronkan dengan data absensi.
      */
     public function calculateMonthlyPayroll(Employee $employee, $monthStr)
     {
@@ -22,7 +23,7 @@ class PayrollService
         $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
         $daysInMonth = $date->daysInMonth;
 
-        // 1. Pre-fetch All Settings in ONE Query
+        // Ambil semua setting sekaligus
         $allSettings = Setting::where('key', 'like', 'payroll_%')->get()->pluck('value', 'key');
         
         $rules = [
@@ -35,19 +36,16 @@ class PayrollService
             'lupa_absen' => (float)($allSettings['payroll_lupa_absen_percent'] ?? 1.5),
             'sakit_3_6' => (float)($allSettings['payroll_sakit_3_6_percent'] ?? 2.5),
             'sakit_7' => (float)($allSettings['payroll_sakit_7_plus_percent'] ?? 10.0),
-            'apel' => (float)($allSettings['payroll_apel_percent'] ?? 0.5),
             'staff_in' => $allSettings['payroll_staff_in'] ?? '07:30',
             'staff_out_mon_thu' => $allSettings['payroll_staff_out_mon_thu'] ?? '16:00',
             'staff_out_fri' => $allSettings['payroll_staff_out_fri'] ?? '16:30',
         ];
         
-        // 2. Pre-fetch Attendances
         $attendances = Attendance::where('employee_id', $employee->id)
             ->whereBetween('date', [$startDate, $endDate])
             ->get()
             ->keyBy(fn($item) => Carbon::parse($item->date)->format('Y-m-d'));
 
-        // 3. Pre-fetch ALL Schedules (INDIVIDUAL & SQUAD) in single queries
         $individualSchedules = Schedule::with('shift')
             ->where('employee_id', $employee->id)
             ->whereBetween('date', [$startDate, $endDate])
@@ -109,7 +107,6 @@ class PayrollService
             
             $attendance = $attendances->get($currentDate);
             
-            // LOGIKA JADWAL DINAMIS
             $isScheduled = false;
             $scheduledInTime = null;
             $scheduledOutTime = null;
@@ -127,8 +124,6 @@ class PayrollService
                 $squadSched = $squadSchedules[$currentDate];
                 $scheduledInTime = $squadSched->shift->start_time ?? null;
                 $scheduledOutTime = $squadSched->shift->end_time ?? null;
-                
-                // FORCE 06:00:00 untuk semua Regu Jaga Pagi (Pastikan Syahrul telat 77 menit)
                 if (str_contains(strtoupper($squadSched->shift->name ?? ''), 'PAGI')) {
                     $scheduledInTime = '06:00:00';
                 }
@@ -139,7 +134,6 @@ class PayrollService
                 $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['staff_out_fri'] : $rules['staff_out_mon_thu'];
             }
 
-            // Fallback regu jaga pagi jika data shift terputus
             if ($employee->squad_id && $isScheduled && empty($scheduledInTime)) {
                 $scheduledInTime = '06:00:00'; 
             }
@@ -167,37 +161,23 @@ class PayrollService
                     $checkInStr = $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s')) : null;
                     
                     if ($checkInStr && $scheduledInTime) {
-                        $actualTime = date('H:i', strtotime($checkInStr));
-                        $targetIn = date('H:i', strtotime($scheduledInTime));
+                        $actualTimestamp = strtotime($currentDate . ' ' . $checkInStr);
+                        $targetTimestamp = strtotime($currentDate . ' ' . $scheduledInTime);
 
-                        // 1. Denda Apel (Staf Kantor)
-                        if ($isDefaultOffice && $actualTime > date('H:i', strtotime($rules['staff_in']))) {
-                            $stats['deduction_percentage'] += $rules['apel'];
-                            $stats['details'][] = [
-                                'type' => 'Tidak Ikut Apel', 
-                                'info' => "Masuk {$actualTime} (> {$rules['staff_in']})", 
-                                'date' => $currentDate, 
-                                'percent' => $rules['apel'], 
-                                'rupiah' => ($rules['apel'] / 100) * $baseTunkin
-                            ];
-                        }
-
-                        // 2. FORCE RECALCULATE TL (Penting untuk Kasus Budi & Syahrul)
-                        if ($actualTime > $targetIn) {
-                            $diff = (int) Carbon::parse($currentDate . ' ' . $actualTime)->diffInMinutes(Carbon::parse($currentDate . ' ' . $targetIn));
+                        // LOGIKA TL (Denda Apel di sini sudah dihapus total)
+                        if ($actualTimestamp > $targetTimestamp) {
+                            $diff = (int) ceil(($actualTimestamp - $targetTimestamp) / 60);
                             $lateMin = max($lateMin, $diff);
                         }
                     }
 
-                    // --- Pencatatan TL yang Persisten ---
                     if ($lateMin > 0) {
                         $p = $this->getLatePSWPercentage($lateMin, $rules);
                         $canCompensate = false;
-                        
                         if ($lateMin <= 30 && $stats['compensation_count'] < 8 && $attendance->check_out && $scheduledOutTime) {
-                            $actualOut = Carbon::parse($currentDate . ' ' . date('H:i:s', strtotime($attendance->check_out)));
-                            $requiredOut = Carbon::parse($currentDate . ' ' . $scheduledOutTime)->addMinutes(30);
-                            if ($actualOut->greaterThanOrEqualTo($requiredOut)) $canCompensate = true;
+                            $actualOut = strtotime($currentDate . ' ' . date('H:i:s', strtotime($attendance->check_out)));
+                            $requiredOut = strtotime($currentDate . ' ' . $scheduledOutTime) + 1800; // +30 mins
+                            if ($actualOut >= $requiredOut) $canCompensate = true;
                         }
 
                         if ($canCompensate) {
@@ -208,17 +188,10 @@ class PayrollService
                             $stats['deduction_percentage'] += $p;
                             $label = $isDefaultOffice ? 'Terlambat (TL)' : 'Terlambat (TL Shift)';
                             $targetDisplay = $scheduledInTime ? date('H:i', strtotime($scheduledInTime)) : '--:--';
-                            $stats['details'][] = [
-                                'type' => $label, 
-                                'info' => "{$lateMin}m (Jadwal: {$targetDisplay})", 
-                                'date' => $currentDate, 
-                                'percent' => $p, 
-                                'rupiah' => ($p / 100) * $baseTunkin
-                            ];
+                            $stats['details'][] = ['type' => $label, 'info' => "{$lateMin}m (Jadwal: {$targetDisplay})", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                         }
                     }
 
-                    // 3. PSW & Lupa Absen
                     $earlyMin = abs((int)($attendance->early_minutes ?? 0));
                     if ($earlyMin > 0) {
                         $p = $this->getLatePSWPercentage($earlyMin, $rules);
