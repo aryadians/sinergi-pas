@@ -466,6 +466,30 @@
         const urlParams = new URLSearchParams(window.location.search);
         switchTab(urlParams.get('tab') || 'recap');
         lucide.createIcons();
+
+        @if(session('success'))
+            Swal.fire({
+                title: '<div class="flex items-center justify-center gap-3 text-emerald-600"><i data-lucide="check-circle" class="w-8 h-8"></i> BERHASIL!</div>',
+                html: '<div class="text-slate-600 font-bold leading-relaxed py-4">{{ session('success') }}</div>',
+                confirmButtonText: 'SAYA MENGERTI',
+                confirmButtonColor: '#0F172A',
+                customClass: {
+                    popup: 'rounded-[40px] p-10 border-4 border-emerald-50',
+                    confirmButton: 'rounded-2xl px-8 py-4 font-bold text-xs uppercase tracking-widest'
+                },
+                didOpen: () => { lucide.createIcons(); }
+            });
+        @endif
+        
+        @if(session('error'))
+            Swal.fire({
+                icon: 'error',
+                title: 'Oops...',
+                text: "{{ session('error') }}",
+                confirmButtonColor: '#0F172A',
+                customClass: { popup: 'rounded-[32px]' }
+            });
+        @endif
     });
 </script>
 
