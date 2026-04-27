@@ -228,78 +228,228 @@ class AttendanceController extends Controller
             if (count($data) < 2) return back()->with('error', 'File terbaca namun kosong.');
 
             $scansByNip = [];
+            $allDates = [];
+            
+            // Default mapping berdasarkan contoh user
+            $map = ['nip' => 4, 'date' => 1, 'time' => 2, 'datetime' => 0];
+            $dataStarted = false;
+
             foreach ($data as $index => $row) {
-                if ($index === 0 || !isset($row[4]) || !is_numeric($row[4])) continue;
-                $nip = trim((string)$row[4]);
-                $scansByNip[$nip][] = $row[1] . ' ' . $row[2];
+                // 1. Deteksi Header (Cari baris yang mengandung NIP/Tanggal)
+                if (!$dataStarted) {
+                    $rowNormalized = array_map(fn($v) => strtoupper(str_replace(' ', '', trim((string)$v))), $row);
+                    
+                    if (in_array('NIP', $rowNormalized) || in_array('TANGGALSCAN', $rowNormalized)) {
+                        foreach ($rowNormalized as $colIdx => $h) {
+                            if ($h === 'NIP') $map['nip'] = $colIdx;
+                            if ($h === 'TANGGAL' || $h === 'TANGGALSCAN') $map['date'] = $colIdx;
+                            if ($h === 'JAM') $map['time'] = $colIdx;
+                            if ($h === 'TANGGALSCAN') $map['datetime'] = $colIdx;
+                        }
+                        \Log::info("Header detected at row $index", ['map' => $map]);
+                        $dataStarted = true;
+                        continue;
+                    }
+                    
+                    if ($index >= 10) $dataStarted = true;
+                    else continue;
+                }
+
+                $nipRaw = trim((string)($row[$map['nip']] ?? ''));
+                if (empty($nipRaw)) continue;
+
+                // Bersihkan NIP: Hanya ambil angka
+                $nip = preg_replace('/[^0-9]/', '', $nipRaw);
+                if (empty($nip)) continue;
+
+                try {
+                    $d = trim((string)($row[$map['date']] ?? ''));
+                    $t = trim((string)($row[$map['time']] ?? ''));
+                    $dt = trim((string)($row[$map['datetime']] ?? ''));
+                    
+                    if (!empty($d) && !empty($t)) {
+                        $scanTime = Carbon::parse($d . ' ' . $t);
+                    } elseif (!empty($dt)) {
+                        $scanTime = Carbon::parse($dt);
+                    } elseif (!empty($d)) {
+                        $scanTime = Carbon::parse($d);
+                    } else {
+                        continue;
+                    }
+                    
+                    $scansByNip[$nip][] = $scanTime;
+                    $allDates[] = $scanTime->format('Y-m-d');
+                } catch (\Exception $e) {
+                    \Log::warning("Failed to parse date/time at row $index: " . $e->getMessage());
+                    continue;
+                }
             }
 
-            $employees = Employee::with(['rank_relation', 'squad'])->whereIn('nip', array_keys($scansByNip))->get()->keyBy('nip');
+            if (empty($scansByNip)) {
+                \Log::error("Import failed: No scans found in file.");
+                return back()->with('error', 'Gagal membaca data scan. Pastikan file sesuai format.');
+            }
+
+            \Log::info("Found " . count($scansByNip) . " unique NIPs in Excel.");
+
+            // Ambil data pegawai
+            $excelNips = array_keys($scansByNip);
+            $employees = Employee::with(['rank_relation', 'squad'])->whereIn('nip', $excelNips)->get()->keyBy('nip');
+            
+            \Log::info("Matched " . $employees->count() . " employees by direct NIP.");
+
+            if ($employees->count() < count($scansByNip)) {
+                $missingNips = array_diff($excelNips, $employees->keys()->toArray());
+                \Log::info("NIPs not matched yet: " . implode(', ', $missingNips));
+                
+                $moreEmps = Employee::with(['rank_relation', 'squad'])->where(function($q) use ($missingNips) {
+                    foreach($missingNips as $n) { $q->orWhere('nip', 'like', "%$n"); }
+                })->get();
+
+                foreach($moreEmps as $me) {
+                    foreach($missingNips as $mn) {
+                        if (str_ends_with($me->nip, $mn) || str_ends_with($mn, $me->nip)) {
+                            $employees->put($mn, $me);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            \Log::info("Total employees matched after fallback: " . $employees->count());
+
+            if ($employees->isEmpty()) return back()->with('error', 'NIP di Excel tidak ada yang cocok dengan Database Pegawai.');
+
+            $minDate = collect($allDates)->min();
+            $maxDate = collect($allDates)->max();
+            $empIds = $employees->pluck('id')->toArray();
+            $squadIds = $employees->pluck('squad_id')->filter()->unique()->toArray();
+
+            // --- OPTIMASI: Pre-fetch jadwal untuk menghindari ribuan query dalam loop ---
+            $individualSchedules = Schedule::with('shift')
+                ->whereIn('employee_id', $empIds)
+                ->whereBetween('date', [$minDate, $maxDate])
+                ->get()
+                ->groupBy('employee_id')
+                ->map(fn($g) => $g->keyBy(fn($i) => \Carbon\Carbon::parse($i->date)->format('Y-m-d')));
+
+            $squadSchedules = SquadSchedule::with('shift')
+                ->whereIn('squad_id', $squadIds)
+                ->whereBetween('date', [$minDate, $maxDate])
+                ->get()
+                ->groupBy('squad_id')
+                ->map(fn($g) => $g->keyBy(fn($i) => \Carbon\Carbon::parse($i->date)->format('Y-m-d')));
+            
+            $staffInTime = Setting::getValue('payroll_staff_in', '07:30');
+            $staffOutMonThu = Setting::getValue('payroll_staff_out_mon_thu', '16:00');
+            $staffOutFri = Setting::getValue('payroll_staff_out_fri', '16:30');
+            // -------------------------------------------------------------------------
+
+            // REPLACE: Hapus data lama sebelum insert
+            Attendance::whereIn('employee_id', $empIds)
+                ->whereBetween('date', [$minDate, $maxDate])
+                ->delete();
+
             $now = now();
-            $upsertData = [];
+            $insertData = [];
             $importedCount = 0;
 
-            foreach ($employees as $nip => $emp) {
-                $scans = collect($scansByNip[$nip])->map(fn($s) => Carbon::parse($s))->sort();
-                $empDates = $scans->groupBy(fn($s) => $s->format('Y-m-d'));
+            foreach ($employees as $dbNip => $emp) {
+                $excelKey = null;
+                foreach (array_keys($scansByNip) as $k) {
+                    if (str_ends_with($dbNip, $k) || str_ends_with($k, $dbNip)) { $excelKey = $k; break; }
+                }
+                if (!$excelKey) continue;
 
-                foreach ($empDates as $date => $dayScans) {
+                $empScans = collect($scansByNip[$excelKey])->sort();
+                foreach ($empScans->groupBy(fn($s) => $s->format('Y-m-d')) as $date => $dayScans) {
                     $checkIn = $dayScans->min();
                     $checkOut = $dayScans->max();
-                    if ($checkIn == $checkOut) $checkOut = null;
+                    if ($checkIn->equalTo($checkOut)) $checkOut = null;
 
-                    $validation = $this->scheduleService->validateAttendanceForAllowance($emp, $date, $checkIn->format('H:i:s'));
-                    $status = $validation['status'] ?? 'present'; 
-                    $lateMinutes = 0; 
-                    $earlyMinutes = 0; 
-                    $allowance = 0;
+                    // --- LOGIKA VALIDASI OPTIMIZED (Tanpa Query di dalam Loop) ---
+                    $effectiveSched = null;
+                    $status = 'absent';
+                    $isPicket = false;
 
-                    if ($validation['is_valid']) {
-                        if ($validation['is_night_shift'] && !str_contains($validation['reason'], 'Kepulangan')) continue; 
-                        
-                        $shift = $validation['schedule']['shift'] ?? null;
-                        
-                        if ($shift && !in_array($status, ['on_leave', 'sick'])) {
-                            $startTime = Carbon::parse($date . ' ' . $shift->start_time);
-                            $actualIn = Carbon::parse($date . ' ' . $checkIn->format('H:i:s'));
-                            
-                            if ($actualIn->gt($startTime)) {
-                                $lateMinutes = $actualIn->diffInMinutes($startTime);
-                            }
-
-                            if ($checkOut) {
-                                $endTime = Carbon::parse($date . ' ' . $shift->end_time);
-                                $actualOut = Carbon::parse($date . ' ' . $checkOut->format('H:i:s'));
-                                if ($actualOut->lt($endTime)) {
-                                    $earlyMinutes = $endTime->diffInMinutes($actualOut);
-                                }
-                            }
+                    // 1. Cek Individu
+                    if (isset($individualSchedules[$emp->id][$date])) {
+                        $sched = $individualSchedules[$emp->id][$date];
+                        $effectiveSched = ['shift' => $sched->shift, 'status' => $sched->status];
+                        $isPicket = ($sched->status === 'picket');
+                        if (in_array($sched->status, ['leave', 'sick'])) $status = ($sched->status === 'leave' ? 'on_leave' : 'sick');
+                        elseif ($sched->status === 'off') $status = 'absent';
+                    } 
+                    // 2. Cek Regu
+                    elseif ($emp->squad_id && isset($squadSchedules[$emp->squad_id][$date])) {
+                        $sched = $squadSchedules[$emp->squad_id][$date];
+                        $effectiveSched = ['shift' => $sched->shift];
+                        $isPicket = true;
+                    }
+                    // 3. Cek Kantor (Staff)
+                    else {
+                        $dateObj = Carbon::parse($date);
+                        if ($dateObj->dayOfWeek >= Carbon::MONDAY && $dateObj->dayOfWeek <= Carbon::FRIDAY) {
+                            $outT = ($dateObj->dayOfWeek === Carbon::FRIDAY) ? $staffOutFri : $staffOutMonThu;
+                            $effectiveSched = ['shift' => (object)[
+                                'start_time' => $staffInTime . ':00',
+                                'end_time' => $outT . ':00'
+                            ]];
                         }
-                        $allowance = $emp->rank_relation->meal_allowance ?? 0;
                     }
 
-                    $upsertData[] = [
+                    $late = 0; $early = 0; $allowance = 0;
+                    
+                    if ($effectiveSched && !in_array($status, ['on_leave', 'sick'])) {
+                        $shift = $effectiveSched['shift'];
+                        if ($shift) {
+                            $st = Carbon::parse($date . ' ' . $shift->start_time);
+                            // Validasi jam masuk (toleransi 2 jam sebelum mulai)
+                            if ($checkIn->diffInHours($st, false) <= 2) {
+                                if ($checkIn->gt($st)) {
+                                    $late = $checkIn->diffInMinutes($st);
+                                    $status = 'late';
+                                } else {
+                                    $status = $isPicket ? 'picket' : 'present';
+                                }
+                                
+                                if ($checkOut) {
+                                    $et = Carbon::parse($date . ' ' . $shift->end_time);
+                                    if ($checkOut->lt($et)) $early = $et->diffInMinutes($checkOut);
+                                }
+                                $allowance = $emp->rank_relation->meal_allowance ?? 0;
+                            }
+                        }
+                    }
+                    // -------------------------------------------------------------
+
+                    $insertData[] = [
                         'employee_id' => $emp->id,
                         'date' => $date,
                         'check_in' => $checkIn->format('H:i:s'),
                         'check_out' => $checkOut ? $checkOut->format('H:i:s') : null,
                         'status' => $status,
-                        'late_minutes' => $lateMinutes,
-                        'early_minutes' => $earlyMinutes,
+                        'late_minutes' => $late,
+                        'early_minutes' => $early,
                         'allowance_amount' => $allowance,
-                        'created_at' => $now,
-                        'updated_at' => $now,
+                        'created_at' => $now, 'updated_at' => $now,
                     ];
                     $importedCount++;
                 }
             }
 
-            if (!empty($upsertData)) {
-                foreach (array_chunk($upsertData, 500) as $chunk) {
-                    Attendance::upsert($chunk, ['employee_id', 'date'], ['check_in', 'check_out', 'status', 'late_minutes', 'allowance_amount', 'updated_at']);
-                }
+            if (!empty($insertData)) {
+                foreach (array_chunk($insertData, 500) as $chunk) { Attendance::insert($chunk); }
             }
-            return back()->with('success', "Berhasil memproses $importedCount data absensi.");
+
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'activity' => 'import_attendance',
+                'ip_address' => $request->ip(),
+                'details' => "Import Replace periode $minDate - $maxDate. Total $importedCount data."
+            ]);
+
+            return back()->with('success', "Berhasil mereplace $importedCount data absensi ($minDate s/d $maxDate).");
         } catch (\Exception $e) {
             return back()->with('error', 'Gagal: ' . $e->getMessage());
         }

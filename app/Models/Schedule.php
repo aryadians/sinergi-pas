@@ -9,6 +9,10 @@ class Schedule extends Model
 {
     protected $fillable = ['employee_id', 'shift_id', 'date', 'status', 'schedule_type_id'];
 
+    protected $casts = [
+        'date' => 'date',
+    ];
+
     public function employee(): BelongsTo
     {
         return $this->belongsTo(Employee::class);

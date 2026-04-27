@@ -11,6 +11,10 @@ class SquadSchedule extends Model
 
     protected $fillable = ['squad_id', 'shift_id', 'date'];
 
+    protected $casts = [
+        'date' => 'date',
+    ];
+
     public function squad()
     {
         return $this->belongsTo(Squad::class);
