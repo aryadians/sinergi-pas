@@ -111,7 +111,7 @@
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center mb-1">
                                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Pilih Pegawai (Bisa Banyak)</label>
-                                    <button type="button" onclick="selectAllEmployees()" class="text-[9px] font-bold text-blue-400 uppercase hover:underline">Pilih Semua</button>
+                                    <button type="button" onclick="selectAllEmployees('all')" class="text-[9px] font-bold text-blue-400 uppercase hover:underline">Pilih Semua</button>
                                 </div>
                                 
                                 <div class="relative group/input mb-3">
@@ -119,15 +119,36 @@
                                     <input type="text" placeholder="Cari nama pegawai..." onkeyup="filterEmployeeList(this.value)" class="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-[11px] font-bold outline-none focus:border-blue-500/50 transition-all placeholder:text-slate-700">
                                 </div>
 
-                                <div class="max-h-48 overflow-y-auto custom-scrollbar space-y-2 bg-white/5 p-4 rounded-2xl border border-white/10" id="employeeChecklist">
-                                    @foreach($employees as $emp)
-                                        <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors employee-item" data-name="{{ strtolower($emp->full_name) }}">
-                                            <input type="checkbox" name="employee_ids[]" value="{{ $emp->id }}" class="w-4 h-4 rounded border-white/20 bg-transparent text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900 employee-checkbox">
-                                            <div class="min-w-0">
-                                                <p class="text-[11px] font-bold text-white truncate uppercase">{{ $emp->full_name }}</p>
-                                                <p class="text-[8px] font-medium text-slate-500 truncate">NIP. {{ $emp->nip }}</p>
+                                <div class="max-h-64 overflow-y-auto custom-scrollbar space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10" id="employeeChecklist">
+                                    @foreach($employeesByGroup as $groupLabel => $items)
+                                        <div class="space-y-2 group-section">
+                                            <div class="flex items-center justify-between px-2 py-1 bg-white/5 rounded-lg border border-white/5">
+                                                <span class="text-[9px] font-black text-slate-500 uppercase tracking-widest">{{ $groupLabel }}</span>
+                                                @if($groupLabel === 'Staff Kantor')
+                                                    <button type="button" onclick="selectAllEmployees('Staff Kantor')" class="text-[8px] font-bold text-slate-400 uppercase hover:text-white">Pilih Semua</button>
+                                                @endif
                                             </div>
-                                        </label>
+
+                                            @if($groupLabel !== 'Staff Kantor')
+                                                @foreach($items as $squadName => $emps)
+                                                    <div class="ml-2 space-y-1 squad-section">
+                                                        <div class="flex items-center justify-between px-2 mb-1">
+                                                            <span class="text-[8px] font-bold text-blue-400/60 uppercase">{{ $squadName }}</span>
+                                                            <button type="button" onclick="selectAllEmployees('{{ $squadName }}')" class="text-[8px] font-bold text-slate-500 uppercase hover:text-white">Pilih {{ $squadName }}</button>
+                                                        </div>
+                                                        @foreach($emps as $emp)
+                                                            @include('admin.schedules.partials.employee-checkbox-item', ['emp' => $emp, 'group' => $squadName])
+                                                        @endforeach
+                                                    </div>
+                                                @endforeach
+                                            @else
+                                                <div class="ml-2 space-y-1">
+                                                    @foreach($items as $emp)
+                                                        @include('admin.schedules.partials.employee-checkbox-item', ['emp' => $emp, 'group' => 'Staff Kantor'])
+                                                    @endforeach
+                                                </div>
+                                            @endif
+                                        </div>
                                     @endforeach
                                 </div>
                             </div>
@@ -303,16 +324,24 @@
         });
     }
 
-    let allSelected = false;
-    function selectAllEmployees() {
+    let selectionState = {};
+    function selectAllEmployees(group) {
         const checkboxes = document.querySelectorAll('.employee-checkbox');
-        const visibleCheckboxes = Array.from(checkboxes).filter(cb => cb.closest('.employee-item').style.display !== 'none');
+        let targetCheckboxes = [];
+
+        if (group === 'all') {
+            targetCheckboxes = Array.from(checkboxes).filter(cb => cb.closest('.employee-item').style.display !== 'none');
+        } else {
+            targetCheckboxes = Array.from(checkboxes).filter(cb => cb.getAttribute('data-group') === group && cb.closest('.employee-item').style.display !== 'none');
+        }
         
-        allSelected = !allSelected;
-        visibleCheckboxes.forEach(cb => cb.checked = allSelected);
+        selectionState[group] = !selectionState[group];
+        targetCheckboxes.forEach(cb => cb.checked = selectionState[group]);
         
         const btn = event.target;
-        btn.innerText = allSelected ? 'Batalkan Semua' : 'Pilih Semua';
+        if (group === 'all') {
+            btn.innerText = selectionState[group] ? 'Batalkan Semua' : 'Pilih Semua';
+        }
     }
 
     function toggleShiftSelect(status) {
