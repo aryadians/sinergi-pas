@@ -109,20 +109,26 @@
                         <form action="{{ route('admin.schedules.store-individual') }}" method="POST" class="space-y-6">
                             @csrf
                             <div class="space-y-3">
-                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nama Pegawai</label>
-                                <div class="relative group/input mb-2">
-                                    <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600 group-focus-within/input:text-blue-400"></i>
-                                    <input type="text" placeholder="Ketik untuk filter..." onkeyup="filterEmployeeSelect(this.value)" class="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-[11px] font-bold outline-none focus:border-blue-500/50 transition-all placeholder:text-slate-700">
+                                <div class="flex justify-between items-center mb-1">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Pilih Pegawai (Bisa Banyak)</label>
+                                    <button type="button" onclick="selectAllEmployees()" class="text-[9px] font-bold text-blue-400 uppercase hover:underline">Pilih Semua</button>
                                 </div>
-                                <div class="relative group/input">
-                                    <i data-lucide="users" class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within/input:text-blue-400 transition-colors"></i>
-                                    <select name="employee_id" id="employeeSelect" required class="w-full pl-11 pr-10 py-4 rounded-xl bg-white/5 border border-white/10 text-white focus:bg-white/10 focus:border-blue-500 outline-none transition-all font-bold text-sm appearance-none cursor-pointer">
-                                        <option value="" class="bg-slate-900 text-slate-400">-- Pilih Pegawai --</option>
-                                        @foreach($employees as $emp)
-                                            <option value="{{ $emp->id }}" class="bg-slate-900 text-white employee-option" data-name="{{ strtolower($emp->full_name) }}">{{ strtoupper($emp->full_name) }}</option>
-                                        @endforeach
-                                    </select>
-                                    <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 pointer-events-none"></i>
+                                
+                                <div class="relative group/input mb-3">
+                                    <i data-lucide="search" class="absolute left-4 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-600 group-focus-within/input:text-blue-400"></i>
+                                    <input type="text" placeholder="Cari nama pegawai..." onkeyup="filterEmployeeList(this.value)" class="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-[11px] font-bold outline-none focus:border-blue-500/50 transition-all placeholder:text-slate-700">
+                                </div>
+
+                                <div class="max-h-48 overflow-y-auto custom-scrollbar space-y-2 bg-white/5 p-4 rounded-2xl border border-white/10" id="employeeChecklist">
+                                    @foreach($employees as $emp)
+                                        <label class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors employee-item" data-name="{{ strtolower($emp->full_name) }}">
+                                            <input type="checkbox" name="employee_ids[]" value="{{ $emp->id }}" class="w-4 h-4 rounded border-white/20 bg-transparent text-blue-600 focus:ring-blue-500 focus:ring-offset-slate-900 employee-checkbox">
+                                            <div class="min-w-0">
+                                                <p class="text-[11px] font-bold text-white truncate uppercase">{{ $emp->full_name }}</p>
+                                                <p class="text-[8px] font-medium text-slate-500 truncate">NIP. {{ $emp->nip }}</p>
+                                            </div>
+                                        </label>
+                                    @endforeach
                                 </div>
                             </div>
 
@@ -286,6 +292,29 @@
 </div>
 
 <script>
+    function filterEmployeeList(query) {
+        const q = query.toLowerCase();
+        document.querySelectorAll('.employee-item').forEach(item => {
+            if (item.getAttribute('data-name').includes(q)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+            }
+        });
+    }
+
+    let allSelected = false;
+    function selectAllEmployees() {
+        const checkboxes = document.querySelectorAll('.employee-checkbox');
+        const visibleCheckboxes = Array.from(checkboxes).filter(cb => cb.closest('.employee-item').style.display !== 'none');
+        
+        allSelected = !allSelected;
+        visibleCheckboxes.forEach(cb => cb.checked = allSelected);
+        
+        const btn = event.target;
+        btn.innerText = allSelected ? 'Batalkan Semua' : 'Pilih Semua';
+    }
+
     function toggleShiftSelect(status) {
         const container = document.getElementById('shiftContainer');
         const select = document.getElementById('shiftSelect');
@@ -297,17 +326,6 @@
             select.removeAttribute('required');
             select.value = '';
         }
-    }
-
-    function filterEmployeeSelect(query) {
-        const q = query.toLowerCase();
-        document.querySelectorAll('.employee-option').forEach(opt => {
-            if (opt.getAttribute('data-name').includes(q)) {
-                opt.style.display = '';
-            } else {
-                opt.style.display = 'none';
-            }
-        });
     }
 
     function filterIndividual() {

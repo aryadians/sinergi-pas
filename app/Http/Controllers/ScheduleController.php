@@ -97,51 +97,53 @@ class ScheduleController extends Controller
     public function storeIndividual(Request $request)
     {
         $request->validate([
-            'employee_id' => 'required|exists:employees,id',
+            'employee_ids' => 'required|array',
+            'employee_ids.*' => 'exists:employees,id',
             'date' => 'required|date',
             'status' => 'required|in:picket,leave,sick,off,duty_full,duty_half,tubel',
             'shift_id' => 'required_if:status,picket,duty_half|nullable|exists:shifts,id',
         ]);
 
-        $schedule = Schedule::updateOrCreate(
-            ['employee_id' => $request->employee_id, 'date' => $request->date],
-            [
-                'status' => $request->status,
-                'shift_id' => in_array($request->status, ['picket', 'duty_half']) ? $request->shift_id : null
-            ]
-        );
-
-        // REALTIME SYNC WITH ATTENDANCE
-        $attendanceStatus = null;
-        if ($request->status === 'leave') $attendanceStatus = 'on_leave';
-        elseif ($request->status === 'sick') $attendanceStatus = 'sick';
-        elseif ($request->status === 'duty_full') $attendanceStatus = 'duty_full';
-        elseif ($request->status === 'duty_half') $attendanceStatus = 'duty_half';
-        elseif ($request->status === 'tubel') $attendanceStatus = 'tubel';
-
-        $cleanDate = \Carbon\Carbon::parse($request->date)->format('Y-m-d');
-
-        if ($attendanceStatus) {
-            \App\Models\Attendance::updateOrCreate(
-                ['employee_id' => $request->employee_id, 'date' => $cleanDate],
+        foreach ($request->employee_ids as $employee_id) {
+            $schedule = Schedule::updateOrCreate(
+                ['employee_id' => $employee_id, 'date' => $request->date],
                 [
-                    'status' => $attendanceStatus,
-                    'check_in' => null,
-                    'check_out' => null,
-                    'late_minutes' => 0,
-                    'allowance_amount' => 0 
+                    'status' => $request->status,
+                    'shift_id' => in_array($request->status, ['picket', 'duty_half']) ? $request->shift_id : null
                 ]
             );
-        } else {
-            // Jika statusnya Piket atau Libur, hapus record Attendance STATUS KHUSUS jika ada
-            // agar nanti bisa diisi ulang oleh Import Finger atau dianggap mangkir biasa
-            \App\Models\Attendance::where('employee_id', $request->employee_id)
-                ->where('date', $cleanDate)
-                ->whereIn('status', ['on_leave', 'sick', 'duty_full', 'duty_half', 'tubel'])
-                ->delete();
+
+            // REALTIME SYNC WITH ATTENDANCE
+            $attendanceStatus = null;
+            if ($request->status === 'leave') $attendanceStatus = 'on_leave';
+            elseif ($request->status === 'sick') $attendanceStatus = 'sick';
+            elseif ($request->status === 'duty_full') $attendanceStatus = 'duty_full';
+            elseif ($request->status === 'duty_half') $attendanceStatus = 'duty_half';
+            elseif ($request->status === 'tubel') $attendanceStatus = 'tubel';
+
+            $cleanDate = \Carbon\Carbon::parse($request->date)->format('Y-m-d');
+
+            if ($attendanceStatus) {
+                \App\Models\Attendance::updateOrCreate(
+                    ['employee_id' => $employee_id, 'date' => $cleanDate],
+                    [
+                        'status' => $attendanceStatus,
+                        'check_in' => null,
+                        'check_out' => null,
+                        'late_minutes' => 0,
+                        'allowance_amount' => 0 
+                    ]
+                );
+            } else {
+                // Jika statusnya Piket atau Libur, hapus record Attendance STATUS KHUSUS jika ada
+                \App\Models\Attendance::where('employee_id', $employee_id)
+                    ->where('date', $cleanDate)
+                    ->whereIn('status', ['on_leave', 'sick', 'duty_full', 'duty_half', 'tubel'])
+                    ->delete();
+            }
         }
 
-        return back()->with('success', 'Penugasan individu berhasil disimpan dan disinkronkan ke absensi.');
+        return back()->with('success', count($request->employee_ids) . ' penugasan individu berhasil disimpan.');
     }
 
     public function destroyIndividual($id)
