@@ -186,6 +186,25 @@
                         </tr>
                         @endforelse
                     </tbody>
+                    @if($tab === 'recap' && isset($summaryTotals) && count($employees) > 0)
+                    <tfoot>
+                        <tr class="bg-slate-900 text-white font-black">
+                            <td colspan="4" class="px-8 py-6 text-right text-[10px] uppercase tracking-[0.2em]">Total Keseluruhan</td>
+                            <td class="px-8 py-6 text-right text-sm">
+                                <p class="text-[8px] text-slate-400 uppercase tracking-widest mb-1 opacity-60">Total Potongan</p>
+                                <span class="text-red-400">Rp {{ number_format($summaryTotals->total_potongan, 0, ',', '.') }}</span>
+                            </td>
+                            <td class="px-8 py-6 text-right text-sm border-l border-white/10">
+                                <p class="text-[8px] text-slate-400 uppercase tracking-widest mb-1 opacity-60">Total Diterima (Gross)</p>
+                                <span class="text-amber-400">Rp {{ number_format($summaryTotals->total_diterima, 0, ',', '.') }}</span>
+                            </td>
+                            <td class="px-8 py-6 text-right">
+                                <p class="text-[8px] text-slate-400 uppercase tracking-widest mb-1 opacity-60">Total Bersih (THP)</p>
+                                <div class="text-lg text-emerald-400">Rp {{ number_format($summaryTotals->total_bersih, 0, ',', '.') }}</div>
+                            </td>
+                        </tr>
+                    </tfoot>
+                    @endif
                 </table>
             </div>
         </div>

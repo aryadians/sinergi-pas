@@ -64,6 +64,25 @@
             </tr>
             @endforeach
         </tbody>
+        @if(isset($summaryTotals))
+        <tfoot>
+            <tr style="background-color: #0f172a; color: #ffffff;">
+                <th colspan="5" class="text-right" style="padding: 10px; font-size: 9px; color: #ffffff;">TOTAL KESELURUHAN</th>
+                <th colspan="2" class="text-right" style="padding: 10px; color: #fbbf24;">
+                    <div style="font-size: 7px; opacity: 0.8; color: #ffffff;">TOTAL DITERIMA (GROSS)</div>
+                    Rp {{ number_format($summaryTotals->total_diterima, 0, ',', '.') }}
+                </th>
+                <th class="text-right" style="padding: 10px; color: #f87171;">
+                    <div style="font-size: 7px; opacity: 0.8; color: #ffffff;">TOTAL POTONGAN</div>
+                    Rp {{ number_format($summaryTotals->total_potongan, 0, ',', '.') }}
+                </th>
+                <th class="text-right" style="padding: 10px; color: #34d399;">
+                    <div style="font-size: 7px; opacity: 0.8; color: #ffffff;">TOTAL BERSIH (THP)</div>
+                    Rp {{ number_format($summaryTotals->total_bersih, 0, ',', '.') }}
+                </th>
+            </tr>
+        </tfoot>
+        @endif
     </table>
 
     <div class="footer">

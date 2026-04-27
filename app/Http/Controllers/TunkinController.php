@@ -39,20 +39,30 @@ class TunkinController extends Controller
         
         $employees = $query->orderBy('full_name')->get();
 
+        $summaryTotals = [
+            'total_potongan' => 0,
+            'total_diterima' => 0, // Base Tunkin + Meal Allowance
+            'total_bersih' => 0    // Grand Total
+        ];
+
         foreach ($employees as $emp) {
             $payroll = $this->payrollService->calculateMonthlyPayroll($emp, $monthStr);
             
             $emp->total_attendance = $payroll['meal_allowance_days'];
             $emp->meal_allowance = $payroll['total_meal_allowance'];
-            $emp->base_tunkin = $emp->tunkin->nominal ?? 0;
+            $emp->base_tunkin = $payroll['base_tunkin']; // Gunakan hasil service (80% jika CPNS)
             $emp->potongan = $payroll['total_potongan_rupiah'];
             $emp->deduction_percentage = $payroll['deduction_percentage'];
             $emp->total_tunkin = $payroll['tunkin_final'];
             $emp->grand_total = $payroll['grand_total'];
             $emp->violation_note = $payroll['violation_note'];
+
+            $summaryTotals['total_potongan'] += $emp->potongan;
+            $summaryTotals['total_diterima'] += ($emp->base_tunkin + $emp->meal_allowance);
+            $summaryTotals['total_bersih'] += $emp->grand_total;
         }
 
-        return [$employees, $monthStr, $date];
+        return [$employees, $monthStr, $date, (object)$summaryTotals];
     }
 
     public function index(Request $request)
@@ -60,8 +70,8 @@ class TunkinController extends Controller
         $tab = $request->tab ?? 'nominal';
         
         if ($tab === 'recap') {
-            list($employees, $monthStr, $date) = $this->getRecapData($request);
-            return view('admin.tunkins.index', compact('tab', 'employees', 'monthStr'));
+            list($employees, $monthStr, $date, $summaryTotals) = $this->getRecapData($request);
+            return view('admin.tunkins.index', compact('tab', 'employees', 'monthStr', 'summaryTotals'));
         }
 
         $tunkins = Tunkin::withCount('employees')->orderBy('grade', 'desc')->get();
@@ -80,7 +90,7 @@ class TunkinController extends Controller
         set_time_limit(300);
         ini_set('memory_limit', '512M');
         
-        list($employees, $monthStr, $date) = $this->getRecapData($request);
+        list($employees, $monthStr, $date, $summaryTotals) = $this->getRecapData($request);
         
         // Pre-convert logo to base64 for faster rendering
         $logoPath = public_path('logo1.png');
@@ -90,7 +100,7 @@ class TunkinController extends Controller
             $logoBase64 = 'data:image/png;base64,' . $logoData;
         }
 
-        $pdf = Pdf::loadView('admin.tunkins.pdf-recap', compact('employees', 'monthStr', 'date', 'logoBase64'))
+        $pdf = Pdf::loadView('admin.tunkins.pdf-recap', compact('employees', 'monthStr', 'date', 'logoBase64', 'summaryTotals'))
                   ->setPaper('a4', 'landscape');
         
         return $pdf->download("rekap-tunkin-{$monthStr}.pdf");
