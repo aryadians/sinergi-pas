@@ -110,7 +110,7 @@
         <form id="squadForm" action="{{ route('admin.squads.store') }}" method="POST" class="space-y-6 relative z-10">
             @csrf
             <input type="hidden" name="_method" id="squadMethod" value="POST">
-            <input type="hidden" name="schedule_type_id" value="{{ $scheduleTypes->first()?->id ?? 1 }}">
+            <input type="hidden" name="schedule_type_id" id="squad_schedule_type_id" value="{{ $scheduleTypes->first()?->id ?? 1 }}">
             
             <div class="space-y-2">
                 <label class="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Nama Unit/Regu</label>
@@ -287,6 +287,12 @@
         document.getElementById('squad_name').value = squad.name;
         document.getElementById('squad_type').value = squad.type;
         document.getElementById('squad_description').value = squad.description || '';
+        
+        const scheduleTypeField = document.getElementById('squad_schedule_type_id');
+        if (scheduleTypeField) {
+            scheduleTypeField.value = squad.schedule_type_id || 1;
+        }
+        
         document.getElementById('squadForm').action = '/admin/squads/' + squad.id;
         document.getElementById('squadMethod').value = 'PUT';
         document.getElementById('squadModal').classList.remove('hidden');
@@ -407,6 +413,20 @@
 <script>
     window.addEventListener('DOMContentLoaded', () => {
         Swal.fire({ icon: 'success', title: 'Berhasil', text: "{{ session('success') }}", confirmButtonColor: '#0F172A', customClass: { popup: 'rounded-[32px]' } });
+    });
+</script>
+@endif
+
+@if($errors->any())
+<script>
+    window.addEventListener('DOMContentLoaded', () => {
+        Swal.fire({ 
+            icon: 'error', 
+            title: 'Oops...', 
+            text: "{{ $errors->first() }}", 
+            confirmButtonColor: '#EF4444', 
+            customClass: { popup: 'rounded-[32px]' } 
+        });
     });
 </script>
 @endif
