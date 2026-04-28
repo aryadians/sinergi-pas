@@ -180,9 +180,35 @@ class ScheduleController extends Controller
 
         for ($d = 1; $d <= $month->daysInMonth; $d++) {
             $date = $month->copy()->day($d)->format('Y-m-d');
-            foreach ($shifts as $shift) {
-                SquadSchedule::create(['date' => $date, 'shift_id' => $shift->id, 'squad_id' => $squads[$currentSquadIndex]]);
+            
+            if ($request->type === 'regu') {
+                // Logika Khusus Regu: Pagi (Base), Siang (Base+1), Malam (Base)
+                foreach ($shifts as $shift) {
+                    $shiftName = strtolower($shift->name);
+                    $assignedIndex = $currentSquadIndex;
+                    
+                    if (str_contains($shiftName, 'siang')) {
+                        $assignedIndex = ($currentSquadIndex + 1) % $squadCount;
+                    }
+                    
+                    SquadSchedule::create([
+                        'date' => $date, 
+                        'shift_id' => $shift->id, 
+                        'squad_id' => $squads[$assignedIndex]
+                    ]);
+                }
+                // Maju ke regu berikutnya untuk hari selanjutnya
                 $currentSquadIndex = ($currentSquadIndex + 1) % $squadCount;
+            } else {
+                // Logika Normal P2U: Bergantian setiap shift
+                foreach ($shifts as $shift) {
+                    SquadSchedule::create([
+                        'date' => $date, 
+                        'shift_id' => $shift->id, 
+                        'squad_id' => $squads[$currentSquadIndex]
+                    ]);
+                    $currentSquadIndex = ($currentSquadIndex + 1) % $squadCount;
+                }
             }
         }
 
