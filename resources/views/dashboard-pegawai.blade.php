@@ -143,7 +143,7 @@
                 <h4 class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-6">Slip Gaji Terbaru</h4>
                 <h3 class="text-2xl font-bold tracking-tight leading-snug">
                     @if($latestSalary)
-                        Unduh slip periode<br>{{ $latestSalary->created_at->translatedFormat('F Y') }}.
+                        Unduh slip gaji terbaru<br>periode {{ now()->translatedFormat('F Y') }}
                     @else
                         Belum ada slip<br>gaji yang diunggah.
                     @endif
