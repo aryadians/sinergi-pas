@@ -124,27 +124,50 @@
                 </div>
             </div>
 
-            <!-- Section 3: Jam Kerja Reguler -->
-            <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden card-3d">
+            <!-- Section 3: Jam Kerja Reguler (Staff & Shift) -->
+            <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden card-3d lg:col-span-2">
                 <div class="px-8 py-6 border-b border-slate-100 bg-slate-50/50 flex items-center gap-3">
                     <i data-lucide="clock" class="w-5 h-5 text-indigo-500"></i>
-                    <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Jam Kerja Reguler (Staff)</h4>
+                    <h4 class="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Konfigurasi Jam Kerja (Staff & Shift)</h4>
                 </div>
-                <div class="p-8 space-y-6">
-                    <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jam Masuk (Setiap Hari)</label>
-                        <input type="time" name="payroll_staff_in" value="{{ $settings['staff_in'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
-                    </div>
-                    <div class="grid grid-cols-2 gap-6">
+                <div class="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Staff Office -->
+                    <div class="space-y-4">
+                        <p class="text-xs font-bold text-slate-800 uppercase italic">Staf Kantor</p>
                         <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jam Pulang (Sen-Kam)</label>
-                            <input type="time" name="payroll_staff_out_mon_thu" value="{{ $settings['staff_out_mon_thu'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
-                        </div>
-                        <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Jam Pulang (Jumat)</label>
-                            <input type="time" name="payroll_staff_out_fri" value="{{ $settings['staff_out_fri'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
+                            <label class="text-[9px] font-black text-slate-400 uppercase">Jam Masuk</label>
+                            <input type="time" name="payroll_staff_in" value="{{ $settings['payroll_staff_in'] ?? '07:30' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50">
                         </div>
                     </div>
+                    
+                    <!-- Shift Pagi -->
+                    <div class="space-y-4">
+                        <p class="text-xs font-bold text-slate-800 uppercase italic">Shift Pagi</p>
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-black text-slate-400 uppercase">Masuk</label>
+                            <input type="time" name="payroll_shift_pagi_in" value="{{ $settings['payroll_shift_pagi_in'] ?? '06:00' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50">
+                        </div>
+                    </div>
+
+                    <!-- Shift Siang -->
+                    <div class="space-y-4">
+                        <p class="text-xs font-bold text-slate-800 uppercase italic">Shift Siang</p>
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-black text-slate-400 uppercase">Masuk</label>
+                            <input type="time" name="payroll_shift_siang_in" value="{{ $settings['payroll_shift_siang_in'] ?? '13:00' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50">
+                        </div>
+                    </div>
+
+                    <!-- Shift Malam -->
+                    <div class="space-y-4">
+                        <p class="text-xs font-bold text-slate-800 uppercase italic">Shift Malam</p>
+                        <div class="space-y-2">
+                            <label class="text-[9px] font-black text-slate-400 uppercase">Masuk</label>
+                            <input type="time" name="payroll_shift_malam_in" value="{{ $settings['payroll_shift_malam_in'] ?? '20:00' }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50">
+                        </div>
+                    </div>
+                </div>
+            </div>
 
                     <div class="pt-6 border-t border-slate-100">
                         <div class="flex items-center justify-between mb-6">
