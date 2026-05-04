@@ -132,20 +132,37 @@ class AttendanceController extends Controller
             $empValidDays = 0; $empTotalAllowance = 0;
 
             foreach ($emp->attendances as $att) {
-                if ($att->status !== 'absent') {
+                $status = $att->status;
+                $canReevaluate = in_array($status, ['absent', 'present', 'late']);
+                $info = $getEffectiveShiftInfo($emp, $att->date);
+                $effectiveStart = $info['start_time'] ?? null;
+                $isScheduled = !is_null($effectiveStart);
+
+                if ($att->check_in && $isScheduled && $canReevaluate) {
+                    $checkInTime = date('H:i', strtotime($att->check_in));
+                    $targetInTime = date('H:i', strtotime($effectiveStart));
+                    $dateStr = Carbon::parse($att->date)->format('Y-m-d');
+                    $actualIn = Carbon::parse($dateStr.' '.$checkInTime);
+                    $targetIn = Carbon::parse($dateStr.' '.$targetInTime);
+                    $diffMinutes = $actualIn->diffInMinutes($targetIn, false);
+                    if ($diffMinutes >= -180) {
+                        $status = ($actualIn > $targetIn) ? 'late' : 'present';
+                    } else {
+                        $status = 'present';
+                    }
+                } elseif ($att->check_in && !$isScheduled && $canReevaluate) {
+                    $status = 'present';
+                }
+
+                if ($status !== 'absent') {
                     $totalPresent++;
-                    $info = $getEffectiveShiftInfo($emp, $att->date);
                     if ($info) {
-                        $effectiveStart = $info['start_time'];
-                        $isLate = ($att->status === 'late');
-                        if (!$isLate && $att->check_in && $effectiveStart) {
-                            if (date('H:i', strtotime($att->check_in)) > date('H:i', strtotime($effectiveStart))) $isLate = true;
-                        }
+                        $isLate = ($status === 'late');
                         if ($isLate) $totalLate++;
                         
                         $count = $info['is_double'] ? 2 : 1;
                         $empValidDays += $count;
-                        if ($att->status !== 'duty_full' && $att->status !== 'tubel') {
+                        if ($status !== 'duty_full' && $status !== 'tubel') {
                             $empTotalAllowance += ($empRate * $count);
                         }
                     }

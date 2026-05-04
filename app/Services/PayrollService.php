@@ -176,6 +176,31 @@ class PayrollService
 
             if ($attendance) {
                 $status = $attendance->status;
+                $canReevaluate = in_array($status, ['absent', 'present', 'late']);
+                
+                $checkInStr = $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s')) : null;
+
+                // Re-evaluate logic (Sync with AttendanceController)
+                if ($checkInStr && $isScheduled && $canReevaluate) {
+                    if ($scheduledInTime) {
+                        $actualTimestamp = strtotime($currentDate . ' ' . $checkInStr);
+                        $targetTimestamp = strtotime($currentDate . ' ' . $scheduledInTime);
+                        $diffMin = (int) ceil(($actualTimestamp - $targetTimestamp) / 60);
+
+                        if ($diffMin >= -180) {
+                            if ($diffMin > 0) {
+                                $status = 'late';
+                            } else {
+                                $status = $employee->squad_id ? 'picket' : 'present';
+                            }
+                        } else {
+                            $status = 'present'; // Sangat pagi tapi hadir
+                        }
+                    }
+                } elseif ($checkInStr && !$isScheduled && $canReevaluate) {
+                    $status = 'present'; // Hari libur tapi absen
+                }
+
                 $isEligibleMeal = in_array($status, ['present', 'late', 'duty_half', 'picket']) && $isScheduled;
                 
                 $dailyMealAmount = $isEligibleMeal ? ($isDoubleShift ? $mealRate * 2 : $mealRate) : 0;
@@ -183,8 +208,8 @@ class PayrollService
                 $stats['processed_logs'][] = [
                     'date' => $currentDate, 
                     'status' => $status, 
-                    'check_in' => $attendance->check_in ? date('H:i', strtotime($attendance->check_in)) : '--:--', 
-                    'check_out' => $attendance->check_out ? date('H:i', strtotime($attendance->check_out)) : '--:--', 
+                    'check_in' => $checkInStr ?: '--:--', 
+                    'check_out' => $attendance->check_out ? (is_string($attendance->check_out) ? $attendance->check_out : $attendance->check_out->format('H:i:s')) : '--:--', 
                     'is_scheduled' => $isScheduled, 
                     'meal_amount' => $dailyMealAmount
                 ];
@@ -198,7 +223,6 @@ class PayrollService
 
                 if ($isScheduled) {
                     $lateMin = 0;
-                    $checkInStr = $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s')) : null;
                     
                     if ($checkInStr && $scheduledInTime) {
                         $actualTimestamp = strtotime($currentDate . ' ' . $checkInStr);
@@ -208,10 +232,6 @@ class PayrollService
                         // Tolerance: Max 3 hours early (180 mins)
                         if ($diffMin >= -180) {
                             if ($diffMin > 0) $lateMin = $diffMin;
-                            // Valid presence
-                        } else {
-                            // Outside tolerance, treat as absent/invalid for meal
-                            $isEligibleMeal = false;
                         }
                     }
 
