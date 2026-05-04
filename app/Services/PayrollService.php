@@ -42,6 +42,9 @@ class PayrollService
             'staff_saturday_enabled' => $allSettings['payroll_staff_saturday_enabled'] ?? 'off',
             'staff_saturday_in' => $allSettings['payroll_staff_saturday_in'] ?? '07:30',
             'staff_saturday_out' => $allSettings['payroll_staff_saturday_out'] ?? '12:00',
+            'shift_pagi_in' => $allSettings['payroll_shift_pagi_in'] ?? '06:00',
+            'shift_siang_in' => $allSettings['payroll_shift_siang_in'] ?? '13:00',
+            'shift_malam_in' => $allSettings['payroll_shift_malam_in'] ?? '20:00',
             
             // Jam Kerja Staff (Bulan Puasa)
             'ramadan_enabled' => $allSettings['payroll_ramadan_enabled'] ?? 'off',
