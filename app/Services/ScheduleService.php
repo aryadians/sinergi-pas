@@ -206,11 +206,12 @@ class ScheduleService
         // Jika ada jadwal di hari H, pastikan jam masuknya masuk akal
         if ($schedule) {
             $shiftStart = Carbon::parse($date . ' ' . $schedule['shift']->start_time);
+            $diffMin = $checkIn->diffInMinutes($shiftStart, false); // Negative if early
             
-            // Beri toleransi masuk (misal 2 jam sebelum shift mulai masih dianggap valid)
-            if ($checkIn->diffInHours($shiftStart, false) <= 2) {
+            // Beri toleransi masuk: Max 3 jam sebelum shift mulai
+            if ($diffMin >= -180) {
                 // Tentukan status: Jika jam masuk > jam mulai, maka 'late', jika tidak maka 'present' atau 'picket'
-                $isLate = $checkIn->gt($shiftStart);
+                $isLate = $diffMin > 0;
                 $status = $isLate ? 'late' : ($schedule['is_picket'] ? 'picket' : 'present');
 
                 return [

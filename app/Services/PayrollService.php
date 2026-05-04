@@ -197,17 +197,21 @@ class PayrollService
                 // ... (TL/PSW calculation unchanged but now uses correct scheduledInTime) ...
 
                 if ($isScheduled) {
-                    $lateMin = abs((int)($attendance->late_minutes ?? 0));
+                    $lateMin = 0;
                     $checkInStr = $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s')) : null;
                     
                     if ($checkInStr && $scheduledInTime) {
                         $actualTimestamp = strtotime($currentDate . ' ' . $checkInStr);
                         $targetTimestamp = strtotime($currentDate . ' ' . $scheduledInTime);
+                        $diffMin = (int) ceil(($actualTimestamp - $targetTimestamp) / 60);
 
-                        // FORCE RECALCULATE TL
-                        if ($actualTimestamp > $targetTimestamp) {
-                            $diff = (int) ceil(($actualTimestamp - $targetTimestamp) / 60);
-                            $lateMin = max($lateMin, $diff);
+                        // Tolerance: Max 3 hours early (180 mins)
+                        if ($diffMin >= -180) {
+                            if ($diffMin > 0) $lateMin = $diffMin;
+                            // Valid presence
+                        } else {
+                            // Outside tolerance, treat as absent/invalid for meal
+                            $isEligibleMeal = false;
                         }
                     }
 

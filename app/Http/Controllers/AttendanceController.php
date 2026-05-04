@@ -179,21 +179,38 @@ class AttendanceController extends Controller
             $isScheduled = !is_null($effectiveStart);
             $empRate = (float)($emp->rank_relation->meal_allowance ?? 0);
             
-            $hasMeal = $isScheduled && !in_array($log->status, ['absent', 'duty_full', 'tubel', 'on_leave', 'sick']);
-            $log->allowance_amount = $hasMeal ? ($info['is_double'] ? $empRate * 2 : $empRate) : 0;
-
-            if ($log->check_in && $isScheduled && !in_array($log->status, ['absent', 'duty_full', 'tubel', 'on_leave', 'sick'])) {
+            // Re-evaluate if it's currently marked as absent/present/late but we have new schedule info
+            // Allow correcting 'absent' if there's a check_in now
+            $canReevaluate = in_array($log->status, ['absent', 'present', 'late']);
+            
+            if ($log->check_in && $isScheduled && $canReevaluate) {
                 $checkInTime = date('H:i', strtotime($log->check_in));
                 $targetInTime = date('H:i', strtotime($effectiveStart));
-                if ($checkInTime > $targetInTime) {
-                    $log->status = 'late';
-                    $dateStr = Carbon::parse($log->date)->format('Y-m-d');
-                    $log->late_minutes = (int)Carbon::parse($dateStr.' '.$checkInTime)->diffInMinutes(Carbon::parse($dateStr.' '.$targetInTime));
+                
+                $dateStr = Carbon::parse($log->date)->format('Y-m-d');
+                $actualIn = Carbon::parse($dateStr.' '.$checkInTime);
+                $targetIn = Carbon::parse($dateStr.' '.$targetInTime);
+                
+                $diffMinutes = $actualIn->diffInMinutes($targetIn, false); // Negative if early
+
+                // Tolerance: Max 3 hours early (increased from 2)
+                if ($diffMinutes >= -180) {
+                    if ($actualIn > $targetIn) {
+                        $log->status = 'late';
+                        $log->late_minutes = (int)$diffMinutes;
+                    } else {
+                        $log->status = $emp->squad_id ? 'picket' : 'present';
+                        $log->late_minutes = 0;
+                    }
                 } else {
-                    if ($log->status === 'late') $log->status = 'present';
-                    $log->late_minutes = 0;
+                    // Still outside schedule
+                    $log->status = 'absent';
                 }
             }
+
+            $hasMeal = $isScheduled && !in_array($log->status, ['absent', 'duty_full', 'tubel', 'on_leave', 'sick']);
+            $log->allowance_amount = $hasMeal ? ($info['is_double'] ? $empRate * 2 : $empRate) : 0;
+            
             return $log;
         });
 
@@ -328,10 +345,19 @@ class AttendanceController extends Controller
                     $late = 0; $early = 0; $allowance = 0;
                     if ($effectiveSched && !in_array($status, ['on_leave', 'sick'])) {
                         $st = Carbon::parse($date . ' ' . $effectiveSched->start_time);
-                        if ($checkIn->diffInHours($st, false) <= 2) {
-                            if ($checkIn->gt($st)) { $late = $checkIn->diffInMinutes($st); $status = 'late'; }
-                            else { $status = $isPicket ? 'picket' : 'present'; }
+                        $diffMin = $checkIn->diffInMinutes($st, false); // Negative if early
+
+                        // Tolerance: Max 3 hours early (180 mins)
+                        if ($diffMin >= -180) {
+                            if ($diffMin > 0) {
+                                $late = $diffMin;
+                                $status = 'late';
+                            } else {
+                                $status = $isPicket ? 'picket' : 'present';
+                            }
                             $allowance = (float)($emp->rank_relation->meal_allowance ?? 0) * ($isDouble ? 2 : 1);
+                        } else {
+                            $status = 'absent'; // Outside tolerance
                         }
                     }
 
