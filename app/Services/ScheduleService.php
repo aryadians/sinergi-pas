@@ -65,12 +65,23 @@ class ScheduleService
 
             if ($squads->isNotEmpty()) {
                 $st = null; $et = null; $hasPagi = false; $hasMalam = false;
+                
+                // Ambil aturan jam masuk shift dari setting
+                $pagiIn = Setting::getValue('payroll_shift_pagi_in', '06:00') . ':00';
+                $siangIn = Setting::getValue('payroll_shift_siang_in', '13:00') . ':00';
+                $malamIn = Setting::getValue('payroll_shift_malam_in', '20:00') . ':00';
+
                 foreach($squads as $sq) {
                     $start = $sq->shift->start_time ?? '06:00:00';
-                    if ($sq->shift && str_contains(strtoupper($sq->shift->name), 'PAGI')) {
-                        $start = '06:00:00'; $hasPagi = true;
+                    $sName = strtoupper($sq->shift->name ?? '');
+
+                    if (str_contains($sName, 'PAGI')) {
+                        $start = $pagiIn; $hasPagi = true;
+                    } elseif (str_contains($sName, 'SIANG')) {
+                        $start = $siangIn;
+                    } elseif (str_contains($sName, 'MALAM')) {
+                        $start = $malamIn; $hasMalam = true;
                     }
-                    if ($sq->shift && str_contains(strtoupper($sq->shift->name), 'MALAM')) $hasMalam = true;
 
                     $end = $sq->shift->end_time ?? '00:00:00';
                     if (!$st || $start < $st) $st = $start;

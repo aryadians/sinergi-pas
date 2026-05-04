@@ -164,12 +164,12 @@ class PayrollService
                     $sName = strtoupper($s->shift->name ?? '');
                     
                     if (str_contains($sName, 'PAGI')) { 
-                        $st = $rules['shift_pagi_in'] ?? '06:00:00'; 
+                        $st = ($rules['shift_pagi_in'] ?? '06:00') . ':00'; 
                         $hasPagi = true; 
                     } elseif (str_contains($sName, 'SIANG')) { 
-                        $st = $rules['shift_siang_in'] ?? '13:00:00'; 
+                        $st = ($rules['shift_siang_in'] ?? '13:00') . ':00'; 
                     } elseif (str_contains($sName, 'MALAM')) { 
-                        $st = $rules['shift_malam_in'] ?? '20:00:00'; 
+                        $st = ($rules['shift_malam_in'] ?? '20:00') . ':00'; 
                         $hasMalam = true; $isNightShift = true; 
                     }
                     

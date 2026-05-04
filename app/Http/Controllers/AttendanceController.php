@@ -59,8 +59,14 @@ class AttendanceController extends Controller
         $ramadanSatEnabled = \App\Models\Setting::getValue('payroll_ramadan_saturday_enabled', 'off');
         $ramadanSatIn = \App\Models\Setting::getValue('payroll_ramadan_saturday_in', '08:00');
 
+        $shiftRules = [
+            'pagi' => \App\Models\Setting::getValue('payroll_shift_pagi_in', '06:00') . ':00',
+            'siang' => \App\Models\Setting::getValue('payroll_shift_siang_in', '13:00') . ':00',
+            'malam' => \App\Models\Setting::getValue('payroll_shift_malam_in', '20:00') . ':00',
+        ];
+
         // Helper to get effective shift info (including double shift check)
-        $getEffectiveShiftInfo = function($emp, $date) use ($squadSchedules, $individualSchedules, $holidays, $staffInTime, $staffSatEnabled, $staffSatIn, $ramadanEnabled, $ramadanStart, $ramadanEnd, $ramadanIn, $ramadanSatEnabled, $ramadanSatIn) {
+        $getEffectiveShiftInfo = function($emp, $date) use ($squadSchedules, $individualSchedules, $holidays, $staffInTime, $staffSatEnabled, $staffSatIn, $ramadanEnabled, $ramadanStart, $ramadanEnd, $ramadanIn, $ramadanSatEnabled, $ramadanSatIn, $shiftRules) {
             $dateStr = Carbon::parse($date)->format('Y-m-d');
             $dateObj = Carbon::parse($date);
             
@@ -74,6 +80,12 @@ class AttendanceController extends Controller
                 foreach($scheds as $s) {
                     if (in_array($s->status, ['off', 'leave', 'sick'])) return null;
                     $st = $s->shift->start_time ?? null;
+                    $sName = strtoupper($s->shift->name ?? '');
+                    
+                    if (str_contains($sName, 'PAGI')) { $st = $shiftRules['pagi']; }
+                    elseif (str_contains($sName, 'SIANG')) { $st = $shiftRules['siang']; }
+                    elseif (str_contains($sName, 'MALAM')) { $st = $shiftRules['malam']; }
+
                     if ($st && (!$minIn || $st < $minIn)) $minIn = $st;
                 }
                 return ['start_time' => $minIn, 'is_double' => $scheds->count() > 1];
@@ -85,8 +97,12 @@ class AttendanceController extends Controller
                 $minIn = null; $hasPagi = false; $hasMalam = false;
                 foreach($scheds as $s) {
                     $st = $s->shift->start_time ?? '06:00:00';
-                    if ($s->shift && str_contains(strtoupper($s->shift->name), 'PAGI')) { $st = '06:00:00'; $hasPagi = true; }
-                    if ($s->shift && str_contains(strtoupper($s->shift->name), 'MALAM')) $hasMalam = true;
+                    $sName = strtoupper($s->shift->name ?? '');
+
+                    if (str_contains($sName, 'PAGI')) { $st = $shiftRules['pagi']; $hasPagi = true; }
+                    elseif (str_contains($sName, 'SIANG')) { $st = $shiftRules['siang']; }
+                    elseif (str_contains($sName, 'MALAM')) { $st = $shiftRules['malam']; $hasMalam = true; }
+
                     if (!$minIn || $st < $minIn) $minIn = $st;
                 }
                 return ['start_time' => $minIn, 'is_double' => ($hasPagi && $hasMalam) || $scheds->count() > 1];
@@ -343,9 +359,20 @@ class AttendanceController extends Controller
                         elseif ($sched->status === 'off') $status = 'absent';
                         else {
                             $minStart = null; $maxEnd = null;
+                            $pagiIn = $settings['payroll_shift_pagi_in'] ?? '06:00';
+                            $siangIn = $settings['payroll_shift_siang_in'] ?? '13:00';
+                            $malamIn = $settings['payroll_shift_malam_in'] ?? '20:00';
+
                             foreach($scheds as $s) {
                                 if ($s->shift) {
-                                    if (!$minStart || $s->shift->start_time < $minStart) $minStart = $s->shift->start_time;
+                                    $st = $s->shift->start_time;
+                                    $sName = strtoupper($s->shift->name ?? '');
+
+                                    if (str_contains($sName, 'PAGI')) { $st = $pagiIn.':00'; }
+                                    elseif (str_contains($sName, 'SIANG')) { $st = $siangIn.':00'; }
+                                    elseif (str_contains($sName, 'MALAM')) { $st = $malamIn.':00'; }
+
+                                    if (!$minStart || $st < $minStart) $minStart = $st;
                                     if (!$maxEnd || $s->shift->end_time > $maxEnd) $maxEnd = $s->shift->end_time;
                                 }
                             }
@@ -356,16 +383,26 @@ class AttendanceController extends Controller
                     } elseif ($emp->squad_id && isset($squadSchedules[$emp->squad_id][$date])) {
                         $scheds = $squadSchedules[$emp->squad_id][$date];
                         $minStart = null; $maxEnd = null; $hasPagi = false; $hasMalam = false;
+
+                        $pagiIn = $settings['payroll_shift_pagi_in'] ?? '06:00';
+                        $siangIn = $settings['payroll_shift_siang_in'] ?? '13:00';
+                        $malamIn = $settings['payroll_shift_malam_in'] ?? '20:00';
+
                         foreach($scheds as $s) {
                             $st = $s->shift->start_time;
-                            if ($s->shift && str_contains(strtoupper($s->shift->name), 'PAGI')) { $st = '06:00:00'; $hasPagi = true; }
-                            if ($s->shift && str_contains(strtoupper($s->shift->name), 'MALAM')) $hasMalam = true;
+                            $sName = strtoupper($s->shift->name ?? '');
+
+                            if (str_contains($sName, 'PAGI')) { $st = $pagiIn.':00'; $hasPagi = true; }
+                            elseif (str_contains($sName, 'SIANG')) { $st = $siangIn.':00'; }
+                            elseif (str_contains($sName, 'MALAM')) { $st = $malamIn.':00'; $hasMalam = true; }
+
                             if (!$minStart || $st < $minStart) $minStart = $st;
                             if (!$maxEnd || ($s->shift->end_time ?? '00:00:00') > $maxEnd) $maxEnd = $s->shift->end_time;
                         }
                         $effectiveSched = (object)['start_time' => $minStart, 'end_time' => $maxEnd, 'name' => 'Squad'];
                         $isPicket = true; $isDouble = ($hasPagi && $hasMalam) || $scheds->count() > 1;
-                    } elseif (!$emp->squad_id || !isset($squadSchedules[$emp->squad_id]) || $squadSchedules[$emp->squad_id]->count() == 0) {
+                    }
+ elseif (!$emp->squad_id || !isset($squadSchedules[$emp->squad_id]) || $squadSchedules[$emp->squad_id]->count() == 0) {
                         $dateObj = Carbon::parse($date); $dayNum = $dateObj->dayOfWeek;
                         if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) {
                             $inT = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd)) ? ($settings['payroll_ramadan_staff_in'] ?? '08:00') : $staffIn;
