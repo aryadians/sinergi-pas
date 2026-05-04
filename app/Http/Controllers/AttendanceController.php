@@ -345,7 +345,10 @@ class AttendanceController extends Controller
                     $late = 0; $early = 0; $allowance = 0;
                     if ($effectiveSched && !in_array($status, ['on_leave', 'sick'])) {
                         $st = Carbon::parse($date . ' ' . $effectiveSched->start_time);
-                        $diffMin = $checkIn->diffInMinutes($st, false); // Negative if early
+                        
+                        $actualTs = strtotime($checkIn->format('Y-m-d H:i:s'));
+                        $targetTs = strtotime($st->format('Y-m-d H:i:s'));
+                        $diffMin = (int) ceil(($actualTs - $targetTs) / 60);
 
                         // Tolerance: Max 3 hours early (180 mins)
                         if ($diffMin >= -180) {

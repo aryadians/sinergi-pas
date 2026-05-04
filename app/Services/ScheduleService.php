@@ -206,7 +206,10 @@ class ScheduleService
         // Jika ada jadwal di hari H, pastikan jam masuknya masuk akal
         if ($schedule) {
             $shiftStart = Carbon::parse($date . ' ' . $schedule['shift']->start_time);
-            $diffMin = $checkIn->diffInMinutes($shiftStart, false); // Negative if early
+            
+            $actualTs = strtotime($checkIn->format('Y-m-d H:i:s'));
+            $targetTs = strtotime($shiftStart->format('Y-m-d H:i:s'));
+            $diffMin = (int) ceil(($actualTs - $targetTs) / 60);
             
             // Beri toleransi masuk: Max 3 jam sebelum shift mulai
             if ($diffMin >= -180) {
