@@ -159,7 +159,7 @@ class PayrollService
                 foreach($dayScheds as $s) {
                     $st = $s->shift->start_time ?? '06:00:00';
                     if ($s->shift && str_contains(strtoupper($s->shift->name), 'PAGI')) { $st = '06:00:00'; $hasPagi = true; }
-                    if ($s->shift && str_contains(strtoupper($s->shift->name), 'MALAM')) { $hasMalam = true; $isNightShift = true; }
+                    if ($s->shift && str_contains(strtoupper($s->shift->name), 'MALAM')) { $st = '20:00:00'; $hasMalam = true; $isNightShift = true; }
                     
                     if (!$minIn || $st < $minIn) $minIn = $st;
                     if (!$maxOut || ($s->shift->end_time ?? '00:00:00') > $maxOut) $maxOut = $s->shift->end_time;
@@ -169,7 +169,7 @@ class PayrollService
                 $scheduledOutTime = $maxOut;
                 $isDoubleShift = ($hasPagi && $hasMalam) || ($dayScheds->count() > 1);
 
-            } elseif (!$employee->squad_id || !$hasAnySquadSchedule) {
+            } elseif ((!$employee->squad_id || !$hasAnySquadSchedule) && !in_array($currentDate, $holidays)) {
                 // Fallback Staff (Office) logic ...
                 $isRamadan = false;
                 if ($rules['ramadan_enabled'] === 'on') {
