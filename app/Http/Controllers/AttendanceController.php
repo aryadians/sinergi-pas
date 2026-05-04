@@ -148,7 +148,7 @@ class AttendanceController extends Controller
                     if ($diffMinutes >= -180) {
                         $status = ($actualIn > $targetIn) ? 'late' : 'present';
                     } else {
-                        $status = 'present';
+                        $status = 'absent';
                     }
                 } elseif ($att->check_in && !$isScheduled && $canReevaluate) {
                     $status = 'present';
@@ -220,8 +220,8 @@ class AttendanceController extends Controller
                         $log->late_minutes = 0;
                     }
                 } else {
-                    // Masih sangat jauh dari jadwal, tapi karena dia scan kita anggap hadir (Luar Jadwal)
-                    $log->status = 'present';
+                    // Sangat jauh dari jadwal (salah shift/terlalu pagi) -> Dianggap Mangkir dari shift tersebut
+                    $log->status = 'absent';
                 }
             } elseif ($log->check_in && !$isScheduled && $canReevaluate) {
                 // Scan di hari libur (Tidak ada jadwal)
@@ -381,7 +381,7 @@ class AttendanceController extends Controller
                             }
                             $allowance = (float)($emp->rank_relation->meal_allowance ?? 0) * ($isDouble ? 2 : 1);
                         } else {
-                            $status = 'present'; // Outside tolerance but scanned
+                            $status = 'absent'; // Outside tolerance -> Mangkir (salah shift)
                         }
                     } elseif (!$effectiveSched && !in_array($status, ['on_leave', 'sick'])) {
                         $status = 'present'; // Scanned on a day off

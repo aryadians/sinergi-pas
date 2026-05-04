@@ -220,7 +220,7 @@ class PayrollService
                                 $status = $employee->squad_id ? 'picket' : 'present';
                             }
                         } else {
-                            $status = 'present'; // Sangat pagi tapi hadir
+                            $status = 'absent'; // Sangat pagi = salah shift = mangkir
                         }
                     }
                 } elseif ($checkInStr && !$isScheduled && $canReevaluate) {
