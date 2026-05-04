@@ -158,8 +158,17 @@ class PayrollService
                 $minIn = null; $maxOut = null; $hasPagi = false; $hasMalam = false;
                 foreach($dayScheds as $s) {
                     $st = $s->shift->start_time ?? '06:00:00';
-                    if ($s->shift && str_contains(strtoupper($s->shift->name), 'PAGI')) { $st = '06:00:00'; $hasPagi = true; }
-                    if ($s->shift && str_contains(strtoupper($s->shift->name), 'MALAM')) { $st = '20:00:00'; $hasMalam = true; $isNightShift = true; }
+                    $sName = strtoupper($s->shift->name ?? '');
+                    
+                    if (str_contains($sName, 'PAGI')) { 
+                        $st = $rules['shift_pagi_in'] ?? '06:00:00'; 
+                        $hasPagi = true; 
+                    } elseif (str_contains($sName, 'SIANG')) { 
+                        $st = $rules['shift_siang_in'] ?? '13:00:00'; 
+                    } elseif (str_contains($sName, 'MALAM')) { 
+                        $st = $rules['shift_malam_in'] ?? '20:00:00'; 
+                        $hasMalam = true; $isNightShift = true; 
+                    }
                     
                     if (!$minIn || $st < $minIn) $minIn = $st;
                     if (!$maxOut || ($s->shift->end_time ?? '00:00:00') > $maxOut) $maxOut = $s->shift->end_time;
