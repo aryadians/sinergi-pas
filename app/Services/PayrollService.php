@@ -146,8 +146,23 @@ class PayrollService
                 
                 $specialStatus = $indiv->status ?? 'picket';
                 $isScheduled = !in_array($specialStatus, ['off', 'leave', 'sick']);
-                $scheduledInTime = $indiv->shift->start_time ?? null;
-                $scheduledOutTime = $indiv->shift->end_time ?? null;
+                
+                $st = $indiv->shift->start_time ?? null;
+                $et = $indiv->shift->end_time ?? null;
+                
+                // Override with Master Rules if shift name matches
+                $sName = strtoupper($indiv->shift->name ?? '');
+                if (str_contains($sName, 'PAGI')) {
+                    $st = ($rules['shift_pagi_in'] ?? '06:00') . ':00';
+                } elseif (str_contains($sName, 'SIANG')) {
+                    $st = ($rules['shift_siang_in'] ?? '13:00') . ':00';
+                } elseif (str_contains($sName, 'MALAM')) {
+                    $st = ($rules['shift_malam_in'] ?? '20:00') . ':00';
+                    $isNightShift = true;
+                }
+
+                $scheduledInTime = $st;
+                $scheduledOutTime = $et;
                 
                 foreach((is_iterable($indivs) ? $indivs : [$indivs]) as $indivSched) {
                     if ($indivSched->shift && str_contains(strtoupper($indivSched->shift->name ?? ''), 'MALAM')) {
