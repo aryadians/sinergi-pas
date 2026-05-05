@@ -246,7 +246,7 @@ class AttendanceController extends Controller
                         $log->late_minutes = 0;
                     }
                 } else {
-                    // Sangat jauh dari jadwal (salah shift/terlalu pagi) -> Dianggap Mangkir dari shift tersebut
+                    // Sangat jauh dari jadwal (salah shift/terlalu pagi) -> Dianggap Tanpa Keterangan dari shift tersebut
                     $log->status = 'absent';
                 }
             } elseif ($log->check_in && !$isScheduled && $canReevaluate) {
@@ -428,7 +428,7 @@ class AttendanceController extends Controller
                             }
                             $allowance = (float)($emp->rank_relation->meal_allowance ?? 0) * ($isDouble ? 2 : 1);
                         } else {
-                            $status = 'absent'; // Outside tolerance -> Mangkir (salah shift)
+                            $status = 'absent'; // Outside tolerance -> Tanpa Keterangan (salah shift)
                         }
                     } elseif (!$effectiveSched && !in_array($status, ['on_leave', 'sick'])) {
                         $status = 'present'; // Scanned on a day off

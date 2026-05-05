@@ -356,13 +356,13 @@ class PayrollService
                 if ($status === 'absent') {
                     $p = $rules['mangkir'];
                     $stats['deduction_percentage'] += $p;
-                    $stats['details'][] = ['type' => 'Mangkir', 'info' => "Tanpa Keterangan", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                    $stats['details'][] = ['type' => 'Tanpa Keterangan', 'info' => "Tanpa Keterangan", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
             } else {
                 if ($isScheduled && !$isFuture) {
                     $p = $rules['mangkir'];
                     $stats['deduction_percentage'] += $p;
-                    $stats['details'][] = ['type' => 'Mangkir (Otomatis)', 'info' => "Bolos Jadwal", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                    $stats['details'][] = ['type' => 'Tanpa Keterangan (Otomatis)', 'info' => "Bolos Jadwal", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
             }
         }

@@ -44,7 +44,7 @@ Ruang penyimpanan dokumen kedinasan yang teratur:
 ### 💰 4. Digital Payroll Engine (Tunkin & Uang Makan)
 Inti dari sistem finansial yang patuh pada **Permenkumham No. 10 Tahun 2021**:
 - **Kalkulasi Otomatis:** Perhitungan Tunjangan Kinerja (Tukin) berdasarkan 17 Kelas Jabatan (Grade).
-- **Potongan Akumulatif Harian:** Deteksi otomatis TL 1-4, PSW, dan Mangkir yang diakumulasikan per hari.
+- **Potongan Akumulatif Harian:** Deteksi otomatis TL 1-4, PSW, dan Tanpa Keterangan yang diakumulasikan per hari.
 - **Kompensasi Waktu:** Fitur "Tebus Telat" otomatis (Telat < 30m diganti dengan pulang +30m) sesuai aturan kementerian.
 - **Status Khusus:** Dukungan kalkulasi untuk **CPNS (80%)**, **Tugas Belajar (Potong 100%)**, dan **Plt/Plh (+20% bonus)**.
 - **Uang Makan (PMK):** Pembayaran otomatis berdasarkan kehadiran riil di hari kerja valid sesuai tarif golongan.
@@ -52,7 +52,7 @@ Inti dari sistem finansial yang patuh pada **Permenkumham No. 10 Tahun 2021**:
 ### 👤 5. Employee Self-Service (Portal Pegawai)
 Memberikan transparansi penuh bagi setiap pegawai:
 - **Dashboard Mandiri:** Monitor progres berkas pribadi dan status presensi harian.
-- **Tunkin Saya:** Transparansi rincian gaji, total uang makan, dan detail rincian pelanggaran (TL/Mangkir) per tanggal.
+- **Tunkin Saya:** Transparansi rincian gaji, total uang makan, dan detail rincian pelanggaran (TL/Tanpa Keterangan) per tanggal.
 - **Download Slip Resmi:** Unduh slip gaji resmi PDF yang telah divalidasi bendahara di Arsip Digital.
 
 ---

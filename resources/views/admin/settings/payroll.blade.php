@@ -92,7 +92,7 @@
                 </div>
                 <div class="p-8 space-y-6">
                     <div class="space-y-2">
-                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Mangkir / Tanpa Keterangan</label>
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanpa Keterangan</label>
                         <div class="relative">
                             <input type="number" step="0.1" name="payroll_mangkir_percent" value="{{ $settings['mangkir'] }}" class="w-full px-6 py-4 rounded-2xl border-2 border-slate-50 bg-slate-50 text-sm font-black text-slate-700 outline-none focus:bg-white focus:border-blue-500 transition-all">
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-black text-slate-400">%/HARI</span>
