@@ -90,6 +90,10 @@ class PayrollService
             $currentDateObj = $date->copy()->day($d);
             $currentDate = $currentDateObj->format('Y-m-d');
             $isFuture = $currentDateObj->isAfter($today);
+
+            if ($isFuture) {
+                continue; // Do not process or log future dates
+            }
             
             $attendance = $attendances->get($currentDate);
             $schedules = $this->scheduleService->getAllSchedulesForDay($employee, $currentDate);
