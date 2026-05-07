@@ -9,7 +9,7 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm card-3d relative overflow-hidden">
         <div class="absolute right-0 top-0 w-32 h-32 bg-amber-50 rounded-full -mr-16 -mt-16 opacity-50"></div>
         <div class="relative z-10">
-            <h2 class="text-xl font-black text-slate-900 tracking-tight italic">Top 10 Pegawai Paling Disiplin</h2>
+            <h2 class="text-xl font-black text-slate-900 tracking-tight italic">Daftar Pegawai Paling Disiplin</h2>
             <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Berdasarkan Kehadiran & Minim Pelanggaran</p>
         </div>
         <div class="relative z-10 w-full md:w-auto">
