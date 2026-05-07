@@ -264,7 +264,8 @@ class PayrollService
                 }
             }
 
-            // Hitung total Uang Makan harian (Max 2x)
+            // Hitung total Uang Makan harian
+            // Aturan Baru: 2x jika lebih dari 1 shift (Double Shift), selain itu 1x.
             $dayMultiplier = ($dayPresentCount > 1) ? 2 : 1;
             $stats['meal_allowance_days'] += $dayMultiplier;
             $totalDailyMeal = $dayMultiplier * $mealRate;
