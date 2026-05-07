@@ -34,9 +34,15 @@ class ScheduleService
                 $status = $indiv->status;
                 $isOff = in_array($status, ['off', 'leave', 'sick']);
                 $isPicket = ($status === 'picket');
-                $start = $indiv->shift->start_time ?? null;
-                $end = $indiv->shift->end_time ?? null;
-                $shiftName = $indiv->shift->name ?? 'Piket Individu';
+                $pagiIn = Setting::getValue('payroll_shift_pagi_in', '06:00') . ':00';
+                $siangIn = Setting::getValue('payroll_shift_siang_in', '13:00') . ':00';
+                $malamIn = Setting::getValue('payroll_shift_malam_in', '20:00') . ':00';
+
+                $start = $indiv->shift->start_time ?? '00:00:00';
+                $sName = strtoupper($indiv->shift->name ?? '');
+                if (str_contains($sName, 'PAGI')) $start = $pagiIn;
+                elseif (str_contains($sName, 'SIANG')) $start = $siangIn;
+                elseif (str_contains($sName, 'MALAM')) $start = $malamIn;
 
                 $schedules[] = [
                     'type' => 'individual',
@@ -44,7 +50,7 @@ class ScheduleService
                     'shift' => (object)[
                         'name' => $shiftName,
                         'start_time' => $start,
-                        'end_time' => $end,
+                        'end_time' => $indiv->shift->end_time ?? '00:00:00',
                     ],
                     'is_picket' => $isPicket,
                     'is_off' => $isOff
