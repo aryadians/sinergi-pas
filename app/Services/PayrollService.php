@@ -288,7 +288,6 @@ class PayrollService
                 $stats['processed_logs'][] = $res;
             }
         }
-        }
 
         if ($stats['late_count'] > $rules['max_late']) $stats['violation_note'] = "PELANGGARAN: Telat {$stats['late_count']}x";
         $finalPercent = min(100, $stats['deduction_percentage']);
