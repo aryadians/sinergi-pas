@@ -171,7 +171,7 @@
                                 <td class="px-8 py-4">
                                     <p class="text-sm font-bold text-slate-700 leading-none mb-1">{{ \Carbon\Carbon::parse($log['date'])->format('d/m/Y') }}</p>
                                     <span class="px-2 py-0.5 {{ $log['status'] === 'present' || $log['status'] === 'late' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600' }} text-[8px] font-black uppercase rounded border border-current opacity-70">
-                                        {{ $log['status'] === 'present' ? 'Hadir' : ($log['status'] === 'late' ? 'Telat' : (str_contains($log['status'], 'absent') ? 'Mangkir' : $log['status'])) }}
+                                        {{ $log['status'] === 'present' ? 'Hadir' : ($log['status'] === 'late' ? 'Telat' : (str_contains($log['status'], 'absent') ? 'Tanpa Keterangan' : $log['status'])) }}
                                     </span>
                                 </td>
                                 <td class="px-8 py-4">
