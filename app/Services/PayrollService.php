@@ -265,26 +265,14 @@ class PayrollService
             }
 
             // Hitung total Uang Makan harian (Max 2x)
-            $dayMultiplier = 0;
-            if ($dayPresentCount > 0) {
-                // Jika shift malam (hasNightShiftPresence) ATAU double shift (dayPresentCount > 1) -> 2x
-                // Selain itu (pagi saja) -> 1x
-                $dayMultiplier = ($hasNightShiftPresence || $dayPresentCount > 1) ? 2 : 1;
-                $stats['meal_allowance_days'] += $dayMultiplier;
-            }
+            $dayMultiplier = ($dayPresentCount > 1) ? 2 : 1;
+            $stats['meal_allowance_days'] += $dayMultiplier;
+            $totalDailyMeal = $dayMultiplier * $mealRate;
 
-            // Simpan ke log proses (bagi nominal uang makan agar rapi di tabel)
+            // Simpan ke log proses
             foreach ($dayShiftResults as $idx => $res) {
-                $shiftMeal = 0;
-                if ($res['is_eligible']) {
-                    if ($dayMultiplier == 2) {
-                        // Jika 2x, bagi 1x per shift jika double, atau 2x sekaligus jika single night shift
-                        $shiftMeal = ($dayPresentCount > 1) ? $mealRate : ($res['is_night'] ? $mealRate * 2 : $mealRate);
-                    } else {
-                        $shiftMeal = $mealRate;
-                    }
-                }
-                $res['meal_amount'] = $shiftMeal;
+                // Tampilkan total di log pertama, 0 di log kedua untuk avoid double counting di tabel UI
+                $res['meal_amount'] = ($idx === 0) ? $totalDailyMeal : 0;
                 $stats['processed_logs'][] = $res;
             }
         }

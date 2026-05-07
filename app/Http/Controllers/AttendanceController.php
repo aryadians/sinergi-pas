@@ -120,9 +120,8 @@ class AttendanceController extends Controller
 
                 if ($dayPresentCount > 0) {
                     $totalPresent++;
-                    // Jika ada minimal 1 shift hadir
-                    // Multiplier: 2x jika shift malam ATAU double shift. Selain itu 1x.
-                    $dayMultiplier = ($hasNightShift || $dayPresentCount > 1) ? 2 : 1;
+                    // 2x jika double shift, selain itu 1x
+                    $dayMultiplier = ($dayPresentCount > 1) ? 2 : 1;
                     
                     $empValidDays += $dayMultiplier;
                     $empTotalAllowance += ($empRate * $dayMultiplier);
@@ -214,18 +213,23 @@ class AttendanceController extends Controller
                     else $log->late_minutes = 0;
                 }
 
-                if ($isShift2) $log->status_2 = $status;
-                else $log->status = $status;
-
                 $hasMeal = !in_array($status, ['absent', 'duty_full', 'tubel', 'on_leave', 'sick']);
                 if ($hasMeal) {
-                    $shiftName = $sched['shift']->name ?? '';
-                    $isNightShift = str_contains(strtoupper($shiftName), 'MALAM');
-                    $mealMultiplier = $isNightShift ? 2 : 1;
-
-                    if ($isShift2) $log->allowance_amount_2 = $empRate * $mealMultiplier;
-                    else $log->allowance_amount = $empRate * $mealMultiplier;
+                    $dayPresentCount++;
                 }
+            }
+            
+            // Total allowance for the day
+            $dayMultiplier = ($dayPresentCount > 1) ? 2 : 1;
+            $totalDailyAllowance = $empRate * $dayMultiplier;
+
+            // Assign allowance to first log entry only
+            if ($dayPresentCount > 0) {
+                $log->allowance_amount = $totalDailyAllowance;
+                $log->allowance_amount_2 = 0;
+            } else {
+                $log->allowance_amount = 0;
+                $log->allowance_amount_2 = 0;
             }
             
             return $log;
