@@ -324,64 +324,96 @@ class AttendanceController extends Controller
                             $attData['status'] = 'present';
                         }
                     } else {
-                        // Heuristik pencocokan scan ke shift (mendukung night shift)
+                        // Heuristik pencocokan scan ke shift (mendukung night shift & scan tidak lengkap)
                         $shiftCount = min(2, count($schedules));
                         
                         if (isset($schedules[0]) && $schedules[0]['is_off']) $attData['status'] = $schedules[0]['status'];
                         if (isset($schedules[1]) && $schedules[1]['is_off']) $attData['status_2'] = $schedules[1]['status'];
+
+                        $expectedEvents = [];
+                        for ($i = 0; $i < $shiftCount; $i++) {
+                            if ($schedules[$i]['is_off']) continue;
+                            $st = Carbon::parse($date . ' ' . $schedules[$i]['shift']->start_time);
+                            $et = Carbon::parse($date . ' ' . $schedules[$i]['shift']->end_time);
+                            if ($et <= $st) $et->addDay(); // Night shift
+                            
+                            $expectedEvents[] = ['shift_index' => $i, 'type' => 'in', 'time' => $st];
+                            $expectedEvents[] = ['shift_index' => $i, 'type' => 'out', 'time' => $et];
+                        }
+
+                        $matches = [];
+                        foreach ($expectedEvents as $eIdx => $event) {
+                            foreach ($allScans as $sIdx => $scan) {
+                                if (in_array($sIdx, $usedScans)) continue;
+                                $diffMin = ($scan->timestamp - $event['time']->timestamp) / 60;
+                                $absDiff = abs($diffMin);
+                                
+                                if ($event['type'] === 'in') {
+                                    if ($diffMin < -180 || $diffMin > 240) continue; // 3 jam awal, 4 jam telat
+                                } else {
+                                    if ($diffMin < -240 || $diffMin > 480) continue; // 4 jam awal, 8 jam telat
+                                }
+                                
+                                $matches[] = [
+                                    'eIdx' => $eIdx,
+                                    'sIdx' => $sIdx,
+                                    'absDiff' => $absDiff,
+                                    'diffMin' => $diffMin
+                                ];
+                            }
+                        }
+                        
+                        // Sort by absolute difference
+                        usort($matches, fn($a, $b) => $a['absDiff'] <=> $b['absDiff']);
+                        
+                        $matchedEvents = [];
+                        $matchedScans = [];
+                        
+                        foreach ($matches as $match) {
+                            if (isset($matchedEvents[$match['eIdx']]) || isset($matchedScans[$match['sIdx']])) continue;
+                            
+                            $matchedEvents[$match['eIdx']] = [
+                                'scan' => $allScans[$match['sIdx']],
+                                'diffMin' => $match['diffMin']
+                            ];
+                            $matchedScans[$match['sIdx']] = true;
+                            $usedScans[] = $match['sIdx'];
+                        }
 
                         for ($i = 0; $i < $shiftCount; $i++) {
                             $sched = $schedules[$i];
                             if ($sched['is_off']) continue;
 
                             $isShift2 = ($i === 1);
-                            $st = Carbon::parse($date . ' ' . $sched['shift']->start_time);
-                            
-                            $shiftName = strtoupper($sched['shift']->name ?? '');
-                            $isNightShift = str_contains($shiftName, 'MALAM');
-                            
                             $assignedCheckIn = null;
                             $assignedCheckOut = null;
+                            $late = 0;
                             
-                            foreach ($allScans as $idx => $scan) {
-                                if (in_array($idx, $usedScans)) continue;
-                                
-                                if (!$assignedCheckIn) {
-                                    $diffMin = (int) ceil(($scan->timestamp - $st->timestamp) / 60);
-                                    // Toleransi masuk: 3 jam lebih awal s/d 4 jam terlambat
-                                    if ($diffMin >= -180 && $diffMin <= 240) {
-                                        $assignedCheckIn = $scan;
-                                        $usedScans[] = $idx;
-                                    }
-                                } elseif (!$assignedCheckOut) {
-                                    // Jika shift malam, check out bisa sampai besok pagi (max 16 jam setelah check in)
-                                    // Jika bukan malam, check out wajar di hari yang sama (max 14 jam)
-                                    $hoursSinceCheckIn = ($scan->timestamp - $assignedCheckIn->timestamp) / 3600;
-                                    if ($hoursSinceCheckIn > 0.5 && $hoursSinceCheckIn <= ($isNightShift ? 16 : 14)) {
-                                        $assignedCheckOut = $scan;
-                                        $usedScans[] = $idx;
-                                        break; // Found both, done for this shift
+                            foreach ($expectedEvents as $eIdx => $event) {
+                                if ($event['shift_index'] === $i && isset($matchedEvents[$eIdx])) {
+                                    if ($event['type'] === 'in') {
+                                        $assignedCheckIn = $matchedEvents[$eIdx]['scan'];
+                                        $late = $matchedEvents[$eIdx]['diffMin'] > 0 ? (int)$matchedEvents[$eIdx]['diffMin'] : 0;
+                                    } elseif ($event['type'] === 'out') {
+                                        $assignedCheckOut = $matchedEvents[$eIdx]['scan'];
                                     }
                                 }
                             }
 
                             $status = 'absent';
-                            $late = 0;
                             $allowance = 0;
 
                             if ($assignedCheckIn) {
-                                $diffMin = (int) ceil(($assignedCheckIn->timestamp - $st->timestamp) / 60);
-                                if ($diffMin >= -180) {
-                                    if ($diffMin > 0) {
-                                        $late = $diffMin;
-                                        $status = 'late';
-                                    } else {
-                                        $status = $sched['is_picket'] ? 'picket' : 'present';
-                                    }
-                                    
-                                    $mealMultiplier = $isNightShift ? 2 : 1;
-                                    $allowance = $empRate * $mealMultiplier;
+                                if ($late > 0) {
+                                    $status = 'late';
+                                } else {
+                                    $status = $sched['is_picket'] ? 'picket' : 'present';
                                 }
+                                
+                                $shiftName = strtoupper($sched['shift']->name ?? '');
+                                $isNightShift = str_contains($shiftName, 'MALAM');
+                                $mealMultiplier = $isNightShift ? 2 : 1;
+                                $allowance = $empRate * $mealMultiplier;
                             }
 
                             if ($isShift2) {
