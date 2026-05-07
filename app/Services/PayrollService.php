@@ -253,7 +253,7 @@ class PayrollService
                 if ($status === 'absent' || (!$checkInStr && !$checkOutStr && !$isFuture)) {
                     $p = $rules['mangkir'];
                     $stats['deduction_percentage'] += $p;
-                    $stats['details'][] = ['type' => 'Tanpa Keterangan', 'info' => "Tanpa Keterangan ({$shiftName})", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                    $stats['details'][] = ['type' => 'Tanpa Keterangan', 'info' => "Tidak Hadir ({$shiftName})", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
             }
         }
