@@ -40,6 +40,8 @@ class ScheduleService
 
                 $start = $indiv->shift->start_time ?? '00:00:00';
                 $sName = strtoupper($indiv->shift->name ?? '');
+                $shiftName = $indiv->shift->name ?? 'Piket Individu';
+                
                 if (str_contains($sName, 'PAGI')) $start = $pagiIn;
                 elseif (str_contains($sName, 'SIANG')) $start = $siangIn;
                 elseif (str_contains($sName, 'MALAM')) $start = $malamIn;
