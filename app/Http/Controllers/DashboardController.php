@@ -106,7 +106,6 @@ class DashboardController extends Controller
         }
 
         return [
-            'unitStats' => $unitStats,
             'latenessTrend' => ['labels' => $labels, 'values' => $values]
         ];
     }

@@ -98,20 +98,15 @@
 <!-- Main Grid -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     <!-- Analytics Charts -->
-    <div class="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-8">
-        <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 card-3d">
-            <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-6">Top 5 Unit Kerja Paling Disiplin</h3>
-            <canvas id="unitChart" height="200"></canvas>
-        </div>
-        <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 card-3d">
-            <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-6">Tren Keterlambatan Mingguan</h3>
-            <canvas id="latenessChart" height="200"></canvas>
+    <div class="lg:col-span-3 flex justify-center">
+        <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 card-3d w-full max-w-2xl">
+            <h3 class="text-sm font-black text-slate-900 uppercase tracking-widest mb-6 text-center">Tren Keterlambatan Mingguan</h3>
+            <canvas id="latenessChart" height="100"></canvas>
         </div>
     </div>
 
     <!-- Left: Compliance Tracker -->
-    <div class="lg:col-span-2 space-y-8">
-        <!-- ... -->
+    <div class="lg:col-span-2 space-y-8">        <!-- ... -->
             <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm overflow-hidden flex flex-col card-3d">
                 <div class="p-8 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
                     <div>
@@ -261,19 +256,6 @@
     window.addEventListener('DOMContentLoaded', () => {
         lucide.createIcons();
 
-        // Unit Chart
-        new Chart(document.getElementById('unitChart'), {
-            type: 'bar',
-            data: {
-                labels: {!! json_encode($disciplinaryData['unitStats']->keys()) !!},
-                datasets: [{
-                    label: 'Rata-rata Kehadiran (Hari)',
-                    data: {!! json_encode($disciplinaryData['unitStats']->values()) !!},
-                    backgroundColor: '#3b82f6'
-                }]
-            }
-        });
-
         // Lateness Trend Chart
         new Chart(document.getElementById('latenessChart'), {
             type: 'line',
@@ -289,5 +271,4 @@
             }
         });
     });
-</script>
-@endsection
+</script>@endsection
