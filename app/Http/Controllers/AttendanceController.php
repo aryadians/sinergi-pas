@@ -204,7 +204,8 @@ class AttendanceController extends Controller
                             $status = 'absent';
                         }
                     } else {
-                        $status = ($sched['is_picket'] ?? false) ? 'picket' : 'present';
+                        // Jika tidak ada check_in tapi ada check_out, anggap hadir
+                        $status = ($sched['is_picket'] ? 'picket' : 'present');
                         if ($isShift2) $log->late_minutes_2 = 0;
                         else $log->late_minutes = 0;
                     }
