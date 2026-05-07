@@ -57,6 +57,8 @@ class ScheduleService
                     if (str_contains($sName, 'PAGI')) $start = $pagiIn;
                     elseif (str_contains($sName, 'SIANG')) $start = $siangIn;
                     elseif (str_contains($sName, 'MALAM')) $start = $malamIn;
+                    
+                    $shiftName = $indiv->shift->name ?? 'Shift Regu';
                 }
 
                 $schedules[] = [
