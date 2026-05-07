@@ -283,15 +283,20 @@ class AttendanceController extends Controller
                 try {
                     $d = trim((string)($row[$map['date']] ?? ''));
                     $t = trim((string)($row[$map['time']] ?? ''));
-                    $dt = trim((string)($row[$map['datetime']] ?? ''));
-                    if (!empty($d) && !empty($t)) $scanTime = Carbon::parse($d . ' ' . $t);
-                    elseif (!empty($dt)) $scanTime = Carbon::parse($dt);
-                    elseif (!empty($d)) $scanTime = Carbon::parse($d);
-                    else continue;
+                    
+                    // Gunakan format DD-MM-YYYY untuk tanggal jika perlu
+                    $scanTime = Carbon::createFromFormat('d-m-Y H:i:s', $d . ' ' . $t);
                     
                     $scansByNip[$nip][] = $scanTime;
                     $allDates[] = $scanTime->format('Y-m-d');
-                } catch (\Exception $e) { continue; }
+                } catch (\Exception $e) { 
+                    try {
+                        // Fallback jika format berbeda
+                        $scanTime = Carbon::parse($d . ' ' . $t);
+                        $scansByNip[$nip][] = $scanTime;
+                        $allDates[] = $scanTime->format('Y-m-d');
+                    } catch (\Exception $e2) { continue; }
+                }
             }
 
             if (empty($scansByNip)) return back()->with('error', 'Gagal membaca data scan.');
