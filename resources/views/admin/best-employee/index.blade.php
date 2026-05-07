@@ -34,7 +34,7 @@
                 <div class="w-full bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
                     <div class="flex justify-between items-center text-xs font-bold">
                         <span class="text-slate-500">Skor</span>
-                        <span class="text-slate-900">{{ $topEmployees[1]->score }}</span>
+                        <span class="text-slate-900">{{ $topEmployees[1]->score }} Poin</span>
                     </div>
                     <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400">
                         <span>Hadir: {{ $topEmployees[1]->total_present }}x</span>
@@ -51,7 +51,9 @@
                 <div class="absolute -top-4 -left-4 text-amber-400/20">
                     <i data-lucide="award" class="w-32 h-32"></i>
                 </div>
-                <div class="absolute top-6 left-6 w-10 h-10 rounded-full bg-white text-amber-500 flex items-center justify-center font-black text-lg shadow-lg">#1</div>
+                <div class="absolute top-6 left-6 w-10 h-10 rounded-full bg-white text-amber-500 flex items-center justify-center font-black shadow-lg">
+                    <i data-lucide="crown" class="w-5 h-5"></i>
+                </div>
                 
                 <div class="w-32 h-32 rounded-full bg-white mb-5 overflow-hidden border-4 border-amber-300 shadow-xl relative z-10">
                     <img src="{{ $topEmployees[0]->employee->photo }}" alt="Profile" class="w-full h-full object-cover" onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($topEmployees[0]->employee->full_name) }}&background=FFFBEB&color=B45309'">
@@ -61,7 +63,7 @@
                 <div class="w-full bg-black/10 rounded-3xl p-5 backdrop-blur-sm border border-white/10 space-y-3 relative z-10">
                     <div class="flex justify-between items-center text-sm font-black text-white">
                         <span>Skor Total</span>
-                        <span class="text-xl">{{ $topEmployees[0]->score }}</span>
+                        <span class="text-xl">{{ $topEmployees[0]->score }} Poin</span>
                     </div>
                     <div class="h-px w-full bg-white/20"></div>
                     <div class="flex justify-between items-center text-[11px] font-bold text-amber-100 uppercase">
@@ -84,7 +86,7 @@
                 <div class="w-full bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2">
                     <div class="flex justify-between items-center text-xs font-bold">
                         <span class="text-slate-500">Skor</span>
-                        <span class="text-slate-900">{{ $topEmployees[2]->score }}</span>
+                        <span class="text-slate-900">{{ $topEmployees[2]->score }} Poin</span>
                     </div>
                     <div class="flex justify-between items-center text-[10px] font-semibold text-slate-400">
                         <span>Hadir: {{ $topEmployees[2]->total_present }}x</span>
@@ -142,7 +144,7 @@
                                 </span>
                             </td>
                             <td class="px-6 py-4 text-center">
-                                <span class="text-sm font-black text-blue-600">{{ $emp->score }}</span>
+                                <span class="text-sm font-black text-blue-600">{{ $emp->score }} Poin</span>
                             </td>
                         </tr>
                         @endfor
