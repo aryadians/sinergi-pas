@@ -338,60 +338,50 @@ class AttendanceController extends Controller
                             $attData['status'] = 'present';
                         }
                     } else {
-                        // Heuristik pencocokan scan ke shift (mendukung night shift & scan tidak lengkap)
+                        // Pencocokan pintar scan ke shift
                         $shiftCount = min(2, count($schedules));
                         
                         if (isset($schedules[0]) && $schedules[0]['is_off']) $attData['status'] = $schedules[0]['status'];
                         if (isset($schedules[1]) && $schedules[1]['is_off']) $attData['status_2'] = $schedules[1]['status'];
 
-                        $expectedEvents = [];
+                        $targets = [];
                         for ($i = 0; $i < $shiftCount; $i++) {
                             if ($schedules[$i]['is_off']) continue;
                             $st = Carbon::parse($date . ' ' . $schedules[$i]['shift']->start_time);
                             $et = Carbon::parse($date . ' ' . $schedules[$i]['shift']->end_time);
-                            if ($et <= $st) $et->addDay(); // Night shift
+                            if ($et <= $st) $et->addDay(); // Shift melintasi hari
                             
-                            $expectedEvents[] = ['shift_index' => $i, 'type' => 'in', 'time' => $st];
-                            $expectedEvents[] = ['shift_index' => $i, 'type' => 'out', 'time' => $et];
+                            $targets[] = ['shift' => $i, 'type' => 'in', 'time' => $st];
+                            $targets[] = ['shift' => $i, 'type' => 'out', 'time' => $et];
                         }
 
-                        $matches = [];
-                        foreach ($expectedEvents as $eIdx => $event) {
-                            foreach ($allScans as $sIdx => $scan) {
-                                if (in_array($sIdx, $usedScans)) continue;
-                                $diffMin = ($scan->timestamp - $event['time']->timestamp) / 60;
-                                $absDiff = abs($diffMin);
-                                
-                                if ($event['type'] === 'in') {
-                                    if ($diffMin < -180 || $diffMin > 240) continue; // 3 jam awal, 4 jam telat
-                                } else {
-                                    if ($diffMin < -240 || $diffMin > 480) continue; // 4 jam awal, 8 jam telat
-                                }
-                                
-                                $matches[] = [
-                                    'eIdx' => $eIdx,
-                                    'sIdx' => $sIdx,
-                                    'absDiff' => $absDiff,
-                                    'diffMin' => $diffMin
-                                ];
-                            }
-                        }
-                        
-                        // Sort by absolute difference
-                        usort($matches, fn($a, $b) => $a['absDiff'] <=> $b['absDiff']);
-                        
-                        $matchedEvents = [];
-                        $matchedScans = [];
-                        
-                        foreach ($matches as $match) {
-                            if (isset($matchedEvents[$match['eIdx']]) || isset($matchedScans[$match['sIdx']])) continue;
+                        $assignments = [];
+                        foreach ($targets as $target) {
+                            $bestScanIdx = null;
+                            $bestDiff = 999999;
                             
-                            $matchedEvents[$match['eIdx']] = [
-                                'scan' => $allScans[$match['sIdx']],
-                                'diffMin' => $match['diffMin']
-                            ];
-                            $matchedScans[$match['sIdx']] = true;
-                            $usedScans[] = $match['sIdx'];
+                            foreach ($allScans as $idx => $scan) {
+                                if (in_array($idx, $usedScans)) continue;
+                                $diffMins = ($scan->timestamp - $target['time']->timestamp) / 60;
+                                
+                                // Toleransi Masuk: 3 jam lebih awal s/d 4 jam telat
+                                if ($target['type'] === 'in' && ($diffMins < -180 || $diffMins > 240)) continue;
+                                // Toleransi Pulang: 4 jam lebih awal s/d 8 jam telat
+                                if ($target['type'] === 'out' && ($diffMins < -240 || $diffMins > 480)) continue;
+                                
+                                if (abs($diffMins) < $bestDiff) {
+                                    $bestDiff = abs($diffMins);
+                                    $bestScanIdx = $idx;
+                                }
+                            }
+                            
+                            if ($bestScanIdx !== null) {
+                                $assignments[$target['shift']][$target['type']] = [
+                                    'scan' => $allScans[$bestScanIdx],
+                                    'late' => $target['type'] === 'in' && $bestDiff > 0 && ($allScans[$bestScanIdx]->timestamp > $target['time']->timestamp) ? ($allScans[$bestScanIdx]->timestamp - $target['time']->timestamp) / 60 : 0
+                                ];
+                                $usedScans[] = $bestScanIdx;
+                            }
                         }
 
                         for ($i = 0; $i < $shiftCount; $i++) {
@@ -399,21 +389,10 @@ class AttendanceController extends Controller
                             if ($sched['is_off']) continue;
 
                             $isShift2 = ($i === 1);
-                            $assignedCheckIn = null;
-                            $assignedCheckOut = null;
-                            $late = 0;
+                            $assignedCheckIn = $assignments[$i]['in']['scan'] ?? null;
+                            $assignedCheckOut = $assignments[$i]['out']['scan'] ?? null;
+                            $late = isset($assignments[$i]['in']['late']) ? (int)$assignments[$i]['in']['late'] : 0;
                             
-                            foreach ($expectedEvents as $eIdx => $event) {
-                                if ($event['shift_index'] === $i && isset($matchedEvents[$eIdx])) {
-                                    if ($event['type'] === 'in') {
-                                        $assignedCheckIn = $matchedEvents[$eIdx]['scan'];
-                                        $late = $matchedEvents[$eIdx]['diffMin'] > 0 ? (int)$matchedEvents[$eIdx]['diffMin'] : 0;
-                                    } elseif ($event['type'] === 'out') {
-                                        $assignedCheckOut = $matchedEvents[$eIdx]['scan'];
-                                    }
-                                }
-                            }
-
                             $status = 'absent';
                             $allowance = 0;
 
