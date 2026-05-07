@@ -1,18 +1,16 @@
 <?php
+// VERSION 6.0 - DOUBLE SHIFT SUPPORT
 
 namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\Attendance;
-use App\Models\Shift;
 use App\Models\Schedule;
 use App\Models\SquadSchedule;
 use App\Models\Setting;
 use App\Models\AuditLog;
-use App\Models\WorkUnit;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Maatwebsite\Excel\Facades\Excel;
@@ -36,96 +34,6 @@ class AttendanceController extends Controller
         $endDate = $request->end_date ?? now()->endOfMonth()->format('Y-m-d');
         $monthStr = Carbon::parse($startDate)->format('Y-m');
 
-        // --- PRE-FETCH SCHEDULES FOR ALL CALCULATIONS ---
-        $squadSchedules = SquadSchedule::with('shift')->whereBetween('date', [$startDate, $endDate])
-            ->get()->groupBy('squad_id')
-            ->map(fn($g) => $g->groupBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
-
-        $individualSchedules = Schedule::with('shift')->whereBetween('date', [$startDate, $endDate])
-            ->get()->groupBy('employee_id')
-            ->map(fn($g) => $g->groupBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
-
-        $holidays = \App\Models\Holiday::whereBetween('date', [$startDate, $endDate])
-            ->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray();
-
-        $staffInTime = \App\Models\Setting::getValue('payroll_staff_in', '07:30');
-        $staffSatEnabled = \App\Models\Setting::getValue('payroll_staff_saturday_enabled', 'off');
-        $staffSatIn = \App\Models\Setting::getValue('payroll_staff_saturday_in', '07:30');
-        
-        $ramadanEnabled = \App\Models\Setting::getValue('payroll_ramadan_enabled', 'off');
-        $ramadanStart = Carbon::parse(\App\Models\Setting::getValue('payroll_ramadan_start', date('Y-m-d')))->startOfDay();
-        $ramadanEnd = Carbon::parse(\App\Models\Setting::getValue('payroll_ramadan_end', date('Y-m-d')))->endOfDay();
-        $ramadanIn = \App\Models\Setting::getValue('payroll_ramadan_staff_in', '08:00');
-        $ramadanSatEnabled = \App\Models\Setting::getValue('payroll_ramadan_saturday_enabled', 'off');
-        $ramadanSatIn = \App\Models\Setting::getValue('payroll_ramadan_saturday_in', '08:00');
-
-        $shiftRules = [
-            'pagi' => \App\Models\Setting::getValue('payroll_shift_pagi_in', '06:00') . ':00',
-            'siang' => \App\Models\Setting::getValue('payroll_shift_siang_in', '13:00') . ':00',
-            'malam' => \App\Models\Setting::getValue('payroll_shift_malam_in', '20:00') . ':00',
-        ];
-
-        // Helper to get effective shift info (including double shift check)
-        $getEffectiveShiftInfo = function($emp, $date) use ($squadSchedules, $individualSchedules, $holidays, $staffInTime, $staffSatEnabled, $staffSatIn, $ramadanEnabled, $ramadanStart, $ramadanEnd, $ramadanIn, $ramadanSatEnabled, $ramadanSatIn, $shiftRules) {
-            $dateStr = Carbon::parse($date)->format('Y-m-d');
-            $dateObj = Carbon::parse($date);
-            
-            // Cek Libur Nasional
-            $isHoliday = in_array($dateStr, $holidays);
-
-            // 1. Individual
-            if (isset($individualSchedules[$emp->id][$dateStr])) {
-                $scheds = $individualSchedules[$emp->id][$dateStr];
-                $minIn = null; $isDouble = false;
-                foreach($scheds as $s) {
-                    if (in_array($s->status, ['off', 'leave', 'sick'])) return null;
-                    $st = $s->shift->start_time ?? null;
-                    $sName = strtoupper($s->shift->name ?? '');
-                    
-                    if (str_contains($sName, 'PAGI')) { $st = $shiftRules['pagi']; }
-                    elseif (str_contains($sName, 'SIANG')) { $st = $shiftRules['siang']; }
-                    elseif (str_contains($sName, 'MALAM')) { $st = $shiftRules['malam']; }
-
-                    if ($st && (!$minIn || $st < $minIn)) $minIn = $st;
-                }
-                return ['start_time' => $minIn, 'is_double' => $scheds->count() > 1];
-            }
-            
-            // 2. Squad
-            if ($emp->squad_id && isset($squadSchedules[$emp->squad_id][$dateStr])) {
-                $scheds = $squadSchedules[$emp->squad_id][$dateStr];
-                $minIn = null; $hasPagi = false; $hasMalam = false;
-                foreach($scheds as $s) {
-                    $st = $s->shift->start_time ?? '06:00:00';
-                    $sName = strtoupper($s->shift->name ?? '');
-
-                    if (str_contains($sName, 'PAGI')) { $st = $shiftRules['pagi']; $hasPagi = true; }
-                    elseif (str_contains($sName, 'SIANG')) { $st = $shiftRules['siang']; }
-                    elseif (str_contains($sName, 'MALAM')) { $st = $shiftRules['malam']; $hasMalam = true; }
-
-                    if (!$minIn || $st < $minIn) $minIn = $st;
-                }
-                return ['start_time' => $minIn, 'is_double' => ($hasPagi && $hasMalam) || $scheds->count() > 1];
-            }
-            
-            if ($isHoliday) return null;
-
-            // 3. Office Fallback
-            $hasSquadScheduleAtAll = $emp->squad_id && isset($squadSchedules[$emp->squad_id]) && $squadSchedules[$emp->squad_id]->count() > 0;
-            if (!$emp->squad_id || !$hasSquadScheduleAtAll) {
-                $dayNum = $dateObj->dayOfWeek;
-                $isRamadan = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd));
-                if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) {
-                    return ['start_time' => ($isRamadan ? $ramadanIn : $staffInTime), 'is_double' => false];
-                }
-                if ($dayNum === Carbon::SATURDAY) {
-                    if ($isRamadan && $ramadanSatEnabled === 'on') return ['start_time' => $ramadanSatIn, 'is_double' => false];
-                    if (!$isRamadan && $staffSatEnabled === 'on') return ['start_time' => $staffSatIn, 'is_double' => false];
-                }
-            }
-            return null;
-        };
-
         $employees = Employee::with(['work_unit', 'squad', 'rank_relation'])
             ->whereHas('user')
             ->when($search, function($q) use ($search) {
@@ -138,7 +46,6 @@ class AttendanceController extends Controller
             ->orderBy('full_name')
             ->paginate(50)->withQueryString();
 
-        // --- CALCULATE SUMMARY ---
         $allFilteredEmployees = Employee::whereHas('user')
             ->when($search, function($q) use ($search) {
                 $q->where('full_name', 'like', "%$search%")
@@ -146,7 +53,7 @@ class AttendanceController extends Controller
             })
             ->with(['attendances' => function($q) use ($startDate, $endDate) {
                 $q->whereBetween('date', [$startDate, $endDate]);
-            }])
+            }, 'rank_relation'])
             ->get();
 
         $totalPresent = 0; $totalValidDays = 0; $totalLate = 0; $totalAllowance = 0;
@@ -156,46 +63,61 @@ class AttendanceController extends Controller
             $empValidDays = 0; $empTotalAllowance = 0;
 
             foreach ($emp->attendances as $att) {
-                $status = $att->status;
-                $canReevaluate = in_array($status, ['absent', 'present', 'late']);
-                $info = $getEffectiveShiftInfo($emp, $att->date);
-                $effectiveStart = $info['start_time'] ?? null;
-                $isScheduled = !is_null($effectiveStart);
-
-                if ($att->check_in && $isScheduled && $canReevaluate) {
-                    $checkInTime = date('H:i', strtotime($att->check_in));
-                    $targetInTime = date('H:i', strtotime($effectiveStart));
-                    $dateStr = Carbon::parse($att->date)->format('Y-m-d');
-                    
-                    $actualTs = strtotime($dateStr.' '.$checkInTime);
-                    $targetTs = strtotime($dateStr.' '.$targetInTime);
-                    $diffMinutes = (int) ceil(($actualTs - $targetTs) / 60);
-                    
-                    if ($diffMinutes >= -180) {
-                        $status = ($diffMinutes > 0) ? 'late' : 'present';
-                    } else {
-                        $status = 'absent';
-                    }
-                } elseif ($att->check_in && !$isScheduled && $canReevaluate) {
-                    $status = 'present';
+                $schedules = $this->scheduleService->getAllSchedulesForDay($emp, $att->date);
+                
+                if (empty($schedules)) {
+                    if ($att->check_in) $totalPresent++;
+                    continue;
                 }
 
-                if ($status !== 'absent') {
-                    $totalPresent++;
-                    if ($info) {
-                        $isLate = ($status === 'late');
-                        if ($isLate) $totalLate++;
+                $shiftCount = min(2, count($schedules));
+                $dayPresent = false;
+
+                for ($i = 0; $i < $shiftCount; $i++) {
+                    $sched = $schedules[$i];
+                    $isShift2 = ($i === 1);
+                    $status = $isShift2 ? $att->status_2 : $att->status;
+                    $checkIn = $isShift2 ? $att->check_in_2 : $att->check_in;
+                    $isOff = $sched['is_off'] ?? false;
+
+                    if ($isOff) continue;
+
+                    $canReevaluate = in_array($status, ['absent', 'present', 'late']);
+                    $effectiveStart = $sched['shift']->start_time ?? null;
+
+                    if ($checkIn && $effectiveStart && $canReevaluate) {
+                        $checkInTime = date('H:i', strtotime($checkIn));
+                        $targetInTime = date('H:i', strtotime($effectiveStart));
+                        $dateStr = Carbon::parse($att->date)->format('Y-m-d');
                         
-                        $count = $info['is_double'] ? 2 : 1;
-                        $empValidDays += $count;
+                        $actualTs = strtotime($dateStr.' '.$checkInTime);
+                        $targetTs = strtotime($dateStr.' '.$targetInTime);
+                        $diffMinutes = (int) ceil(($actualTs - $targetTs) / 60);
+                        
+                        if ($diffMinutes >= -180) {
+                            $status = ($diffMinutes > 0) ? 'late' : 'present';
+                        } else {
+                            $status = 'absent';
+                        }
+                    }
+
+                    if ($status !== 'absent') {
+                        $dayPresent = true;
+                        if ($status === 'late') $totalLate++;
+                        $empValidDays++;
                         if ($status !== 'duty_full' && $status !== 'tubel') {
-                            $empTotalAllowance += ($empRate * $count);
+                            $shiftName = $sched['shift']->name ?? '';
+                            $isNightShift = str_contains(strtoupper($shiftName), 'MALAM');
+                            $mealMultiplier = $isNightShift ? 2 : 1;
+                            $empTotalAllowance += ($empRate * $mealMultiplier);
                         }
                     }
                 }
+                if ($dayPresent) $totalPresent++;
             }
             $totalValidDays += $empValidDays;
             $totalAllowance += $empTotalAllowance;
+            
             $paginatedEmp = $employees->getCollection()->where('id', $emp->id)->first();
             if ($paginatedEmp) {
                 $paginatedEmp->setAttribute('valid_attendance_count', $empValidDays);
@@ -215,48 +137,76 @@ class AttendanceController extends Controller
             ->orderBy('date', 'desc')->orderBy('check_in', 'asc')
             ->paginate(50, ['*'], 'log_page')->withQueryString();
 
-        $attendanceLogs->getCollection()->transform(function($log) use ($getEffectiveShiftInfo) {
+        $attendanceLogs->getCollection()->transform(function($log) {
             $emp = $log->employee;
-            $info = $getEffectiveShiftInfo($emp, $log->date);
-            $effectiveStart = $info['start_time'] ?? null;
-            $isScheduled = !is_null($effectiveStart);
+            $schedules = $this->scheduleService->getAllSchedulesForDay($emp, $log->date);
             $empRate = (float)($emp->rank_relation->meal_allowance ?? 0);
             
-            // Re-evaluate if it's currently marked as absent/present/late but we have new schedule info
-            // Allow correcting 'absent' if there's a check_in now
-            $canReevaluate = in_array($log->status, ['absent', 'present', 'late']);
+            $log->allowance_amount = 0;
+            $log->allowance_amount_2 = 0;
             
-            if ($log->check_in && $isScheduled && $canReevaluate) {
-                $checkInTime = date('H:i', strtotime($log->check_in));
-                $targetInTime = date('H:i', strtotime($effectiveStart));
-                
-                $dateStr = Carbon::parse($log->date)->format('Y-m-d');
-                $actualTs = strtotime($dateStr.' '.$checkInTime);
-                $targetTs = strtotime($dateStr.' '.$targetInTime);
-                
-                $diffMinutes = (int) ceil(($actualTs - $targetTs) / 60);
-
-                // Tolerance: Max 3 hours early (increased from 2)
-                if ($diffMinutes >= -180) {
-                    if ($diffMinutes > 0) {
-                        $log->status = 'late';
-                        $log->late_minutes = (int)$diffMinutes;
-                    } else {
-                        $log->status = $emp->squad_id ? 'picket' : 'present';
-                        $log->late_minutes = 0;
-                    }
-                } else {
-                    // Sangat jauh dari jadwal (salah shift/terlalu pagi) -> Dianggap Tanpa Keterangan dari shift tersebut
-                    $log->status = 'absent';
-                }
-            } elseif ($log->check_in && !$isScheduled && $canReevaluate) {
-                // Scan di hari libur (Tidak ada jadwal)
-                $log->status = 'present';
-                $log->late_minutes = 0;
+            if (empty($schedules)) {
+                if ($log->check_in) $log->status = 'present';
+                if ($log->check_in_2) $log->status_2 = 'present';
+                return $log;
             }
 
-            $hasMeal = $isScheduled && !in_array($log->status, ['absent', 'duty_full', 'tubel', 'on_leave', 'sick']);
-            $log->allowance_amount = $hasMeal ? ($info['is_double'] ? $empRate * 2 : $empRate) : 0;
+            $shiftCount = min(2, count($schedules));
+            
+            for ($i = 0; $i < $shiftCount; $i++) {
+                $sched = $schedules[$i];
+                $isShift2 = ($i === 1);
+                
+                $status = $isShift2 ? $log->status_2 : $log->status;
+                $checkIn = $isShift2 ? $log->check_in_2 : $log->check_in;
+                $isOff = $sched['is_off'] ?? false;
+                $effectiveStart = $sched['shift']->start_time ?? null;
+
+                if ($isOff) continue;
+
+                $canReevaluate = in_array($status, ['absent', 'present', 'late']);
+                
+                if ($checkIn && $effectiveStart && $canReevaluate) {
+                    $checkInTime = date('H:i', strtotime($checkIn));
+                    $targetInTime = date('H:i', strtotime($effectiveStart));
+                    
+                    $dateStr = Carbon::parse($log->date)->format('Y-m-d');
+                    $actualTs = strtotime($dateStr.' '.$checkInTime);
+                    $targetTs = strtotime($dateStr.' '.$targetInTime);
+                    $diffMinutes = (int) ceil(($actualTs - $targetTs) / 60);
+
+                    if ($diffMinutes >= -180) {
+                        if ($diffMinutes > 0) {
+                            $status = 'late';
+                            if ($isShift2) $log->late_minutes_2 = $diffMinutes;
+                            else $log->late_minutes = $diffMinutes;
+                        } else {
+                            $status = ($sched['is_picket'] ?? false) ? 'picket' : 'present';
+                            if ($isShift2) $log->late_minutes_2 = 0;
+                            else $log->late_minutes = 0;
+                        }
+                    } else {
+                        $status = 'absent';
+                    }
+                } elseif ($checkIn && !$effectiveStart && $canReevaluate) {
+                    $status = 'present';
+                    if ($isShift2) $log->late_minutes_2 = 0;
+                    else $log->late_minutes = 0;
+                }
+
+                if ($isShift2) $log->status_2 = $status;
+                else $log->status = $status;
+
+                $hasMeal = !in_array($status, ['absent', 'duty_full', 'tubel', 'on_leave', 'sick']);
+                if ($hasMeal) {
+                    $shiftName = $sched['shift']->name ?? '';
+                    $isNightShift = str_contains(strtoupper($shiftName), 'MALAM');
+                    $mealMultiplier = $isNightShift ? 2 : 1;
+
+                    if ($isShift2) $log->allowance_amount_2 = $empRate * $mealMultiplier;
+                    else $log->allowance_amount = $empRate * $mealMultiplier;
+                }
+            }
             
             return $log;
         });
@@ -327,16 +277,6 @@ class AttendanceController extends Controller
 
             $minDate = collect($allDates)->min(); $maxDate = collect($allDates)->max();
             $empIds = $employees->pluck('id')->toArray();
-            $squadIds = $employees->pluck('squad_id')->filter()->unique()->toArray();
-
-            $individualSchedules = Schedule::with('shift')->whereIn('employee_id', $empIds)->whereBetween('date', [$minDate, $maxDate])->get()->groupBy('employee_id')->map(fn($g) => $g->groupBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
-            $squadSchedules = SquadSchedule::with('shift')->whereIn('squad_id', $squadIds)->whereBetween('date', [$minDate, $maxDate])->get()->groupBy('squad_id')->map(fn($g) => $g->groupBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
-            
-            $settings = Setting::where('key', 'like', 'payroll_%')->get()->pluck('value', 'key');
-            $staffIn = $settings['payroll_staff_in'] ?? '07:30';
-            $ramadanEnabled = $settings['payroll_ramadan_enabled'] ?? 'off';
-            $ramadanStart = Carbon::parse($settings['payroll_ramadan_start'] ?? date('Y-m-d'))->startOfDay();
-            $ramadanEnd = Carbon::parse($settings['payroll_ramadan_end'] ?? date('Y-m-d'))->endOfDay();
 
             Attendance::whereIn('employee_id', $empIds)->whereBetween('date', [$minDate, $maxDate])->delete();
 
@@ -348,93 +288,126 @@ class AttendanceController extends Controller
                 if (!$excelKey) continue;
 
                 foreach (collect($scansByNip[$excelKey])->sort()->groupBy(fn($s) => $s->format('Y-m-d')) as $date => $dayScans) {
-                    $checkIn = $dayScans->min(); $checkOut = $dayScans->max();
-                    if ($checkIn->equalTo($checkOut)) $checkOut = null;
+                    $scans = $dayScans->sortBy(fn($s) => $s->format('H:i:s'))->values();
+                    $schedules = $this->scheduleService->getAllSchedulesForDay($emp, $date);
+                    
+                    $attData = [
+                        'employee_id' => $emp->id,
+                        'date' => $date,
+                        'check_in' => null,
+                        'check_out' => null,
+                        'status' => 'absent',
+                        'late_minutes' => 0,
+                        'early_minutes' => 0,
+                        'allowance_amount' => 0,
+                        'check_in_2' => null,
+                        'check_out_2' => null,
+                        'status_2' => 'absent',
+                        'late_minutes_2' => 0,
+                        'early_minutes_2' => 0,
+                        'allowance_amount_2' => 0,
+                        'created_at' => $now,
+                        'updated_at' => $now
+                    ];
 
-                    $effectiveSched = null; $status = 'absent'; $isPicket = false; $isDouble = false;
+                    $empRate = (float)($emp->rank_relation->meal_allowance ?? 0);
 
-                    if (isset($individualSchedules[$emp->id][$date])) {
-                        $scheds = $individualSchedules[$emp->id][$date]; $sched = $scheds->first();
-                        if (in_array($sched->status, ['leave', 'sick'])) $status = ($sched->status === 'leave' ? 'on_leave' : 'sick');
-                        elseif ($sched->status === 'off') $status = 'absent';
-                        else {
-                            $minStart = null; $maxEnd = null;
-                            $pagiIn = $settings['payroll_shift_pagi_in'] ?? '06:00';
-                            $siangIn = $settings['payroll_shift_siang_in'] ?? '13:00';
-                            $malamIn = $settings['payroll_shift_malam_in'] ?? '20:00';
+                    if (empty($schedules)) {
+                        // Tidak ada jadwal resmi
+                        if ($scans->count() > 0) {
+                            $attData['check_in'] = $scans->first()->format('H:i:s');
+                            if ($scans->count() > 1) $attData['check_out'] = $scans->last()->format('H:i:s');
+                            $attData['status'] = 'present';
+                        }
+                    } else {
+                        // Heuristik pencocokan scan ke shift
+                        $shiftCount = min(2, count($schedules));
+                        
+                        // Copy shift statuses (like sick, leave)
+                        if (isset($schedules[0]) && $schedules[0]['is_off']) {
+                            $attData['status'] = $schedules[0]['status'];
+                        }
+                        if (isset($schedules[1]) && $schedules[1]['is_off']) {
+                            $attData['status_2'] = $schedules[1]['status'];
+                        }
 
-                            foreach($scheds as $s) {
-                                if ($s->shift) {
-                                    $st = $s->shift->start_time;
-                                    $sName = strtoupper($s->shift->name ?? '');
+                        $scanPointer = 0;
+                        for ($i = 0; $i < $shiftCount; $i++) {
+                            $sched = $schedules[$i];
+                            if ($sched['is_off']) continue;
 
-                                    if (str_contains($sName, 'PAGI')) { $st = $pagiIn.':00'; }
-                                    elseif (str_contains($sName, 'SIANG')) { $st = $siangIn.':00'; }
-                                    elseif (str_contains($sName, 'MALAM')) { $st = $malamIn.':00'; }
+                            $isShift2 = ($i === 1);
+                            $st = Carbon::parse($date . ' ' . $sched['shift']->start_time);
+                            
+                            $assignedCheckIn = null;
+                            $assignedCheckOut = null;
+                            
+                            // Cari scan masuk yang paling masuk akal (Toleransi absen 3 jam sebelumnya hingga bbrp jam sesudahnya)
+                            while ($scanPointer < $scans->count()) {
+                                $currentScan = $scans[$scanPointer];
+                                $diffMin = (int) ceil(($currentScan->timestamp - $st->timestamp) / 60);
+                                
+                                // Jika scan masuk masuk dalam range masuk shift ini (max 3 jam sebelumnya)
+                                if ($diffMin >= -180) {
+                                    $assignedCheckIn = $currentScan;
+                                    $scanPointer++;
+                                    
+                                    // Coba ambil pasangannya (check out) jika ada
+                                    if ($scanPointer < $scans->count()) {
+                                        // Assume next scan is checkout for this shift IF there's only 1 shift OR next scan is way later
+                                        // For simplicity: if we have 4 scans, scan 0,1 goes to shift 1. scan 2,3 goes to shift 2.
+                                        // If we have 2 scans and 2 shifts, scan 0 goes to shift 1 in, scan 1 goes to shift 2 in.
+                                        if ($shiftCount == 2 && $scans->count() == 2) {
+                                            // Jangan ambil check out, sisakan untuk check_in shift 2
+                                            break;
+                                        } else {
+                                            $assignedCheckOut = $scans[$scanPointer];
+                                            $scanPointer++;
+                                        }
+                                    }
+                                    break;
+                                }
+                                $scanPointer++;
+                            }
 
-                                    if (!$minStart || $st < $minStart) $minStart = $st;
-                                    if (!$maxEnd || $s->shift->end_time > $maxEnd) $maxEnd = $s->shift->end_time;
+                            $status = 'absent';
+                            $late = 0;
+                            $allowance = 0;
+
+                            if ($assignedCheckIn) {
+                                $diffMin = (int) ceil(($assignedCheckIn->timestamp - $st->timestamp) / 60);
+                                if ($diffMin >= -180) {
+                                    if ($diffMin > 0) {
+                                        $late = $diffMin;
+                                        $status = 'late';
+                                    } else {
+                                        $status = $sched['is_picket'] ? 'picket' : 'present';
+                                    }
+                                    
+                                    $shiftName = $sched['shift']->name ?? '';
+                                    $isNightShift = str_contains(strtoupper($shiftName), 'MALAM');
+                                    $mealMultiplier = $isNightShift ? 2 : 1;
+                                    $allowance = $empRate * $mealMultiplier;
                                 }
                             }
-                            $effectiveSched = (object)['start_time' => $minStart, 'end_time' => $maxEnd, 'name' => 'Individual'];
-                            $isPicket = ($sched->status === 'picket');
-                            $isDouble = $scheds->count() > 1;
-                        }
-                    } elseif ($emp->squad_id && isset($squadSchedules[$emp->squad_id][$date])) {
-                        $scheds = $squadSchedules[$emp->squad_id][$date];
-                        $minStart = null; $maxEnd = null; $hasPagi = false; $hasMalam = false;
 
-                        $pagiIn = $settings['payroll_shift_pagi_in'] ?? '06:00';
-                        $siangIn = $settings['payroll_shift_siang_in'] ?? '13:00';
-                        $malamIn = $settings['payroll_shift_malam_in'] ?? '20:00';
-
-                        foreach($scheds as $s) {
-                            $st = $s->shift->start_time;
-                            $sName = strtoupper($s->shift->name ?? '');
-
-                            if (str_contains($sName, 'PAGI')) { $st = $pagiIn.':00'; $hasPagi = true; }
-                            elseif (str_contains($sName, 'SIANG')) { $st = $siangIn.':00'; }
-                            elseif (str_contains($sName, 'MALAM')) { $st = $malamIn.':00'; $hasMalam = true; }
-
-                            if (!$minStart || $st < $minStart) $minStart = $st;
-                            if (!$maxEnd || ($s->shift->end_time ?? '00:00:00') > $maxEnd) $maxEnd = $s->shift->end_time;
-                        }
-                        $effectiveSched = (object)['start_time' => $minStart, 'end_time' => $maxEnd, 'name' => 'Squad'];
-                        $isPicket = true; $isDouble = ($hasPagi && $hasMalam) || $scheds->count() > 1;
-                    }
- elseif (!$emp->squad_id || !isset($squadSchedules[$emp->squad_id]) || $squadSchedules[$emp->squad_id]->count() == 0) {
-                        $dateObj = Carbon::parse($date); $dayNum = $dateObj->dayOfWeek;
-                        if ($dayNum >= Carbon::MONDAY && $dayNum <= Carbon::FRIDAY) {
-                            $inT = ($ramadanEnabled === 'on' && $dateObj->between($ramadanStart, $ramadanEnd)) ? ($settings['payroll_ramadan_staff_in'] ?? '08:00') : $staffIn;
-                            $effectiveSched = (object)['start_time' => $inT.':00', 'end_time' => '16:00:00', 'name' => 'Office'];
-                        }
-                    }
-
-                    $late = 0; $early = 0; $allowance = 0;
-                    if ($effectiveSched && !in_array($status, ['on_leave', 'sick'])) {
-                        $st = Carbon::parse($date . ' ' . $effectiveSched->start_time);
-                        
-                        $actualTs = strtotime($checkIn->format('Y-m-d H:i:s'));
-                        $targetTs = strtotime($st->format('Y-m-d H:i:s'));
-                        $diffMin = (int) ceil(($actualTs - $targetTs) / 60);
-
-                        // Tolerance: Max 3 hours early (180 mins)
-                        if ($diffMin >= -180) {
-                            if ($diffMin > 0) {
-                                $late = $diffMin;
-                                $status = 'late';
+                            if ($isShift2) {
+                                $attData['check_in_2'] = $assignedCheckIn ? $assignedCheckIn->format('H:i:s') : null;
+                                $attData['check_out_2'] = $assignedCheckOut ? $assignedCheckOut->format('H:i:s') : null;
+                                $attData['status_2'] = $status;
+                                $attData['late_minutes_2'] = $late;
+                                $attData['allowance_amount_2'] = $allowance;
                             } else {
-                                $status = $isPicket ? 'picket' : 'present';
+                                $attData['check_in'] = $assignedCheckIn ? $assignedCheckIn->format('H:i:s') : null;
+                                $attData['check_out'] = $assignedCheckOut ? $assignedCheckOut->format('H:i:s') : null;
+                                $attData['status'] = $status;
+                                $attData['late_minutes'] = $late;
+                                $attData['allowance_amount'] = $allowance;
                             }
-                            $allowance = (float)($emp->rank_relation->meal_allowance ?? 0) * ($isDouble ? 2 : 1);
-                        } else {
-                            $status = 'absent'; // Outside tolerance -> Tanpa Keterangan (salah shift)
                         }
-                    } elseif (!$effectiveSched && !in_array($status, ['on_leave', 'sick'])) {
-                        $status = 'present'; // Scanned on a day off
                     }
 
-                    $insertData[] = ['employee_id' => $emp->id, 'date' => $date, 'check_in' => $checkIn->format('H:i:s'), 'check_out' => $checkOut ? $checkOut->format('H:i:s') : null, 'status' => $status, 'late_minutes' => $late, 'early_minutes' => $early, 'allowance_amount' => $allowance, 'created_at' => $now, 'updated_at' => $now];
+                    $insertData[] = $attData;
                     $importedCount++;
                 }
             }
@@ -456,33 +429,18 @@ class AttendanceController extends Controller
         if ($request->filled('employee_id')) $query->where('id', $request->employee_id);
         if ($request->filled('work_unit_id')) $query->where('work_unit_id', $request->work_unit_id);
 
-        $squadSchedules = SquadSchedule::whereBetween('date', [$startDate, $endDate])->get()->groupBy('squad_id')->map(fn($g) => $g->groupBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
-        $individualSchedules = Schedule::whereBetween('date', [$startDate, $endDate])->get()->groupBy('employee_id')->map(fn($g) => $g->groupBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d')));
-        
-        $settings = Setting::where('key', 'like', 'payroll_%')->get()->pluck('value', 'key');
-
-        $getMealMultiplier = function($emp, $date) use ($squadSchedules, $individualSchedules) {
-            $dateStr = Carbon::parse($date)->format('Y-m-d');
-            if (isset($individualSchedules[$emp->id][$dateStr])) return $individualSchedules[$emp->id][$dateStr]->count() > 1 ? 2 : 1;
-            if ($emp->squad_id && isset($squadSchedules[$emp->squad_id][$dateStr])) {
-                $scheds = $squadSchedules[$emp->squad_id][$dateStr];
-                $hasPagi = false; $hasMalam = false;
-                foreach($scheds as $s) {
-                    if (str_contains(strtoupper($s->shift->name ?? ''), 'PAGI')) $hasPagi = true;
-                    if (str_contains(strtoupper($s->shift->name ?? ''), 'MALAM')) $hasMalam = true;
-                }
-                return ($hasPagi && $hasMalam) || $scheds->count() > 1 ? 2 : 1;
-            }
-            return 1;
-        };
-
         if ($filter === 'daily') {
             $exactDate = Carbon::parse($request->exact_date ?? now()); $dateStr = $exactDate->format('Y-m-d');
             $employees = $query->with('rank_relation')->get();
             $attendances = Attendance::whereDate('date', $exactDate)->get()->keyBy('employee_id');
-            $data = $employees->map(function($emp) use ($attendances, $dateStr, $getMealMultiplier) {
+            $data = $employees->map(function($emp) use ($attendances, $dateStr) {
                 $att = $attendances->get($emp->id);
-                return (object)['employee' => $emp, 'check_in' => $att?->check_in, 'check_out' => $att?->check_out, 'status' => $att?->status ?? 'absent', 'late_minutes' => $att?->late_minutes ?? 0, 'allowance_amount' => $att ? $att->allowance_amount : 0];
+                // Simplify sum of allowances for daily PDF
+                $allowance = 0;
+                if ($att) {
+                    $allowance = $att->allowance_amount + $att->allowance_amount_2;
+                }
+                return (object)['employee' => $emp, 'check_in' => $att?->check_in, 'check_out' => $att?->check_out, 'status' => $att?->status ?? 'absent', 'late_minutes' => $att?->late_minutes ?? 0, 'allowance_amount' => $allowance];
             });
             $reportTitle = "ABSENSI HARIAN - " . strtoupper($exactDate->translatedFormat('d F Y'));
             if ($type === 'excel') return $this->exportExcelDaily($data, $reportTitle, "absensi-harian-{$dateStr}.xlsx");
@@ -494,7 +452,22 @@ class AttendanceController extends Controller
             $attendances = Attendance::whereBetween('date', [$startDate, $endDate])->get()->groupBy('employee_id');
             $data = $employees->map(function($emp) use ($attendances) {
                 $atts = $attendances->get($emp->id) ?? collect();
-                return (object)['full_name' => strtoupper($emp->full_name), 'nip' => $emp->nip, 'present_count' => $atts->whereNotIn('status', ['absent'])->count(), 'late_count' => $atts->where('status', 'late')->count(), 'total_allowance' => $atts->sum('allowance_amount')];
+                
+                $presentCount = 0;
+                $lateCount = 0;
+                $totalAllowance = 0;
+                
+                foreach ($atts as $att) {
+                    if (!in_array($att->status, ['absent'])) $presentCount++;
+                    if (!in_array($att->status_2, ['absent']) && $att->check_in_2) $presentCount++;
+                    
+                    if ($att->status === 'late') $lateCount++;
+                    if ($att->status_2 === 'late') $lateCount++;
+                    
+                    $totalAllowance += $att->allowance_amount + $att->allowance_amount_2;
+                }
+                
+                return (object)['full_name' => strtoupper($emp->full_name), 'nip' => $emp->nip, 'present_count' => $presentCount, 'late_count' => $lateCount, 'total_allowance' => $totalAllowance];
             });
             $reportTitle = "REKAP ABSENSI (" . $start->format('d/m/Y') . " - " . $end->format('d/m/Y') . ")";
             if ($type === 'excel') return $this->exportExcelMonthly($data, $reportTitle, "rekap-absensi.xlsx");
@@ -512,7 +485,7 @@ class AttendanceController extends Controller
                 return $this->logs->map(fn($log, $i) => [
                     $i+1, Carbon::parse($log->date)->format('d/m/Y'),
                     $log->check_in ?? '--:--', $log->check_out ?? '--:--',
-                    strtoupper($log->status), $log->late_minutes . 'm', $log->allowance_amount
+                    strtoupper($log->status), $log->late_minutes . 'm', $log->allowance_amount + $log->allowance_amount_2
                 ]);
             }
             public function headings(): array { return ['NO', 'TANGGAL', 'MASUK', 'PULANG', 'STATUS', 'TELAT', 'UANG MAKAN']; }

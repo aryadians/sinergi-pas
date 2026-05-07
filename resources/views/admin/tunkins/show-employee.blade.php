@@ -188,7 +188,7 @@
                                 </td>
                                 <td class="px-8 py-4 text-center">
                                     @if($log['is_scheduled'])
-                                        <span class="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">Valid</span>
+                                        <span class="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">{{ $log['shift'] ?? 'Valid' }}</span>
                                     @else
                                         <span class="text-[9px] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full uppercase tracking-tighter">Luar Jadwal</span>
                                     @endif

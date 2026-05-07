@@ -1,20 +1,26 @@
 <?php
-// VERSION 5.0 - ADDED RAMADAN SATURDAY LOGIC
+// VERSION 6.0 - DOUBLE SHIFT SUPPORT
 
 namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\Employee;
-use App\Models\Schedule;
-use App\Models\SquadSchedule;
 use App\Models\Setting;
 use Carbon\Carbon;
+use App\Services\ScheduleService;
 
 class PayrollService
 {
+    protected $scheduleService;
+
+    public function __construct(ScheduleService $scheduleService)
+    {
+        $this->scheduleService = $scheduleService;
+    }
+
     /**
      * Menghitung rincian Tukin dan Uang Makan untuk satu pegawai dalam satu bulan.
-     * Menggunakan kalkulasi Real-time yang disinkronkan dengan data absensi.
+     * Mendukung Double Shift (2 jadwal sehari).
      */
     public function calculateMonthlyPayroll(Employee $employee, $monthStr)
     {
@@ -23,7 +29,6 @@ class PayrollService
         $endDate = $date->copy()->endOfMonth()->format('Y-m-d');
         $daysInMonth = $date->daysInMonth;
 
-        // Ambil semua setting sekaligus
         $allSettings = Setting::where('key', 'like', 'payroll_%')->get()->pluck('value', 'key');
         
         $rules = [
@@ -36,53 +41,12 @@ class PayrollService
             'lupa_absen' => (float)($allSettings['payroll_lupa_absen_percent'] ?? 1.5),
             'sakit_3_6' => (float)($allSettings['payroll_sakit_3_6_percent'] ?? 2.5),
             'sakit_7' => (float)($allSettings['payroll_sakit_7_plus_percent'] ?? 10.0),
-            'staff_in' => $allSettings['payroll_staff_in'] ?? '07:30',
-            'staff_out_mon_thu' => $allSettings['payroll_staff_out_mon_thu'] ?? '16:00',
-            'staff_out_fri' => $allSettings['payroll_staff_out_fri'] ?? '16:30',
-            'staff_saturday_enabled' => $allSettings['payroll_staff_saturday_enabled'] ?? 'off',
-            'staff_saturday_in' => $allSettings['payroll_staff_saturday_in'] ?? '07:30',
-            'staff_saturday_out' => $allSettings['payroll_staff_saturday_out'] ?? '12:00',
-            'shift_pagi_in' => $allSettings['payroll_shift_pagi_in'] ?? '06:00',
-            'shift_siang_in' => $allSettings['payroll_shift_siang_in'] ?? '13:00',
-            'shift_malam_in' => $allSettings['payroll_shift_malam_in'] ?? '20:00',
-            
-            // Jam Kerja Staff (Bulan Puasa)
-            'ramadan_enabled' => $allSettings['payroll_ramadan_enabled'] ?? 'off',
-            'ramadan_start' => $allSettings['payroll_ramadan_start'] ?? date('Y-m-d'),
-            'ramadan_end' => $allSettings['payroll_ramadan_end'] ?? date('Y-m-d'),
-            'ramadan_staff_in' => $allSettings['payroll_ramadan_staff_in'] ?? '08:00',
-            'ramadan_staff_out_mon_thu' => $allSettings['payroll_ramadan_staff_out_mon_thu'] ?? '15:00',
-            'ramadan_staff_out_fri' => $allSettings['payroll_ramadan_staff_out_fri'] ?? '15:30',
-            'ramadan_saturday_enabled' => $allSettings['payroll_ramadan_saturday_enabled'] ?? 'off',
-            'ramadan_saturday_in' => $allSettings['payroll_ramadan_saturday_in'] ?? '08:00',
-            'ramadan_saturday_out' => $allSettings['payroll_ramadan_saturday_out'] ?? '12:00',
         ];
         
         $attendances = Attendance::where('employee_id', $employee->id)
             ->whereBetween('date', [$startDate, $endDate])
             ->get()
             ->keyBy(fn($item) => Carbon::parse($item->date)->format('Y-m-d'));
-
-        $individualSchedules = Schedule::with('shift')
-            ->where('employee_id', $employee->id)
-            ->whereBetween('date', [$startDate, $endDate])
-            ->get()
-            ->keyBy(fn($i) => Carbon::parse($i->date)->format('Y-m-d'));
-            
-        // Ambil semua jadwal regu untuk bulan ini
-        $squadSchedules = [];
-        if ($employee->squad_id) {
-            $squadSchedules = SquadSchedule::with('shift')
-                ->where('squad_id', $employee->squad_id)
-                ->whereBetween('date', [$startDate, $endDate])
-                ->get()
-                ->groupBy(fn($s) => Carbon::parse($s->date)->format('Y-m-d'));
-        }
-        
-        $holidays = \App\Models\Holiday::whereBetween('date', [$startDate, $endDate])
-            ->pluck('date')->map(fn($d) => Carbon::parse($d)->format('Y-m-d'))->toArray();
-
-        $hasAnySquadSchedule = $employee->squad_id && $squadSchedules->count() > 0;
 
         $stats = [
             'total_present' => 0,
@@ -125,244 +89,171 @@ class PayrollService
         for ($d = 1; $d <= $daysInMonth; $d++) {
             $currentDateObj = $date->copy()->day($d);
             $currentDate = $currentDateObj->format('Y-m-d');
-            $dayOfWeek = $currentDateObj->dayOfWeek;
             $isFuture = $currentDateObj->isAfter($today);
             
             $attendance = $attendances->get($currentDate);
-            
-            $isScheduled = false;
-            $scheduledInTime = null;
-            $scheduledOutTime = null;
-            $specialStatus = null; 
-            $isDefaultOffice = false;
-            $isDoubleShift = false;
-            $isNightShift = false;
+            $schedules = $this->scheduleService->getAllSchedulesForDay($employee, $currentDate);
 
-            if ($individualSchedules->has($currentDate)) {
-                $indivs = $individualSchedules->get($currentDate); // Wait, individualSchedules was grouped?
-                // PayrollService v5 had keyBy, but I need to support multiple?
-                // Actually individuals are rarely multiple, but let's be safe.
-                $indiv = is_iterable($indivs) ? $indivs->first() : $indivs;
-                
-                $specialStatus = $indiv->status ?? 'picket';
-                $isScheduled = !in_array($specialStatus, ['off', 'leave', 'sick']);
-                
-                $st = $indiv->shift->start_time ?? null;
-                $et = $indiv->shift->end_time ?? null;
-                
-                // Override with Master Rules if shift name matches
-                $sName = strtoupper($indiv->shift->name ?? '');
-                if (str_contains($sName, 'PAGI')) {
-                    $st = ($rules['shift_pagi_in'] ?? '06:00') . ':00';
-                } elseif (str_contains($sName, 'SIANG')) {
-                    $st = ($rules['shift_siang_in'] ?? '13:00') . ':00';
-                } elseif (str_contains($sName, 'MALAM')) {
-                    $st = ($rules['shift_malam_in'] ?? '20:00') . ':00';
-                    $isNightShift = true;
+            // Jika tidak ada jadwal, cek kalau dia absen (lembur/masuk libur)
+            if (empty($schedules)) {
+                if ($attendance && $attendance->check_in) {
+                    $stats['processed_logs'][] = [
+                        'date' => $currentDate, 
+                        'status' => 'present', 
+                        'check_in' => is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s'), 
+                        'check_out' => $attendance->check_out ? (is_string($attendance->check_out) ? $attendance->check_out : $attendance->check_out->format('H:i:s')) : '--:--', 
+                        'is_scheduled' => false, 
+                        'meal_amount' => 0 // Umumnya tidak ada uang makan kalau tidak ada jadwal resmi
+                    ];
                 }
-
-                $scheduledInTime = $st;
-                $scheduledOutTime = $et;
-                
-                foreach((is_iterable($indivs) ? $indivs : [$indivs]) as $indivSched) {
-                    if ($indivSched->shift && str_contains(strtoupper($indivSched->shift->name ?? ''), 'MALAM')) {
-                        $isNightShift = true;
-                    }
-                }
-            } elseif ($employee->squad_id && isset($squadSchedules[$currentDate])) {
-                $isScheduled = true;
-                $dayScheds = $squadSchedules[$currentDate];
-                
-                $minIn = null; $maxOut = null; $hasPagi = false; $hasMalam = false;
-                foreach($dayScheds as $s) {
-                    $st = $s->shift->start_time ?? '06:00:00';
-                    $sName = strtoupper($s->shift->name ?? '');
-                    
-                    if (str_contains($sName, 'PAGI')) { 
-                        $st = ($rules['shift_pagi_in'] ?? '06:00') . ':00'; 
-                        $hasPagi = true; 
-                    } elseif (str_contains($sName, 'SIANG')) { 
-                        $st = ($rules['shift_siang_in'] ?? '13:00') . ':00'; 
-                    } elseif (str_contains($sName, 'MALAM')) { 
-                        $st = ($rules['shift_malam_in'] ?? '20:00') . ':00'; 
-                        $hasMalam = true; $isNightShift = true; 
-                    }
-                    
-                    if (!$minIn || $st < $minIn) $minIn = $st;
-                    if (!$maxOut || ($s->shift->end_time ?? '00:00:00') > $maxOut) $maxOut = $s->shift->end_time;
-                }
-                
-                $scheduledInTime = $minIn;
-                $scheduledOutTime = $maxOut;
-                $isDoubleShift = ($hasPagi && $hasMalam) || ($dayScheds->count() > 1);
-
-            } elseif ((!$employee->squad_id || !$hasAnySquadSchedule) && !in_array($currentDate, $holidays)) {
-                // Fallback Staff (Office) logic ...
-                $isRamadan = false;
-                if ($rules['ramadan_enabled'] === 'on') {
-                    $ramadanStart = Carbon::parse($rules['ramadan_start'])->startOfDay();
-                    $ramadanEnd = Carbon::parse($rules['ramadan_end'])->endOfDay();
-                    if ($currentDateObj->between($ramadanStart, $ramadanEnd)) $isRamadan = true;
-                }
-
-                if (($dayOfWeek >= Carbon::MONDAY && $dayOfWeek <= Carbon::FRIDAY) || ($dayOfWeek === Carbon::SATURDAY && $rules['staff_saturday_enabled'] === 'on')) {
-                    $isScheduled = true;
-                    $isDefaultOffice = true;
-                    if ($dayOfWeek === Carbon::SATURDAY) {
-                        if ($isRamadan && $rules['ramadan_saturday_enabled'] === 'on') {
-                            $scheduledInTime = $rules['ramadan_saturday_in'];
-                            $scheduledOutTime = $rules['ramadan_saturday_out'];
-                        } else if (!$isRamadan) {
-                            $scheduledInTime = $rules['staff_saturday_in'];
-                            $scheduledOutTime = $rules['staff_saturday_out'];
-                        } else { $isScheduled = false; $isDefaultOffice = false; }
-                    } else {
-                        if ($isRamadan) {
-                            $scheduledInTime = $rules['ramadan_staff_in'];
-                            $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['ramadan_staff_out_fri'] : $rules['ramadan_staff_out_mon_thu'];
-                        } else {
-                            $scheduledInTime = $rules['staff_in'];
-                            $scheduledOutTime = ($dayOfWeek === Carbon::FRIDAY) ? $rules['staff_out_fri'] : $rules['staff_out_mon_thu'];
-                        }
-                    }
-                }
+                continue;
             }
 
-            // ... (Special status processing duty_full etc) ...
-
-            if ($attendance) {
-                $status = $attendance->status;
-                $canReevaluate = in_array($status, ['absent', 'present', 'late']);
+            // Loop untuk maksimal 2 jadwal (karena sistem support 2 shift)
+            $shiftCount = min(2, count($schedules));
+            
+            for ($i = 0; $i < $shiftCount; $i++) {
+                $sched = $schedules[$i];
+                $isShift2 = ($i === 1);
                 
-                $checkInStr = $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s')) : null;
+                $status = $sched['status'] ?? 'present';
+                $isOff = $sched['is_off'] ?? false;
+                $scheduledInTime = $sched['shift']->start_time ?? null;
+                $scheduledOutTime = $sched['shift']->end_time ?? null;
+                $shiftName = $sched['shift']->name ?? 'Unknown';
+                $isNightShift = str_contains(strtoupper($shiftName), 'MALAM');
+                $isDefaultOffice = ($sched['type'] ?? '') === 'office';
 
-                // Re-evaluate logic (Sync with AttendanceController)
-                if ($checkInStr && $isScheduled && $canReevaluate) {
+                // Ambil data check_in / check_out sesuai slot
+                $checkInStr = null; $checkOutStr = null;
+                if ($attendance) {
+                    if ($isShift2) {
+                        $checkInStr = $attendance->check_in_2 ? (is_string($attendance->check_in_2) ? $attendance->check_in_2 : $attendance->check_in_2->format('H:i:s')) : null;
+                        $checkOutStr = $attendance->check_out_2 ? (is_string($attendance->check_out_2) ? $attendance->check_out_2 : $attendance->check_out_2->format('H:i:s')) : null;
+                        // Use status_2 if available, else copy status
+                        $status = $attendance->status_2 !== 'absent' ? $attendance->status_2 : $status;
+                    } else {
+                        $checkInStr = $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s')) : null;
+                        $checkOutStr = $attendance->check_out ? (is_string($attendance->check_out) ? $attendance->check_out : $attendance->check_out->format('H:i:s')) : null;
+                        $status = $attendance->status !== 'absent' ? $attendance->status : $status;
+                    }
+                }
+
+                if ($isOff) {
+                    if ($status === 'sick') {
+                        $sickCounter++;
+                        $p = ($sickCounter >= 3 && $sickCounter <= 6) ? $rules['sakit_3_6'] : (($sickCounter >= 7) ? $rules['sakit_7'] : 0);
+                        if ($p > 0) { 
+                            $stats['deduction_percentage'] += $p; 
+                            $stats['details'][] = ['type' => 'Sakit Progresif', 'info' => "Hari ke-{$sickCounter}", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin]; 
+                        }
+                    }
+                    continue; // Skip potongan TL/Mangkir kalau cuti/sakit/off
+                }
+
+                $canReevaluate = in_array($status, ['absent', 'present', 'late', 'picket']);
+                
+                if ($checkInStr && $canReevaluate) {
                     if ($scheduledInTime) {
                         $actualTimestamp = strtotime($currentDate . ' ' . $checkInStr);
                         $targetTimestamp = strtotime($currentDate . ' ' . $scheduledInTime);
                         $diffMin = (int) ceil(($actualTimestamp - $targetTimestamp) / 60);
 
-                        if ($diffMin >= -180) {
+                        if ($diffMin >= -180) { // Toleransi absen 3 jam lebih awal
                             if ($diffMin > 0) {
                                 $status = 'late';
                             } else {
-                                $status = $employee->squad_id ? 'picket' : 'present';
+                                $status = ($sched['is_picket'] ?? false) ? 'picket' : 'present';
                             }
                         } else {
-                            $status = 'absent'; // Sangat pagi = salah shift = mangkir
+                            $status = 'absent'; // Sangat pagi = mangkir
                         }
                     }
-                } elseif ($checkInStr && !$isScheduled && $canReevaluate) {
-                    $status = 'present'; // Hari libur tapi absen
                 }
 
-                $isEligibleMeal = in_array($status, ['present', 'late', 'duty_half', 'picket']) && $isScheduled;
+                $isEligibleMeal = in_array($status, ['present', 'late', 'duty_half', 'picket']);
                 
-                $dailyMealAmount = $isEligibleMeal ? ($isDoubleShift ? $mealRate * 2 : $mealRate) : 0;
+                // Uang makan double jika shift malam
+                $mealMultiplier = $isNightShift ? 2 : 1;
+                $dailyMealAmount = $isEligibleMeal ? ($mealRate * $mealMultiplier) : 0;
 
                 $stats['processed_logs'][] = [
                     'date' => $currentDate, 
                     'status' => $status, 
                     'check_in' => $checkInStr ?: '--:--', 
-                    'check_out' => $attendance->check_out ? (is_string($attendance->check_out) ? $attendance->check_out : $attendance->check_out->format('H:i:s')) : '--:--', 
-                    'is_scheduled' => $isScheduled, 
-                    'meal_amount' => $dailyMealAmount
+                    'check_out' => $checkOutStr ?: '--:--', 
+                    'is_scheduled' => true, 
+                    'meal_amount' => $dailyMealAmount,
+                    'shift' => $shiftName
                 ];
 
                 if ($isEligibleMeal) { 
-                    $stats['meal_allowance_days'] += ($isDoubleShift ? 2 : 1); 
+                    $stats['meal_allowance_days'] += $mealMultiplier; 
                     $stats['total_present']++; 
                 }
-                
-                // ... (TL/PSW calculation unchanged but now uses correct scheduledInTime) ...
 
-                if ($isScheduled) {
-                    $lateMin = 0;
+                // Kalkulasi Potongan
+                $lateMin = 0;
+                if ($checkInStr && $scheduledInTime) {
+                    $actualTimestamp = strtotime($currentDate . ' ' . $checkInStr);
+                    $targetTimestamp = strtotime($currentDate . ' ' . $scheduledInTime);
+                    $diffMin = (int) ceil(($actualTimestamp - $targetTimestamp) / 60);
+                    if ($diffMin >= -180 && $diffMin > 0) {
+                        $lateMin = $diffMin;
+                    }
+                }
+
+                if ($lateMin > 0) {
+                    $p = $this->getLatePSWPercentage($lateMin, $rules);
+                    $canCompensate = false;
                     
-                    if ($checkInStr && $scheduledInTime) {
-                        $actualTimestamp = strtotime($currentDate . ' ' . $checkInStr);
-                        $targetTimestamp = strtotime($currentDate . ' ' . $scheduledInTime);
-                        $diffMin = (int) ceil(($actualTimestamp - $targetTimestamp) / 60);
-
-                        // Tolerance: Max 3 hours early (180 mins)
-                        if ($diffMin >= -180) {
-                            if ($diffMin > 0) $lateMin = $diffMin;
-                        }
+                    if ($lateMin <= 30 && $stats['compensation_count'] < 8 && $checkOutStr && $scheduledOutTime) {
+                        $actualOut = strtotime($currentDate . ' ' . $checkOutStr);
+                        $requiredOut = strtotime($currentDate . ' ' . $scheduledOutTime) + 1800; // +30 mins
+                        if ($actualOut >= $requiredOut) $canCompensate = true;
                     }
 
-                    // --- Pencatatan TL yang Persisten ---
-                    if ($lateMin > 0) {
-                        $p = $this->getLatePSWPercentage($lateMin, $rules);
-                        $canCompensate = false;
-                        
-                        if ($lateMin <= 30 && $stats['compensation_count'] < 8 && $attendance->check_out && $scheduledOutTime) {
-                            $actualOut = strtotime($currentDate . ' ' . date('H:i:s', strtotime($attendance->check_out)));
-                            $requiredOut = strtotime($currentDate . ' ' . $scheduledOutTime) + 1800; // +30 mins
-                            if ($actualOut >= $requiredOut) $canCompensate = true;
-                        }
-
-                        if ($canCompensate) {
-                            $stats['compensation_count']++;
-                            $stats['details'][] = ['type' => 'TL Diganti (Kompensasi)', 'info' => "Telat {$lateMin}m, Ganti Pulang", 'date' => $currentDate, 'percent' => 0, 'rupiah' => 0];
-                        } else {
-                            $stats['late_count']++;
-                            $stats['deduction_percentage'] += $p;
-                            $label = $isDefaultOffice ? 'Terlambat (TL)' : 'Terlambat (TL Shift)';
-                            $targetDisplay = $scheduledInTime ? date('H:i', strtotime($scheduledInTime)) : '--:--';
-                            $stats['details'][] = [
-                                'type' => $label, 
-                                'info' => "{$lateMin}m (Jadwal: {$targetDisplay})", 
-                                'date' => $currentDate, 
-                                'percent' => $p, 
-                                'rupiah' => ($p / 100) * $baseTunkin
-                            ];
-                        }
-                    }
-
-                    // 3. PSW & Lupa Absen
-                    $earlyMin = abs((int)($attendance->early_minutes ?? 0));
-                    if ($earlyMin > 0) {
-                        $p = $this->getLatePSWPercentage($earlyMin, $rules);
-                        $stats['deduction_percentage'] += $p;
-                        $stats['details'][] = ['type' => 'Pulang Cepat (PSW)', 'info' => "{$earlyMin}m", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
-                    }
-
-                    if (in_array($status, ['present', 'late']) && (empty($attendance->check_in) || empty($attendance->check_out) || $attendance->check_in == $attendance->check_out)) {
-                        // Skip "Lupa Absen Pulang" deduction if this is a night shift
-                        if ($isNightShift && !empty($attendance->check_in) && empty($attendance->check_out)) {
-                            // Do nothing, it's expected for night shifts
-                        } else {
-                            $stats['deduction_percentage'] += $rules['lupa_absen'];
-                            $stats['details'][] = ['type' => 'Lupa Absen', 'info' => (empty($attendance->check_in) ? "Tanpa Masuk" : "Tanpa Pulang"), 'date' => $currentDate, 'percent' => $rules['lupa_absen'], 'rupiah' => ($rules['lupa_absen'] / 100) * $baseTunkin];
-                        }
-                    }
-                } else if ($attendance && in_array($attendance->status, ['present', 'late'])) {
-                    $lateMinFallback = abs((int)($attendance->late_minutes ?? 0));
-                    if ($lateMinFallback > 0) {
+                    if ($canCompensate) {
+                        $stats['compensation_count']++;
+                        $stats['details'][] = ['type' => 'TL Diganti', 'info' => "Telat {$lateMin}m, Ganti Pulang ({$shiftName})", 'date' => $currentDate, 'percent' => 0, 'rupiah' => 0];
+                    } else {
                         $stats['late_count']++;
-                        $p = $this->getLatePSWPercentage($lateMinFallback, $rules);
                         $stats['deduction_percentage'] += $p;
-                        $stats['details'][] = ['type' => 'Terlambat (TL)', 'info' => "{$lateMinFallback}m (Tercatat)", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                        $label = $isDefaultOffice ? 'Terlambat (TL)' : 'Terlambat (TL Shift)';
+                        $targetDisplay = $scheduledInTime ? date('H:i', strtotime($scheduledInTime)) : '--:--';
+                        $stats['details'][] = [
+                            'type' => $label, 
+                            'info' => "{$lateMin}m (Jadwal: {$targetDisplay} - {$shiftName})", 
+                            'date' => $currentDate, 
+                            'percent' => $p, 
+                            'rupiah' => ($p / 100) * $baseTunkin
+                        ];
                     }
                 }
 
-                if ($status === 'sick') {
-                    $sickCounter++;
-                    $p = ($sickCounter >= 3 && $sickCounter <= 6) ? $rules['sakit_3_6'] : (($sickCounter >= 7) ? $rules['sakit_7'] : 0);
-                    if ($p > 0) { $stats['deduction_percentage'] += $p; $stats['details'][] = ['type' => 'Sakit Progresif', 'info' => "Hari ke-{$sickCounter}", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin]; }
+                $earlyMin = 0;
+                if ($isShift2 && $attendance) $earlyMin = abs((int)($attendance->early_minutes_2 ?? 0));
+                elseif (!$isShift2 && $attendance) $earlyMin = abs((int)($attendance->early_minutes ?? 0));
+
+                if ($earlyMin > 0) {
+                    $p = $this->getLatePSWPercentage($earlyMin, $rules);
+                    $stats['deduction_percentage'] += $p;
+                    $stats['details'][] = ['type' => 'Pulang Cepat (PSW)', 'info' => "{$earlyMin}m ({$shiftName})", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
 
-                if ($status === 'absent') {
-                    $p = $rules['mangkir'];
-                    $stats['deduction_percentage'] += $p;
-                    $stats['details'][] = ['type' => 'Tanpa Keterangan', 'info' => "Tanpa Keterangan", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                if (in_array($status, ['present', 'late']) && (!$checkInStr || !$checkOutStr || $checkInStr == $checkOutStr)) {
+                    if ($isNightShift && $checkInStr && !$checkOutStr) {
+                        // Expected for night shifts
+                    } else {
+                        $stats['deduction_percentage'] += $rules['lupa_absen'];
+                        $stats['details'][] = ['type' => 'Lupa Absen', 'info' => ((!$checkInStr) ? "Tanpa Masuk" : "Tanpa Pulang") . " ({$shiftName})", 'date' => $currentDate, 'percent' => $rules['lupa_absen'], 'rupiah' => ($rules['lupa_absen'] / 100) * $baseTunkin];
+                    }
                 }
-            } else {
-                if ($isScheduled && !$isFuture) {
+
+                if ($status === 'absent' || (!$checkInStr && !$isFuture)) {
                     $p = $rules['mangkir'];
                     $stats['deduction_percentage'] += $p;
-                    $stats['details'][] = ['type' => 'Tanpa Keterangan (Otomatis)', 'info' => "Bolos Jadwal", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
+                    $stats['details'][] = ['type' => 'Tanpa Keterangan', 'info' => "Mangkir ({$shiftName})", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
             }
         }

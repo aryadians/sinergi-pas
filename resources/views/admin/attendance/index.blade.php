@@ -226,7 +226,7 @@
                             }
                         @endphp
                         <tr class="hover:bg-slate-50/50 transition-colors group">
-                            <td class="px-6 py-4">
+                            <td class="px-6 py-4 align-top">
                                 <div class="flex items-center gap-4">
                                     <div class="shrink-0 text-center bg-slate-100 rounded-xl px-2 py-1.5 border border-slate-200 min-w-[50px]">
                                         <p class="text-xs font-black text-slate-900 leading-none">{{ \Carbon\Carbon::parse($log->date)->format('d') }}</p>
@@ -238,8 +238,9 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-center">
-                                <div class="flex items-center justify-center gap-2">
+                            <td class="px-6 py-4 align-top">
+                                <!-- Shift 1 -->
+                                <div class="flex items-center justify-center gap-2 mb-2">
                                     <span class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-black border border-blue-100">
                                         {{ $log->check_in ? \Carbon\Carbon::parse($log->check_in)->format('H:i') : '--:--' }}
                                     </span>
@@ -248,60 +249,100 @@
                                         {{ $log->check_out && $log->check_out != $log->check_in ? \Carbon\Carbon::parse($log->check_out)->format('H:i') : '--:--' }}
                                     </span>
                                 </div>
+                                <!-- Shift 2 (Jika Ada) -->
+                                @if($log->check_in_2 || $log->status_2 !== 'absent')
+                                <div class="flex items-center justify-center gap-2">
+                                    <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[11px] font-black border border-indigo-100">
+                                        {{ $log->check_in_2 ? \Carbon\Carbon::parse($log->check_in_2)->format('H:i') : '--:--' }}
+                                    </span>
+                                    <i data-lucide="arrow-right" class="w-3 h-3 text-slate-300"></i>
+                                    <span class="px-2.5 py-1 bg-slate-50 text-slate-600 rounded-lg text-[11px] font-black border border-slate-100">
+                                        {{ $log->check_out_2 && $log->check_out_2 != $log->check_in_2 ? \Carbon\Carbon::parse($log->check_out_2)->format('H:i') : '--:--' }}
+                                    </span>
+                                </div>
+                                @endif
                             </td>
-                            <td class="px-6 py-4 text-center">
-                                @if($effectiveSched)
-                                    <div class="flex flex-col items-center gap-1">
-                                        @if(isset($effectiveSched['status']) && in_array($effectiveSched['status'], ['leave', 'sick']))
-                                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 italic">
-                                                {{ $effectiveSched['status'] === 'leave' ? 'Sedang Cuti' : 'Izin Sakit' }}
-                                            </span>
-                                        @elseif($effectiveSched['shift'])
-                                            <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider 
-                                                {{ $effectiveSched['type'] === 'office' ? 'bg-slate-100 text-slate-600 border-slate-200' : 'bg-blue-100 text-blue-700 border-blue-200' }} border">
-                                                {{ $effectiveSched['shift']->name }}
-                                            </span>
-                                        @else
-                                            <span class="px-2.5 py-1 bg-red-50 text-red-400 rounded-lg text-[9px] font-black uppercase tracking-wider border border-red-100 italic">No Shift</span>
-                                        @endif
-
-                                        @if($isNightReturn)
-                                            <span class="text-[8px] font-bold text-blue-400 uppercase italic">(Kepulangan H-1)</span>
-                                        @endif
-                                    </div>
-                                @else
+                            <td class="px-6 py-4 align-top text-center">
+                                @php
+                                    $schedules = app('App\Services\ScheduleService')->getAllSchedulesForDay($log->employee, $log->date);
+                                @endphp
+                                @if(empty($schedules))
                                     <span class="px-2.5 py-1 bg-red-50 text-red-400 rounded-lg text-[9px] font-black uppercase tracking-wider border border-red-100 italic">OFF / Libur</span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 text-center">
-                                @if($log->status === 'present')
-                                    <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[9px] font-black uppercase border border-green-100 italic">Tepat Waktu</span>
-                                @elseif($log->status === 'picket')
-                                    <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase border border-indigo-100 italic">Dinas Piket</span>
-                                @elseif($log->status === 'late')
-                                    <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[9px] font-black uppercase border border-amber-100 italic">Terlambat ({{ $log->late_minutes }}m)</span>
-                                @elseif($log->status === 'on_leave')
-                                    <span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase border border-emerald-100 italic">Sedang Cuti</span>
-                                @elseif($log->status === 'sick')
-                                    <span class="px-2.5 py-1 bg-rose-50 text-rose-600 rounded-lg text-[9px] font-black uppercase border border-rose-100 italic">Izin Sakit</span>
                                 @else
-                                    <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase border border-red-100 italic">{{ strtoupper($log->status === 'absent' ? 'Alpa / Libur' : $log->status) }}</span>
+                                    <div class="flex flex-col items-center gap-2">
+                                        @foreach($schedules as $idx => $sched)
+                                            @if($idx >= 2) @break @endif
+                                            @if($sched['is_off'])
+                                                <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200 italic">
+                                                    {{ $sched['status'] === 'leave' ? 'Sedang Cuti' : 'Izin Sakit' }}
+                                                </span>
+                                            @elseif($sched['shift'])
+                                                <span class="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-wider 
+                                                    {{ $sched['type'] === 'office' ? 'bg-slate-100 text-slate-600 border-slate-200' : ($idx == 1 ? 'bg-indigo-100 text-indigo-700 border-indigo-200' : 'bg-blue-100 text-blue-700 border-blue-200') }} border">
+                                                    {{ $sched['shift']->name }}
+                                                </span>
+                                            @endif
+                                        @endforeach
+                                    </div>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 text-right">
-                                @if($log->allowance_amount > 0)
-                                    <div class="flex flex-col items-end">
-                                        <p class="text-sm font-black text-emerald-600">Rp {{ number_format($log->allowance_amount, 0, ',', '.') }}</p>
-                                        <div class="flex items-center gap-1 text-[8px] font-bold text-emerald-400 uppercase">
-                                            <i data-lucide="check-circle-2" class="w-3 h-3"></i> Valid
+                            <td class="px-6 py-4 align-top text-center">
+                                <div class="flex flex-col items-center gap-2">
+                                    <!-- Status Shift 1 -->
+                                    @if($log->status === 'present')
+                                        <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[9px] font-black uppercase border border-green-100 italic">Tepat Waktu</span>
+                                    @elseif($log->status === 'picket')
+                                        <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase border border-indigo-100 italic">Dinas Piket</span>
+                                    @elseif($log->status === 'late')
+                                        <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[9px] font-black uppercase border border-amber-100 italic">Terlambat ({{ $log->late_minutes }}m)</span>
+                                    @elseif(in_array($log->status, ['on_leave', 'sick', 'duty_full', 'tubel']))
+                                        <span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase border border-emerald-100 italic">Terjadwal/Izin</span>
+                                    @else
+                                        <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase border border-red-100 italic">{{ strtoupper($log->status === 'absent' ? 'Alpa / Libur' : $log->status) }}</span>
+                                    @endif
+
+                                    <!-- Status Shift 2 -->
+                                    @if($log->check_in_2 || $log->status_2 !== 'absent')
+                                        @if($log->status_2 === 'present')
+                                            <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[9px] font-black uppercase border border-green-100 italic">Tepat Waktu</span>
+                                        @elseif($log->status_2 === 'picket')
+                                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase border border-indigo-100 italic">Dinas Piket</span>
+                                        @elseif($log->status_2 === 'late')
+                                            <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[9px] font-black uppercase border border-amber-100 italic">Terlambat ({{ $log->late_minutes_2 }}m)</span>
+                                        @elseif(in_array($log->status_2, ['on_leave', 'sick', 'duty_full', 'tubel']))
+                                            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase border border-emerald-100 italic">Terjadwal/Izin</span>
+                                        @else
+                                            <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase border border-red-100 italic">{{ strtoupper($log->status_2 === 'absent' ? 'Alpa / Libur' : $log->status_2) }}</span>
+                                        @endif
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 align-top text-right">
+                                <div class="flex flex-col items-end gap-2">
+                                    <!-- Allowance Shift 1 -->
+                                    @if($log->allowance_amount > 0)
+                                        <div class="flex flex-col items-end">
+                                            <p class="text-sm font-black text-emerald-600">Rp {{ number_format($log->allowance_amount, 0, ',', '.') }}</p>
                                         </div>
-                                    </div>
-                                @else
-                                    <div class="flex flex-col items-end opacity-50">
-                                        <p class="text-sm font-black text-slate-400 italic">Rp 0</p>
-                                        <p class="text-[8px] font-bold text-red-400 uppercase italic">Luar Jadwal</p>
-                                    </div>
-                                @endif
+                                    @else
+                                        <div class="flex flex-col items-end opacity-50">
+                                            <p class="text-sm font-black text-slate-400 italic">Rp 0</p>
+                                        </div>
+                                    @endif
+
+                                    <!-- Allowance Shift 2 -->
+                                    @if($log->check_in_2 || $log->status_2 !== 'absent')
+                                        @if($log->allowance_amount_2 > 0)
+                                            <div class="flex flex-col items-end">
+                                                <p class="text-sm font-black text-emerald-600">Rp {{ number_format($log->allowance_amount_2, 0, ',', '.') }}</p>
+                                            </div>
+                                        @else
+                                            <div class="flex flex-col items-end opacity-50">
+                                                <p class="text-sm font-black text-slate-400 italic">Rp 0</p>
+                                            </div>
+                                        @endif
+                                    @endif
+                                </div>
                             </td>
                         </tr>
                         @empty
