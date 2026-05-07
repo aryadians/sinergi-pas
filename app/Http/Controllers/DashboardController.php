@@ -30,7 +30,48 @@ class DashboardController extends Controller
             $data['disciplinaryData'] = $this->getDisciplinaryData();
             return view('dashboard', $data);
         } 
-        // ... rest of the method
+        
+        // --- PEGAWAI VIEW DATA ---
+        $employee = Employee::with(['work_unit', 'position_relation'])->where('user_id', $user->id)->first();
+        $myDocs = Document::where('employee_id', $employee?->id)->with('category')->get();
+        
+        $myDocumentsCount = $myDocs->count();
+        $verifiedDocs = $myDocs->where('status', 'verified')->count();
+        $rejectedDocsCount = $myDocs->where('status', 'rejected')->count();
+        
+        $recentDocuments = Document::where('employee_id', $employee?->id)
+            ->with('category')
+            ->latest()
+            ->take(5)
+            ->get();
+        
+        $mandatoryCats = DocumentCategory::where('is_mandatory', true)->get();
+        $totalMandatory = $mandatoryCats->count();
+        
+        if ($totalMandatory > 0) {
+            $uploadedMandatory = Document::where('employee_id', $employee?->id)
+                ->whereIn('document_category_id', $mandatoryCats->pluck('id'))
+                ->where('status', 'verified')
+                ->distinct('document_category_id')
+                ->count();
+            $careerProgress = ($uploadedMandatory / $totalMandatory) * 100;
+        } else {
+            $careerProgress = 100;
+        }
+
+        $latestSalary = Document::where('employee_id', $employee?->id)
+            ->whereHas('category', function($q) { $q->where('slug', 'like', '%gaji%'); })
+            ->latest()
+            ->first();
+
+        $myAttendanceToday = Attendance::where('employee_id', $employee?->id)
+            ->whereDate('date', $today)
+            ->first();
+
+        return view('dashboard-pegawai', compact(
+            'myDocumentsCount', 'verifiedDocs', 'rejectedDocsCount', 'careerProgress', 'latestSalary', 
+            'employee', 'recentDocuments', 'myAttendanceToday'
+        ));
     }
 
     private function getDisciplinaryData()
@@ -68,51 +109,6 @@ class DashboardController extends Controller
             'unitStats' => $unitStats,
             'latenessTrend' => ['labels' => $labels, 'values' => $values]
         ];
-    } 
-        
-        // --- PEGAWAI VIEW DATA ---
-        else {
-            $employee = Employee::with(['work_unit', 'position_relation'])->where('user_id', $user->id)->first();
-            $myDocs = Document::where('employee_id', $employee?->id)->with('category')->get();
-            
-            $myDocumentsCount = $myDocs->count();
-            $verifiedDocs = $myDocs->where('status', 'verified')->count();
-            $rejectedDocsCount = $myDocs->where('status', 'rejected')->count();
-            
-            $recentDocuments = Document::where('employee_id', $employee?->id)
-                ->with('category')
-                ->latest()
-                ->take(5)
-                ->get();
-            
-            $mandatoryCats = DocumentCategory::where('is_mandatory', true)->get();
-            $totalMandatory = $mandatoryCats->count();
-            
-            if ($totalMandatory > 0) {
-                $uploadedMandatory = Document::where('employee_id', $employee?->id)
-                    ->whereIn('document_category_id', $mandatoryCats->pluck('id'))
-                    ->where('status', 'verified')
-                    ->distinct('document_category_id')
-                    ->count();
-                $careerProgress = ($uploadedMandatory / $totalMandatory) * 100;
-            } else {
-                $careerProgress = 100;
-            }
-
-            $latestSalary = Document::where('employee_id', $employee?->id)
-                ->whereHas('category', function($q) { $q->where('slug', 'like', '%gaji%'); })
-                ->latest()
-                ->first();
-
-            $myAttendanceToday = Attendance::where('employee_id', $employee?->id)
-                ->whereDate('date', $today)
-                ->first();
-
-            return view('dashboard-pegawai', compact(
-                'myDocumentsCount', 'verifiedDocs', 'rejectedDocsCount', 'careerProgress', 'latestSalary', 
-                'employee', 'recentDocuments', 'myAttendanceToday'
-            ));
-        }
     }
 
     public function exportPdf(Request $request)
