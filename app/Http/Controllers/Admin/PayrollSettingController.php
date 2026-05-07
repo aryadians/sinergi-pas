@@ -11,44 +11,44 @@ class PayrollSettingController extends Controller
     public function index()
     {
         $settings = [
-            'tl_1' => Setting::getValue('payroll_tl_1_percent', 0.5),
-            'tl_2' => Setting::getValue('payroll_tl_2_percent', 1.0),
-            'tl_3' => Setting::getValue('payroll_tl_3_percent', 1.25),
-            'tl_4' => Setting::getValue('payroll_tl_4_percent', 1.5),
-            'max_late' => Setting::getValue('payroll_max_late_count', 8),
-            'mangkir' => Setting::getValue('payroll_mangkir_percent', 5.0),
-            'lupa_absen' => Setting::getValue('payroll_lupa_absen_percent', 1.5),
-            'sakit_3_6' => Setting::getValue('payroll_sakit_3_6_percent', 2.5),
-            'sakit_7' => Setting::getValue('payroll_sakit_7_plus_percent', 10.0),
-            'apel' => Setting::getValue('payroll_apel_percent', 0.5),
+            'payroll_tl_1_percent' => Setting::getValue('payroll_tl_1_percent', 0.5),
+            'payroll_tl_2_percent' => Setting::getValue('payroll_tl_2_percent', 1.0),
+            'payroll_tl_3_percent' => Setting::getValue('payroll_tl_3_percent', 1.25),
+            'payroll_tl_4_percent' => Setting::getValue('payroll_tl_4_percent', 1.5),
+            'payroll_max_late_count' => Setting::getValue('payroll_max_late_count', 8),
+            'payroll_mangkir_percent' => Setting::getValue('payroll_mangkir_percent', 5.0),
+            'payroll_lupa_absen_percent' => Setting::getValue('payroll_lupa_absen_percent', 1.5),
+            'payroll_sakit_3_6_percent' => Setting::getValue('payroll_sakit_3_6_percent', 2.5),
+            'payroll_sakit_7_plus_percent' => Setting::getValue('payroll_sakit_7_plus_percent', 10.0),
+            'payroll_apel_percent' => Setting::getValue('payroll_apel_percent', 0.5),
             
             // Jam Kerja Staff (Reguler)
-            'staff_in' => Setting::getValue('payroll_staff_in', '07:30'),
-            'staff_out_mon_thu' => Setting::getValue('payroll_staff_out_mon_thu', '16:00'),
-            'staff_out_fri' => Setting::getValue('payroll_staff_out_fri', '16:30'),
+            'payroll_staff_in' => Setting::getValue('payroll_staff_in', '07:30'),
+            'payroll_staff_out_mon_thu' => Setting::getValue('payroll_staff_out_mon_thu', '16:00'),
+            'payroll_staff_out_fri' => Setting::getValue('payroll_staff_out_fri', '16:30'),
 
             // Jam Kerja Shift (Garda/Piket)
-            'shift_pagi_in' => Setting::getValue('payroll_shift_pagi_in', '06:00'),
-            'shift_siang_in' => Setting::getValue('payroll_shift_siang_in', '13:00'),
-            'shift_malam_in' => Setting::getValue('payroll_shift_malam_in', '20:00'),
+            'payroll_shift_pagi_in' => Setting::getValue('payroll_shift_pagi_in', '06:00'),
+            'payroll_shift_siang_in' => Setting::getValue('payroll_shift_siang_in', '13:00'),
+            'payroll_shift_malam_in' => Setting::getValue('payroll_shift_malam_in', '20:00'),
 
             // Jam Kerja Staff (Sabtu - Opsional)
-            'staff_saturday_enabled' => Setting::getValue('payroll_staff_saturday_enabled', 'off'),
-            'staff_saturday_in' => Setting::getValue('payroll_staff_saturday_in', '07:30'),
-            'staff_saturday_out' => Setting::getValue('payroll_staff_saturday_out', '12:00'),
+            'payroll_staff_saturday_enabled' => Setting::getValue('payroll_staff_saturday_enabled', 'off'),
+            'payroll_staff_saturday_in' => Setting::getValue('payroll_staff_saturday_in', '07:30'),
+            'payroll_staff_saturday_out' => Setting::getValue('payroll_staff_saturday_out', '12:00'),
 
             // Jam Kerja Staff (Bulan Puasa - Opsional)
-            'ramadan_enabled' => Setting::getValue('payroll_ramadan_enabled', 'off'),
-            'ramadan_start' => Setting::getValue('payroll_ramadan_start', date('Y-m-d')),
-            'ramadan_end' => Setting::getValue('payroll_ramadan_end', date('Y-m-d')),
-            'ramadan_staff_in' => Setting::getValue('payroll_ramadan_staff_in', '08:00'),
-            'ramadan_staff_out_mon_thu' => Setting::getValue('payroll_ramadan_staff_out_mon_thu', '15:00'),
-            'ramadan_staff_out_fri' => Setting::getValue('payroll_ramadan_staff_out_fri', '15:30'),
+            'payroll_ramadan_enabled' => Setting::getValue('payroll_ramadan_enabled', 'off'),
+            'payroll_ramadan_start' => Setting::getValue('payroll_ramadan_start', date('Y-m-d')),
+            'payroll_ramadan_end' => Setting::getValue('payroll_ramadan_end', date('Y-m-d')),
+            'payroll_ramadan_staff_in' => Setting::getValue('payroll_ramadan_staff_in', '08:00'),
+            'payroll_ramadan_staff_out_mon_thu' => Setting::getValue('payroll_ramadan_staff_out_mon_thu', '15:00'),
+            'payroll_ramadan_staff_out_fri' => Setting::getValue('payroll_ramadan_staff_out_fri', '15:30'),
 
             // Jam Kerja Staff (Bulan Puasa - Sabtu)
-            'ramadan_saturday_enabled' => Setting::getValue('payroll_ramadan_saturday_enabled', 'off'),
-            'ramadan_saturday_in' => Setting::getValue('payroll_ramadan_saturday_in', '08:00'),
-            'ramadan_saturday_out' => Setting::getValue('payroll_ramadan_saturday_out', '12:00'),
+            'payroll_ramadan_saturday_enabled' => Setting::getValue('payroll_ramadan_saturday_enabled', 'off'),
+            'payroll_ramadan_saturday_in' => Setting::getValue('payroll_ramadan_saturday_in', '08:00'),
+            'payroll_ramadan_saturday_out' => Setting::getValue('payroll_ramadan_saturday_out', '12:00'),
         ];
 
         return view('admin.settings.payroll', compact('settings'));

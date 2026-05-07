@@ -37,20 +37,10 @@ class ShiftController extends Controller
         ]);
 
         return back()->with('success', 'Shift berhasil ditambahkan.');
+    }
+
     public function update(Request $request, Shift $shift)
     {
-        $request->validate([
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i',
-        ]);
-
-        $shift->update([
-            'start_time' => $request->start_time . ':00',
-            'end_time' => $request->end_time . ':00',
-        ]);
-
-        return back()->with('success', 'Waktu shift berhasil diperbarui.');
-    }
         $request->validate([
             'name' => 'required|string|max:255',
             'start_time' => 'required',
