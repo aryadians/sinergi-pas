@@ -23,7 +23,7 @@ class ScheduleService
         $isHoliday = \App\Models\Holiday::where('date', $dateStr)->exists();
         $schedules = [];
 
-        // 1. Cek Jadwal Individu (Piket/Override)
+                // 1. Cek Jadwal Individu (Piket/Override)
         $individuals = Schedule::with('shift')
             ->where('employee_id', $employee->id)
             ->where('date', $dateStr)
@@ -34,17 +34,30 @@ class ScheduleService
                 $status = $indiv->status;
                 $isOff = in_array($status, ['off', 'leave', 'sick']);
                 $isPicket = ($status === 'picket');
-                $pagiIn = Setting::getValue('payroll_shift_pagi_in', '06:00') . ':00';
-                $siangIn = Setting::getValue('payroll_shift_siang_in', '13:00') . ':00';
-                $malamIn = Setting::getValue('payroll_shift_malam_in', '20:00') . ':00';
+                
+                // Default shift times for individual picket
+                $picketPagiIn = Setting::getValue('payroll_picket_pagi_in', '07:30') . ':00';
+                $picketSiangIn = Setting::getValue('payroll_picket_siang_in', '13:00') . ':00';
+                $picketMalamIn = Setting::getValue('payroll_picket_malam_in', '20:00') . ':00';
 
                 $start = $indiv->shift->start_time ?? '00:00:00';
                 $sName = strtoupper($indiv->shift->name ?? '');
                 $shiftName = $indiv->shift->name ?? 'Piket Individu';
                 
-                if (str_contains($sName, 'PAGI')) $start = $pagiIn;
-                elseif (str_contains($sName, 'SIANG')) $start = $siangIn;
-                elseif (str_contains($sName, 'MALAM')) $start = $malamIn;
+                if ($isPicket) {
+                    if (str_contains($sName, 'PAGI')) $start = $picketPagiIn;
+                    elseif (str_contains($sName, 'SIANG')) $start = $picketSiangIn;
+                    elseif (str_contains($sName, 'MALAM')) $start = $picketMalamIn;
+                } else {
+                    // Fallback untuk shift non-piket (regu)
+                    $pagiIn = Setting::getValue('payroll_shift_pagi_in', '06:00') . ':00';
+                    $siangIn = Setting::getValue('payroll_shift_siang_in', '13:00') . ':00';
+                    $malamIn = Setting::getValue('payroll_shift_malam_in', '20:00') . ':00';
+                    
+                    if (str_contains($sName, 'PAGI')) $start = $pagiIn;
+                    elseif (str_contains($sName, 'SIANG')) $start = $siangIn;
+                    elseif (str_contains($sName, 'MALAM')) $start = $malamIn;
+                }
 
                 $schedules[] = [
                     'type' => 'individual',

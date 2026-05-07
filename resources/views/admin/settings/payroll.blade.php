@@ -186,28 +186,38 @@
                         <!-- Shift Pagi -->
                         <div class="space-y-4">
                             <p class="text-[11px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-amber-500"></span> Shift Pagi
+                                <span class="w-2 h-2 rounded-full bg-amber-500"></span> Shift Regu
                             </p>
                             <div class="space-y-2">
-                                <label class="text-[9px] font-black text-slate-400 uppercase">Masuk</label>
+                                <label class="text-[9px] font-black text-slate-400 uppercase">Pagi</label>
                                 <input type="time" name="payroll_shift_pagi_in" value="{{ $settings['payroll_shift_pagi_in'] }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50 focus:bg-white focus:border-blue-500 outline-none transition-all">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-black text-slate-400 uppercase">Siang</label>
+                                <input type="time" name="payroll_shift_siang_in" value="{{ $settings['payroll_shift_siang_in'] }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50 focus:bg-white focus:border-blue-500 outline-none transition-all">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-black text-slate-400 uppercase">Malam</label>
+                                <input type="time" name="payroll_shift_malam_in" value="{{ $settings['payroll_shift_malam_in'] }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50 focus:bg-white focus:border-blue-500 outline-none transition-all">
                             </div>
                         </div>
 
-                        <!-- Shift Siang & Malam -->
+                        <!-- Piket Individu -->
                         <div class="space-y-4">
                             <p class="text-[11px] font-black text-slate-800 uppercase tracking-wider flex items-center gap-2">
-                                <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Shift Siang & Malam
+                                <span class="w-2 h-2 rounded-full bg-rose-500"></span> Piket Individu
                             </p>
-                            <div class="space-y-4">
-                                <div class="space-y-2">
-                                    <label class="text-[9px] font-black text-slate-400 uppercase">Siang (Masuk)</label>
-                                    <input type="time" name="payroll_shift_siang_in" value="{{ $settings['payroll_shift_siang_in'] }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50 focus:bg-white focus:border-blue-500 outline-none transition-all">
-                                </div>
-                                <div class="space-y-2">
-                                    <label class="text-[9px] font-black text-slate-400 uppercase">Malam (Masuk)</label>
-                                    <input type="time" name="payroll_shift_malam_in" value="{{ $settings['payroll_shift_malam_in'] }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50 focus:bg-white focus:border-blue-500 outline-none transition-all">
-                                </div>
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-black text-slate-400 uppercase">Pagi</label>
+                                <input type="time" name="payroll_picket_pagi_in" value="{{ $settings['payroll_picket_pagi_in'] }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50 focus:bg-white focus:border-rose-500 outline-none transition-all">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-black text-slate-400 uppercase">Siang</label>
+                                <input type="time" name="payroll_picket_siang_in" value="{{ $settings['payroll_picket_siang_in'] }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50 focus:bg-white focus:border-rose-500 outline-none transition-all">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[9px] font-black text-slate-400 uppercase">Malam</label>
+                                <input type="time" name="payroll_picket_malam_in" value="{{ $settings['payroll_picket_malam_in'] }}" class="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm font-bold bg-slate-50 focus:bg-white focus:border-rose-500 outline-none transition-all">
                             </div>
                         </div>
                     </div>

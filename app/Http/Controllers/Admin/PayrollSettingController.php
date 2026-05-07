@@ -27,10 +27,15 @@ class PayrollSettingController extends Controller
             'payroll_staff_out_mon_thu' => Setting::getValue('payroll_staff_out_mon_thu', '16:00'),
             'payroll_staff_out_fri' => Setting::getValue('payroll_staff_out_fri', '16:30'),
 
-            // Jam Kerja Shift (Garda/Piket)
+            // Jam Kerja Shift (Garda/Piket Regu)
             'payroll_shift_pagi_in' => Setting::getValue('payroll_shift_pagi_in', '06:00'),
             'payroll_shift_siang_in' => Setting::getValue('payroll_shift_siang_in', '13:00'),
             'payroll_shift_malam_in' => Setting::getValue('payroll_shift_malam_in', '20:00'),
+
+            // Jam Kerja Shift (Piket Individu)
+            'payroll_picket_pagi_in' => Setting::getValue('payroll_picket_pagi_in', '07:30'),
+            'payroll_picket_siang_in' => Setting::getValue('payroll_picket_siang_in', '13:00'),
+            'payroll_picket_malam_in' => Setting::getValue('payroll_picket_malam_in', '20:00'),
 
             // Jam Kerja Staff (Sabtu - Opsional)
             'payroll_staff_saturday_enabled' => Setting::getValue('payroll_staff_saturday_enabled', 'off'),
