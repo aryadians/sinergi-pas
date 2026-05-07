@@ -119,6 +119,9 @@ Route::middleware('auth')->group(function () {
             Route::get('/export', [AttendanceController::class, 'export'])->name('export');
         });
 
+        // Best Employee
+        Route::get('/admin/best-employee', [\App\Http\Controllers\Admin\BestEmployeeController::class, 'index'])->name('admin.best-employee.index');
+
         Route::prefix('admin/categories')->name('admin.categories.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\CategoryController::class, 'index'])->name('index');
             Route::post('/', [\App\Http\Controllers\Admin\CategoryController::class, 'store'])->name('store');

@@ -212,6 +212,13 @@
                     <span class="text-sm font-semibold">Dashboard</span>
                 </a>
 
+                @if(auth()->user()->role === 'superadmin')
+                <a href="{{ route('admin.best-employee.index') }}" class="sidebar-item {{ request()->routeIs('admin.best-employee.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl mt-1">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                    <span class="text-sm font-semibold">Pegawai Terbaik</span>
+                </a>
+                @endif
+
                 @if(auth()->user()->role === 'pegawai')
                 <div class="pt-4 pb-2 px-4">
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Informasi Saya</p>
