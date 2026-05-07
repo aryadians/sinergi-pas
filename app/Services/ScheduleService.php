@@ -142,12 +142,15 @@ class ScheduleService
                 }
 
                 if ($isOfficeDay) {
-                    // Check if there is an override from individuals that is NOT a night shift
-                    $hasNonNightOverride = collect($schedules)->contains(function($s) {
-                        return $s['type'] === 'individual' && !str_contains(strtoupper($s['shift']->name ?? ''), 'MALAM');
+                    // Cek apakah sudah ada jadwal lain (Regu atau Individu) yang BUKAN shift MALAM
+                    // Jika sudah ada jadwal Pagi/Siang, maka Staff Kantor ditiadakan (dianggap override)
+                    $hasNonNightShift = collect($schedules)->contains(function($s) {
+                        if ($s['is_off']) return false;
+                        $name = strtoupper($s['shift']->name ?? '');
+                        return !str_contains($name, 'MALAM');
                     });
                     
-                    if (!$hasNonNightOverride) {
+                    if (!$hasNonNightShift) {
                         $schedules[] = [
                             'type' => 'office',
                             'status' => 'present',
