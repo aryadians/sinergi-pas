@@ -287,8 +287,11 @@ class AttendanceController extends Controller
                 foreach (array_keys($scansByNip) as $k) { if (str_ends_with($dbNip, $k) || str_ends_with($k, $dbNip)) { $excelKey = $k; break; } }
                 if (!$excelKey) continue;
 
-                foreach (collect($scansByNip[$excelKey])->sort()->groupBy(fn($s) => $s->format('Y-m-d')) as $date => $dayScans) {
-                    $scans = $dayScans->sortBy(fn($s) => $s->format('H:i:s'))->values();
+                $allScans = collect($scansByNip[$excelKey])->sort()->values();
+                $dates = $allScans->map(fn($s) => $s->format('Y-m-d'))->unique()->values();
+                $usedScans = [];
+
+                foreach ($dates as $date) {
                     $schedules = $this->scheduleService->getAllSchedulesForDay($emp, $date);
                     
                     $attData = [
@@ -313,25 +316,20 @@ class AttendanceController extends Controller
                     $empRate = (float)($emp->rank_relation->meal_allowance ?? 0);
 
                     if (empty($schedules)) {
-                        // Tidak ada jadwal resmi
-                        if ($scans->count() > 0) {
-                            $attData['check_in'] = $scans->first()->format('H:i:s');
-                            if ($scans->count() > 1) $attData['check_out'] = $scans->last()->format('H:i:s');
+                        // Tidak ada jadwal resmi, ambil sisa scan di hari itu
+                        $dayScans = $allScans->filter(fn($s, $idx) => $s->format('Y-m-d') === $date && !in_array($idx, $usedScans))->values();
+                        if ($dayScans->count() > 0) {
+                            $attData['check_in'] = $dayScans->first()->format('H:i:s');
+                            if ($dayScans->count() > 1) $attData['check_out'] = $dayScans->last()->format('H:i:s');
                             $attData['status'] = 'present';
                         }
                     } else {
-                        // Heuristik pencocokan scan ke shift
+                        // Heuristik pencocokan scan ke shift (mendukung night shift)
                         $shiftCount = min(2, count($schedules));
                         
-                        // Copy shift statuses (like sick, leave)
-                        if (isset($schedules[0]) && $schedules[0]['is_off']) {
-                            $attData['status'] = $schedules[0]['status'];
-                        }
-                        if (isset($schedules[1]) && $schedules[1]['is_off']) {
-                            $attData['status_2'] = $schedules[1]['status'];
-                        }
+                        if (isset($schedules[0]) && $schedules[0]['is_off']) $attData['status'] = $schedules[0]['status'];
+                        if (isset($schedules[1]) && $schedules[1]['is_off']) $attData['status_2'] = $schedules[1]['status'];
 
-                        $scanPointer = 0;
                         for ($i = 0; $i < $shiftCount; $i++) {
                             $sched = $schedules[$i];
                             if ($sched['is_off']) continue;
@@ -339,35 +337,32 @@ class AttendanceController extends Controller
                             $isShift2 = ($i === 1);
                             $st = Carbon::parse($date . ' ' . $sched['shift']->start_time);
                             
+                            $shiftName = strtoupper($sched['shift']->name ?? '');
+                            $isNightShift = str_contains($shiftName, 'MALAM');
+                            
                             $assignedCheckIn = null;
                             $assignedCheckOut = null;
                             
-                            // Cari scan masuk yang paling masuk akal (Toleransi absen 3 jam sebelumnya hingga bbrp jam sesudahnya)
-                            while ($scanPointer < $scans->count()) {
-                                $currentScan = $scans[$scanPointer];
-                                $diffMin = (int) ceil(($currentScan->timestamp - $st->timestamp) / 60);
+                            foreach ($allScans as $idx => $scan) {
+                                if (in_array($idx, $usedScans)) continue;
                                 
-                                // Jika scan masuk masuk dalam range masuk shift ini (max 3 jam sebelumnya)
-                                if ($diffMin >= -180) {
-                                    $assignedCheckIn = $currentScan;
-                                    $scanPointer++;
-                                    
-                                    // Coba ambil pasangannya (check out) jika ada
-                                    if ($scanPointer < $scans->count()) {
-                                        // Assume next scan is checkout for this shift IF there's only 1 shift OR next scan is way later
-                                        // For simplicity: if we have 4 scans, scan 0,1 goes to shift 1. scan 2,3 goes to shift 2.
-                                        // If we have 2 scans and 2 shifts, scan 0 goes to shift 1 in, scan 1 goes to shift 2 in.
-                                        if ($shiftCount == 2 && $scans->count() == 2) {
-                                            // Jangan ambil check out, sisakan untuk check_in shift 2
-                                            break;
-                                        } else {
-                                            $assignedCheckOut = $scans[$scanPointer];
-                                            $scanPointer++;
-                                        }
+                                if (!$assignedCheckIn) {
+                                    $diffMin = (int) ceil(($scan->timestamp - $st->timestamp) / 60);
+                                    // Toleransi masuk: 3 jam lebih awal s/d 4 jam terlambat
+                                    if ($diffMin >= -180 && $diffMin <= 240) {
+                                        $assignedCheckIn = $scan;
+                                        $usedScans[] = $idx;
                                     }
-                                    break;
+                                } elseif (!$assignedCheckOut) {
+                                    // Jika shift malam, check out bisa sampai besok pagi (max 16 jam setelah check in)
+                                    // Jika bukan malam, check out wajar di hari yang sama (max 14 jam)
+                                    $hoursSinceCheckIn = ($scan->timestamp - $assignedCheckIn->timestamp) / 3600;
+                                    if ($hoursSinceCheckIn > 0.5 && $hoursSinceCheckIn <= ($isNightShift ? 16 : 14)) {
+                                        $assignedCheckOut = $scan;
+                                        $usedScans[] = $idx;
+                                        break; // Found both, done for this shift
+                                    }
                                 }
-                                $scanPointer++;
                             }
 
                             $status = 'absent';
@@ -384,8 +379,6 @@ class AttendanceController extends Controller
                                         $status = $sched['is_picket'] ? 'picket' : 'present';
                                     }
                                     
-                                    $shiftName = $sched['shift']->name ?? '';
-                                    $isNightShift = str_contains(strtoupper($shiftName), 'MALAM');
                                     $mealMultiplier = $isNightShift ? 2 : 1;
                                     $allowance = $empRate * $mealMultiplier;
                                 }
