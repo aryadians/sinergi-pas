@@ -291,31 +291,33 @@
                             <td class="px-6 py-4 align-top text-center">
                                 <div class="flex flex-col items-center gap-2">
                                     <!-- Status Shift 1 -->
-                                    @if($log->status === 'present')
-                                        <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[9px] font-black uppercase border border-green-100 italic">Tepat Waktu</span>
-                                    @elseif($log->status === 'picket')
-                                        <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase border border-indigo-100 italic">Dinas Piket</span>
-                                    @elseif($log->status === 'late')
-                                        <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[9px] font-black uppercase border border-amber-100 italic">Terlambat ({{ $log->late_minutes }}m)</span>
-                                    @elseif(in_array($log->status, ['on_leave', 'sick', 'duty_full', 'tubel']))
-                                        <span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase border border-emerald-100 italic">Terjadwal/Izin</span>
-                                    @else
-                                        <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase border border-red-100 italic">{{ strtoupper($log->status === 'absent' ? 'Alpa / Libur' : $log->status) }}</span>
+                                    @if($log->check_in)
+                                        @if($log->status === 'present')
+                                            <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[9px] font-black uppercase border border-green-100 italic">Tepat Waktu</span>
+                                        @elseif($log->status === 'picket')
+                                            <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase border border-indigo-100 italic">Dinas Piket</span>
+                                        @elseif($log->status === 'late')
+                                            <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[9px] font-black uppercase border border-amber-100 italic">Terlambat ({{ $log->late_minutes }}m)</span>
+                                        @else
+                                            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase border border-emerald-100 italic">Terjadwal/Izin</span>
+                                        @endif
                                     @endif
 
                                     <!-- Status Shift 2 -->
-                                    @if($log->check_in_2 || $log->status_2 !== 'absent')
+                                    @if($log->check_in_2)
                                         @if($log->status_2 === 'present')
                                             <span class="px-2.5 py-1 bg-green-50 text-green-600 rounded-lg text-[9px] font-black uppercase border border-green-100 italic">Tepat Waktu</span>
                                         @elseif($log->status_2 === 'picket')
                                             <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[9px] font-black uppercase border border-indigo-100 italic">Dinas Piket</span>
                                         @elseif($log->status_2 === 'late')
                                             <span class="px-2.5 py-1 bg-amber-50 text-amber-600 rounded-lg text-[9px] font-black uppercase border border-amber-100 italic">Terlambat ({{ $log->late_minutes_2 }}m)</span>
-                                        @elseif(in_array($log->status_2, ['on_leave', 'sick', 'duty_full', 'tubel']))
-                                            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase border border-emerald-100 italic">Terjadwal/Izin</span>
                                         @else
-                                            <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase border border-red-100 italic">{{ strtoupper($log->status_2 === 'absent' ? 'Alpa / Libur' : $log->status_2) }}</span>
+                                            <span class="px-2.5 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[9px] font-black uppercase border border-emerald-100 italic">Terjadwal/Izin</span>
                                         @endif
+                                    @endif
+
+                                    @if(!$log->check_in && !$log->check_in_2)
+                                        <span class="px-2.5 py-1 bg-red-50 text-red-600 rounded-lg text-[9px] font-black uppercase border border-red-100 italic">ALPA / LIBUR</span>
                                     @endif
                                 </div>
                             </td>
