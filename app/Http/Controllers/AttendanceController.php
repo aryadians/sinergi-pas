@@ -355,13 +355,10 @@ class AttendanceController extends Controller
                             $targets[] = ['shift' => $i, 'type' => 'out', 'time' => $et];
                         }
 
-                        $assignments = [];
-                        foreach ($targets as $target) {
-                            $bestScanIdx = null;
-                            $bestDiff = 999999;
-                            
-                            foreach ($allScans as $idx => $scan) {
-                                if (in_array($idx, $usedScans)) continue;
+                        $matches = [];
+                        foreach ($targets as $eIdx => $target) {
+                            foreach ($allScans as $sIdx => $scan) {
+                                if (in_array($sIdx, $usedScans)) continue;
                                 $diffMins = ($scan->timestamp - $target['time']->timestamp) / 60;
                                 
                                 // Toleransi Masuk: 3 jam lebih awal s/d 4 jam telat
@@ -369,19 +366,32 @@ class AttendanceController extends Controller
                                 // Toleransi Pulang: 4 jam lebih awal s/d 8 jam telat
                                 if ($target['type'] === 'out' && ($diffMins < -240 || $diffMins > 480)) continue;
                                 
-                                if (abs($diffMins) < $bestDiff) {
-                                    $bestDiff = abs($diffMins);
-                                    $bestScanIdx = $idx;
-                                }
-                            }
-                            
-                            if ($bestScanIdx !== null) {
-                                $assignments[$target['shift']][$target['type']] = [
-                                    'scan' => $allScans[$bestScanIdx],
-                                    'late' => $target['type'] === 'in' && $bestDiff > 0 && ($allScans[$bestScanIdx]->timestamp > $target['time']->timestamp) ? ($allScans[$bestScanIdx]->timestamp - $target['time']->timestamp) / 60 : 0
+                                $matches[] = [
+                                    'eIdx' => $eIdx,
+                                    'sIdx' => $sIdx,
+                                    'absDiff' => abs($diffMins),
+                                    'diff' => $diffMins
                                 ];
-                                $usedScans[] = $bestScanIdx;
                             }
+                        }
+
+                        // Mengurutkan berdasarkan selisih waktu terkecil (paling cocok)
+                        usort($matches, function($a, $b) {
+                            return $a['absDiff'] <=> $b['absDiff'];
+                        });
+
+                        $matchedEvents = [];
+                        $matchedScans = [];
+
+                        foreach ($matches as $match) {
+                            if (isset($matchedEvents[$match['eIdx']]) || isset($matchedScans[$match['sIdx']])) continue;
+                            
+                            $matchedEvents[$match['eIdx']] = [
+                                'scan' => $allScans[$match['sIdx']],
+                                'diff' => $match['diff']
+                            ];
+                            $matchedScans[$match['sIdx']] = true;
+                            $usedScans[] = $match['sIdx'];
                         }
 
                         for ($i = 0; $i < $shiftCount; $i++) {
@@ -389,9 +399,20 @@ class AttendanceController extends Controller
                             if ($sched['is_off']) continue;
 
                             $isShift2 = ($i === 1);
-                            $assignedCheckIn = $assignments[$i]['in']['scan'] ?? null;
-                            $assignedCheckOut = $assignments[$i]['out']['scan'] ?? null;
-                            $late = isset($assignments[$i]['in']['late']) ? (int)$assignments[$i]['in']['late'] : 0;
+                            $assignedCheckIn = null;
+                            $assignedCheckOut = null;
+                            $late = 0;
+                            
+                            foreach ($targets as $eIdx => $target) {
+                                if ($target['shift'] === $i && isset($matchedEvents[$eIdx])) {
+                                    if ($target['type'] === 'in') {
+                                        $assignedCheckIn = $matchedEvents[$eIdx]['scan'];
+                                        $late = $matchedEvents[$eIdx]['diff'] > 0 ? (int)$matchedEvents[$eIdx]['diff'] : 0;
+                                    } elseif ($target['type'] === 'out') {
+                                        $assignedCheckOut = $matchedEvents[$eIdx]['scan'];
+                                    }
+                                }
+                            }
                             
                             $status = 'absent';
                             $allowance = 0;
