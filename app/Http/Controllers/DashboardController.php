@@ -27,8 +27,48 @@ class DashboardController extends Controller
         // --- ADMIN VIEW DATA ---
         if ($user->role === 'superadmin') {
             $data = $this->getDashboardData($workUnitId);
+            $data['disciplinaryData'] = $this->getDisciplinaryData();
             return view('dashboard', $data);
         } 
+        // ... rest of the method
+    }
+
+    private function getDisciplinaryData()
+    {
+        $month = now()->format('Y-m');
+        $payrollService = app(\App\Services\PayrollService::class);
+        $employees = Employee::whereHas('user')->get();
+
+        $stats = [];
+        foreach ($employees as $emp) {
+            $data = $payrollService->calculateMonthlyPayroll($emp, $month);
+            $stats[] = [
+                'unit' => $emp->work_unit->name ?? 'Staf',
+                'present' => $data['total_present'] ?? 0,
+                'late' => $data['late_count'] ?? 0
+            ];
+        }
+
+        // Top 5 Units by Attendance
+        $unitStats = collect($stats)->groupBy('unit')->map(function($group) {
+            return $group->sum('present') / $group->count();
+        })->sortDesc()->take(5);
+
+        // Weekly Lateness Trend (Last 7 days)
+        $labels = []; $values = [];
+        for ($i = 6; $i >= 0; $i--) {
+            $d = now()->subDays($i)->format('Y-m-d');
+            $labels[] = now()->subDays($i)->format('D');
+            $values[] = Attendance::whereDate('date', $d)
+                ->where(fn($q) => $q->where('status', 'late')->orWhere('status_2', 'late'))
+                ->count();
+        }
+
+        return [
+            'unitStats' => $unitStats,
+            'latenessTrend' => ['labels' => $labels, 'values' => $values]
+        ];
+    } 
         
         // --- PEGAWAI VIEW DATA ---
         else {
