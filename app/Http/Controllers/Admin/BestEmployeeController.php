@@ -66,8 +66,8 @@ class BestEmployeeController extends Controller
             return $a->late_count <=> $b->late_count;
         });
 
-        // Take top 10
-        $topEmployees = array_slice($rankedEmployees, 0, 10);
+        // Take all instead of top 10
+        $topEmployees = $rankedEmployees;
 
         return view('admin.best-employee.index', compact('topEmployees', 'monthStr', 'date'));
     }

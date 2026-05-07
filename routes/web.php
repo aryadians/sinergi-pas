@@ -72,6 +72,9 @@ Route::middleware('auth')->group(function () {
         return back();
     })->name('notifications.mark-read');
 
+    // Best Employee (Accessible by all authenticated users)
+    Route::get('/best-employee', [\App\Http\Controllers\Admin\BestEmployeeController::class, 'index'])->name('admin.best-employee.index');
+
     // System Settings (Superadmin)
     Route::middleware('can:superadmin')->group(function () {
         Route::get('/dashboard/export/pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.export.pdf');
@@ -118,9 +121,6 @@ Route::middleware('auth')->group(function () {
             Route::post('/store-manual', [AttendanceController::class, 'storeManual'])->name('store-manual');
             Route::get('/export', [AttendanceController::class, 'export'])->name('export');
         });
-
-        // Best Employee
-        Route::get('/admin/best-employee', [\App\Http\Controllers\Admin\BestEmployeeController::class, 'index'])->name('admin.best-employee.index');
 
         Route::prefix('admin/categories')->name('admin.categories.')->group(function () {
             Route::get('/', [\App\Http\Controllers\Admin\CategoryController::class, 'index'])->name('index');
