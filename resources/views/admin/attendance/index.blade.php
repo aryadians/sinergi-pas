@@ -282,6 +282,9 @@
                                                 </span>
                                             @endif
                                         @endforeach
+                                        @if(count($schedules) > 1)
+                                            <span class="px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest bg-amber-100 text-amber-700 border border-amber-200">Double Shift</span>
+                                        @endif
                                     </div>
                                 @endif
                             </td>
