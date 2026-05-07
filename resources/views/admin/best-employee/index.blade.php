@@ -19,6 +19,20 @@
         </div>
     </div>
 
+    <!-- Info Perhitungan -->
+    <div class="bg-blue-50 border border-blue-100 p-5 rounded-2xl flex gap-4 items-start">
+        <i data-lucide="info" class="w-10 h-10 text-blue-500 shrink-0 mt-1"></i>
+        <div>
+            <h4 class="text-sm font-black text-blue-900 uppercase tracking-widest mb-1">Cara Perhitungan Poin</h4>
+            <p class="text-xs font-medium text-blue-700 leading-relaxed">
+                Skor dihitung berdasarkan: 
+                <span class="font-bold">+10 poin</span> per kehadiran valid, 
+                <span class="font-bold">-5 poin</span> per keterlambatan, dan 
+                <span class="font-bold">-2 poin</span> setiap 1% potongan Tunkin.
+            </p>
+        </div>
+    </div>
+
     @if(count($topEmployees) > 0)
         <!-- Top 3 Podium -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end pt-4 pb-8">
