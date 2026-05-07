@@ -142,9 +142,12 @@ class ScheduleService
                 }
 
                 if ($isOfficeDay) {
-                    // Check if there is an 'off' override from individuals
-                    $hasOffOverride = collect($schedules)->contains(fn($s) => $s['type'] === 'individual' && $s['is_off']);
-                    if (!$hasOffOverride) {
+                    // Check if there is an override from individuals that is NOT a night shift
+                    $hasNonNightOverride = collect($schedules)->contains(function($s) {
+                        return $s['type'] === 'individual' && !str_contains(strtoupper($s['shift']->name ?? ''), 'MALAM');
+                    });
+                    
+                    if (!$hasNonNightOverride) {
                         $schedules[] = [
                             'type' => 'office',
                             'status' => 'present',

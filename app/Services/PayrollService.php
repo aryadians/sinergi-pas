@@ -241,16 +241,16 @@ class PayrollService
                     $stats['details'][] = ['type' => 'Pulang Cepat (PSW)', 'info' => "{$earlyMin}m ({$shiftName})", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
 
-                if (in_array($status, ['present', 'late']) && (!$checkInStr || !$checkOutStr || $checkInStr == $checkOutStr)) {
+                if (in_array($status, ['present', 'late', 'picket']) && (!$checkInStr || !$checkOutStr || $checkInStr == $checkOutStr)) {
                     if ($isNightShift && $checkInStr && !$checkOutStr) {
-                        // Expected for night shifts
+                        // Bebas denda lupa absen pulang untuk shift malam
                     } else {
                         $stats['deduction_percentage'] += $rules['lupa_absen'];
                         $stats['details'][] = ['type' => 'Lupa Absen', 'info' => ((!$checkInStr) ? "Tanpa Masuk" : "Tanpa Pulang") . " ({$shiftName})", 'date' => $currentDate, 'percent' => $rules['lupa_absen'], 'rupiah' => ($rules['lupa_absen'] / 100) * $baseTunkin];
                     }
                 }
 
-                if ($status === 'absent' || (!$checkInStr && !$isFuture)) {
+                if ($status === 'absent' || (!$checkInStr && !$checkOutStr && !$isFuture)) {
                     $p = $rules['mangkir'];
                     $stats['deduction_percentage'] += $p;
                     $stats['details'][] = ['type' => 'Tanpa Keterangan', 'info' => "Tanpa Keterangan ({$shiftName})", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];

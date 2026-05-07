@@ -78,27 +78,34 @@ class AttendanceController extends Controller
                     $isShift2 = ($i === 1);
                     $status = $isShift2 ? $att->status_2 : $att->status;
                     $checkIn = $isShift2 ? $att->check_in_2 : $att->check_in;
+                    $checkOut = $isShift2 ? $att->check_out_2 : $att->check_out;
                     $isOff = $sched['is_off'] ?? false;
 
                     if ($isOff) continue;
 
-                    $canReevaluate = in_array($status, ['absent', 'present', 'late']);
+                    $canReevaluate = in_array($status, ['absent', 'present', 'late', 'picket']);
                     $effectiveStart = $sched['shift']->start_time ?? null;
 
-                    if ($checkIn && $effectiveStart && $canReevaluate) {
-                        $checkInTime = date('H:i', strtotime($checkIn));
-                        $targetInTime = date('H:i', strtotime($effectiveStart));
-                        $dateStr = Carbon::parse($att->date)->format('Y-m-d');
-                        
-                        $actualTs = strtotime($dateStr.' '.$checkInTime);
-                        $targetTs = strtotime($dateStr.' '.$targetInTime);
-                        $diffMinutes = (int) ceil(($actualTs - $targetTs) / 60);
-                        
-                        if ($diffMinutes >= -180) {
-                            $status = ($diffMinutes > 0) ? 'late' : 'present';
+                    if (($checkIn || $checkOut) && $effectiveStart && $canReevaluate) {
+                        if ($checkIn) {
+                            $checkInTime = date('H:i', strtotime($checkIn));
+                            $targetInTime = date('H:i', strtotime($effectiveStart));
+                            $dateStr = Carbon::parse($att->date)->format('Y-m-d');
+                            
+                            $actualTs = strtotime($dateStr.' '.$checkInTime);
+                            $targetTs = strtotime($dateStr.' '.$targetInTime);
+                            $diffMinutes = (int) ceil(($actualTs - $targetTs) / 60);
+                            
+                            if ($diffMinutes >= -180) {
+                                $status = ($diffMinutes > 0) ? 'late' : ($sched['is_picket'] ? 'picket' : 'present');
+                            } else {
+                                $status = 'absent';
+                            }
                         } else {
-                            $status = 'absent';
+                            $status = ($sched['is_picket'] ?? false) ? 'picket' : 'present';
                         }
+                    } elseif (($checkIn || $checkOut) && !$effectiveStart && $canReevaluate) {
+                        $status = 'present';
                     }
 
                     if ($status !== 'absent') {
@@ -159,36 +166,43 @@ class AttendanceController extends Controller
                 
                 $status = $isShift2 ? $log->status_2 : $log->status;
                 $checkIn = $isShift2 ? $log->check_in_2 : $log->check_in;
+                $checkOut = $isShift2 ? $log->check_out_2 : $log->check_out;
                 $isOff = $sched['is_off'] ?? false;
                 $effectiveStart = $sched['shift']->start_time ?? null;
 
                 if ($isOff) continue;
 
-                $canReevaluate = in_array($status, ['absent', 'present', 'late']);
+                $canReevaluate = in_array($status, ['absent', 'present', 'late', 'picket']);
                 
-                if ($checkIn && $effectiveStart && $canReevaluate) {
-                    $checkInTime = date('H:i', strtotime($checkIn));
-                    $targetInTime = date('H:i', strtotime($effectiveStart));
-                    
-                    $dateStr = Carbon::parse($log->date)->format('Y-m-d');
-                    $actualTs = strtotime($dateStr.' '.$checkInTime);
-                    $targetTs = strtotime($dateStr.' '.$targetInTime);
-                    $diffMinutes = (int) ceil(($actualTs - $targetTs) / 60);
+                if (($checkIn || $checkOut) && $effectiveStart && $canReevaluate) {
+                    if ($checkIn) {
+                        $checkInTime = date('H:i', strtotime($checkIn));
+                        $targetInTime = date('H:i', strtotime($effectiveStart));
+                        
+                        $dateStr = Carbon::parse($log->date)->format('Y-m-d');
+                        $actualTs = strtotime($dateStr.' '.$checkInTime);
+                        $targetTs = strtotime($dateStr.' '.$targetInTime);
+                        $diffMinutes = (int) ceil(($actualTs - $targetTs) / 60);
 
-                    if ($diffMinutes >= -180) {
-                        if ($diffMinutes > 0) {
-                            $status = 'late';
-                            if ($isShift2) $log->late_minutes_2 = $diffMinutes;
-                            else $log->late_minutes = $diffMinutes;
+                        if ($diffMinutes >= -180) {
+                            if ($diffMinutes > 0) {
+                                $status = 'late';
+                                if ($isShift2) $log->late_minutes_2 = $diffMinutes;
+                                else $log->late_minutes = $diffMinutes;
+                            } else {
+                                $status = ($sched['is_picket'] ?? false) ? 'picket' : 'present';
+                                if ($isShift2) $log->late_minutes_2 = 0;
+                                else $log->late_minutes = 0;
+                            }
                         } else {
-                            $status = ($sched['is_picket'] ?? false) ? 'picket' : 'present';
-                            if ($isShift2) $log->late_minutes_2 = 0;
-                            else $log->late_minutes = 0;
+                            $status = 'absent';
                         }
                     } else {
-                        $status = 'absent';
+                        $status = ($sched['is_picket'] ?? false) ? 'picket' : 'present';
+                        if ($isShift2) $log->late_minutes_2 = 0;
+                        else $log->late_minutes = 0;
                     }
-                } elseif ($checkIn && !$effectiveStart && $canReevaluate) {
+                } elseif (($checkIn || $checkOut) && !$effectiveStart && $canReevaluate) {
                     $status = 'present';
                     if ($isShift2) $log->late_minutes_2 = 0;
                     else $log->late_minutes = 0;
