@@ -239,28 +239,27 @@
                                 </div>
                             </td>
                             <td class="px-6 py-4 align-top">
-                                <!-- Shift 1 -->
-                                <div class="flex items-center justify-center gap-2 mb-2">
-                                    <span class="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-lg text-[11px] font-black border border-blue-100">
-                                        {{ $log->check_in ? \Carbon\Carbon::parse($log->check_in)->format('H:i') : '--:--' }}
-                                    </span>
-                                    <i data-lucide="arrow-right" class="w-3 h-3 text-slate-300"></i>
-                                    <span class="px-2.5 py-1 bg-slate-50 text-slate-600 rounded-lg text-[11px] font-black border border-slate-100">
-                                        {{ $log->check_out && $log->check_out != $log->check_in ? \Carbon\Carbon::parse($log->check_out)->format('H:i') : '--:--' }}
-                                    </span>
+                                <!-- Shift 1 & 2 -->
+                                <div class="flex flex-wrap items-center justify-center gap-2">
+                                    <div class="px-2 py-1 bg-slate-50 rounded border border-slate-100 min-w-[55px] text-center">
+                                        <span class="text-[8px] text-slate-400 block uppercase font-black">Masuk 1</span>
+                                        <span class="text-[11px] font-black text-blue-600">{{ $log->check_in ? \Carbon\Carbon::parse($log->check_in)->format('H:i') : '--:--' }}</span>
+                                    </div>
+                                    <div class="px-2 py-1 bg-slate-50 rounded border border-slate-100 min-w-[55px] text-center">
+                                        <span class="text-[8px] text-slate-400 block uppercase font-black">Pulang 1</span>
+                                        <span class="text-[11px] font-black text-slate-600">{{ $log->check_out && $log->check_out != $log->check_in ? \Carbon\Carbon::parse($log->check_out)->format('H:i') : '--:--' }}</span>
+                                    </div>
+                                    @if($log->check_in_2 || $log->status_2 !== 'absent')
+                                    <div class="px-2 py-1 bg-slate-50 rounded border border-slate-100 min-w-[55px] text-center">
+                                        <span class="text-[8px] text-slate-400 block uppercase font-black">Masuk 2</span>
+                                        <span class="text-[11px] font-black text-indigo-600">{{ $log->check_in_2 ? \Carbon\Carbon::parse($log->check_in_2)->format('H:i') : '--:--' }}</span>
+                                    </div>
+                                    <div class="px-2 py-1 bg-slate-50 rounded border border-slate-100 min-w-[55px] text-center">
+                                        <span class="text-[8px] text-slate-400 block uppercase font-black">Pulang 2</span>
+                                        <span class="text-[11px] font-black text-slate-600">{{ $log->check_out_2 && $log->check_out_2 != $log->check_in_2 ? \Carbon\Carbon::parse($log->check_out_2)->format('H:i') : '--:--' }}</span>
+                                    </div>
+                                    @endif
                                 </div>
-                                <!-- Shift 2 (Jika Ada) -->
-                                @if($log->check_in_2 || $log->status_2 !== 'absent')
-                                <div class="flex items-center justify-center gap-2">
-                                    <span class="px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[11px] font-black border border-indigo-100">
-                                        {{ $log->check_in_2 ? \Carbon\Carbon::parse($log->check_in_2)->format('H:i') : '--:--' }}
-                                    </span>
-                                    <i data-lucide="arrow-right" class="w-3 h-3 text-slate-300"></i>
-                                    <span class="px-2.5 py-1 bg-slate-50 text-slate-600 rounded-lg text-[11px] font-black border border-slate-100">
-                                        {{ $log->check_out_2 && $log->check_out_2 != $log->check_in_2 ? \Carbon\Carbon::parse($log->check_out_2)->format('H:i') : '--:--' }}
-                                    </span>
-                                </div>
-                                @endif
                             </td>
                             <td class="px-6 py-4 align-top text-center">
                                 @php

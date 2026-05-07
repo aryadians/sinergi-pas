@@ -166,39 +166,56 @@
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-50">
-                            @foreach($processed_logs as $log)
+                            @php
+                                $groupedLogs = collect($processed_logs)->groupBy('date');
+                            @endphp
+                            @foreach($groupedLogs as $date => $dayLogs)
                             <tr class="hover:bg-slate-50 transition-colors">
-                                <td class="px-8 py-4">
-                                    <p class="text-sm font-bold text-slate-700 leading-none mb-1">{{ \Carbon\Carbon::parse($log['date'])->format('d/m/Y') }}</p>
-                                    <span class="px-2 py-0.5 {{ $log['status'] === 'present' || $log['status'] === 'late' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600' }} text-[8px] font-black uppercase rounded border border-current opacity-70">
-                                        {{ $log['status'] === 'present' ? 'Hadir' : ($log['status'] === 'late' ? 'Telat' : (str_contains($log['status'], 'absent') ? 'Tanpa Keterangan' : $log['status'])) }}
-                                    </span>
-                                </td>
-                                <td class="px-8 py-4">
-                                    <div class="flex items-center gap-2 text-[10px] font-bold">
-                                        <div class="px-2 py-1 bg-slate-50 rounded border border-slate-100 min-w-[50px] text-center">
-                                            <span class="text-[8px] text-slate-400 block uppercase font-black">Masuk</span>
-                                            {{ $log['check_in'] }}
-                                        </div>
-                                        <div class="px-2 py-1 bg-slate-50 rounded border border-slate-100 min-w-[50px] text-center">
-                                            <span class="text-[8px] text-slate-400 block uppercase font-black">Pulang</span>
-                                            {{ $log['check_out'] }}
-                                        </div>
+                                <td class="px-8 py-4 align-top">
+                                    <p class="text-sm font-bold text-slate-700 leading-none mb-1">{{ \Carbon\Carbon::parse($date)->format('d/m/Y') }}</p>
+                                    <div class="flex flex-col gap-1 mt-2">
+                                        @foreach($dayLogs as $log)
+                                        <span class="px-2 py-0.5 {{ $log['status'] === 'present' || $log['status'] === 'late' ? 'bg-emerald-50 text-emerald-600' : 'bg-red-50 text-red-600' }} text-[8px] font-black uppercase rounded border border-current w-fit">
+                                            {{ $log['status'] === 'present' ? 'Hadir' : ($log['status'] === 'late' ? 'Telat' : (str_contains($log['status'], 'absent') ? 'Tanpa Keterangan' : $log['status'])) }}
+                                        </span>
+                                        @endforeach
                                     </div>
                                 </td>
-                                <td class="px-8 py-4 text-center">
-                                    @if($log['is_scheduled'])
-                                        <span class="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter">{{ $log['shift'] ?? 'Valid' }}</span>
-                                    @else
-                                        <span class="text-[9px] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full uppercase tracking-tighter">Luar Jadwal</span>
-                                    @endif
+                                <td class="px-8 py-4 align-top">
+                                    <div class="flex flex-wrap items-center gap-2 text-[10px] font-bold">
+                                        @foreach($dayLogs as $idx => $log)
+                                            <div class="px-2 py-1 bg-slate-50 rounded border border-slate-100 min-w-[55px] text-center">
+                                                <span class="text-[8px] text-slate-400 block uppercase font-black">Masuk {{ $idx + 1 }}</span>
+                                                <span class="text-[11px] font-black {{ $idx == 1 ? 'text-indigo-600' : 'text-blue-600' }}">{{ $log['check_in'] }}</span>
+                                            </div>
+                                            <div class="px-2 py-1 bg-slate-50 rounded border border-slate-100 min-w-[55px] text-center">
+                                                <span class="text-[8px] text-slate-400 block uppercase font-black">Pulang {{ $idx + 1 }}</span>
+                                                <span class="text-[11px] font-black text-slate-600">{{ $log['check_out'] }}</span>
+                                            </div>
+                                        @endforeach
+                                    </div>
                                 </td>
-                                <td class="px-8 py-4 text-sm font-black text-slate-900 text-right">
-                                    @if($log['meal_amount'] > 0)
-                                        Rp {{ number_format($log['meal_amount'], 0, ',', '.') }}
-                                    @else
-                                        <span class="text-slate-300">Rp 0</span>
-                                    @endif
+                                <td class="px-8 py-4 align-top text-center">
+                                    <div class="flex flex-col items-center gap-2 mt-1">
+                                        @foreach($dayLogs as $log)
+                                            @if($log['is_scheduled'])
+                                                <span class="text-[9px] font-black text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-tighter border border-blue-200">{{ $log['shift'] ?? 'Valid' }}</span>
+                                            @else
+                                                <span class="text-[9px] font-black text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full uppercase tracking-tighter border border-slate-200">Luar Jadwal</span>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                </td>
+                                <td class="px-8 py-4 align-top text-sm font-black text-slate-900 text-right">
+                                    <div class="flex flex-col items-end gap-2 mt-1">
+                                        @foreach($dayLogs as $log)
+                                            @if($log['meal_amount'] > 0)
+                                                <span class="text-emerald-600">Rp {{ number_format($log['meal_amount'], 0, ',', '.') }}</span>
+                                            @else
+                                                <span class="text-slate-300">Rp 0</span>
+                                            @endif
+                                        @endforeach
+                                    </div>
                                 </td>
                             </tr>
                             @endforeach
