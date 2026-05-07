@@ -248,12 +248,19 @@ class PayrollService
                     $stats['details'][] = ['type' => 'Pulang Cepat (PSW)', 'info' => "{$earlyMin}m ({$shiftName})", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
 
-                if (in_array($status, ['present', 'late', 'picket']) && (!$checkInStr || !$checkOutStr)) {
-                    if ($isNightShift && $checkInStr) {
-                        // Jika shift malam dan ada scan masuk, tidak kena denda lupa absen
-                    } elseif (!$checkInStr && !$checkOutStr) {
-                        $stats['deduction_percentage'] += $rules['lupa_absen'];
-                        $stats['details'][] = ['type' => 'Lupa Absen', 'info' => "Tanpa Masuk/Pulang ({$shiftName})", 'date' => $currentDate, 'percent' => $rules['lupa_absen'], 'rupiah' => ($rules['lupa_absen'] / 100) * $baseTunkin];
+                // Perbaikan: Lupa Absen jika salah satu scan hilang (untuk shift non-malam)
+                if (in_array($status, ['present', 'late', 'picket'])) {
+                    $isMissingIn = empty($checkInStr);
+                    $isMissingOut = empty($checkOutStr);
+
+                    if ($isMissingIn || $isMissingOut) {
+                        if ($isNightShift && $checkInStr) {
+                            // Bebas denda untuk shift malam yang hanya absen masuk
+                        } else {
+                            $stats['deduction_percentage'] += $rules['lupa_absen'];
+                            $info = ($isMissingIn ? "Tanpa Masuk" : "Tanpa Pulang") . " ({$shiftName})";
+                            $stats['details'][] = ['type' => 'Lupa Absen', 'info' => $info, 'date' => $currentDate, 'percent' => $rules['lupa_absen'], 'rupiah' => ($rules['lupa_absen'] / 100) * $baseTunkin];
+                        }
                     }
                 }
 
