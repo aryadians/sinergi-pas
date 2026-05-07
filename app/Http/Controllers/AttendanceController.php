@@ -164,6 +164,7 @@ class AttendanceController extends Controller
             }
 
             $shiftCount = min(2, count($schedules));
+            $dayPresentCount = 0;
             
             for ($i = 0; $i < $shiftCount; $i++) {
                 $sched = $schedules[$i];
