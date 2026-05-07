@@ -115,7 +115,11 @@ class PayrollService
 
             // Loop untuk maksimal 2 jadwal (karena sistem support 2 shift)
             $shiftCount = min(2, count($schedules));
+            $dayPresentCount = 0;
+            $hasNightShiftPresence = false;
             
+            $dayShiftResults = [];
+
             for ($i = 0; $i < $shiftCount; $i++) {
                 $sched = $schedules[$i];
                 $isShift2 = ($i === 1);
@@ -134,7 +138,6 @@ class PayrollService
                     if ($isShift2) {
                         $checkInStr = $attendance->check_in_2 ? (is_string($attendance->check_in_2) ? $attendance->check_in_2 : $attendance->check_in_2->format('H:i:s')) : null;
                         $checkOutStr = $attendance->check_out_2 ? (is_string($attendance->check_out_2) ? $attendance->check_out_2 : $attendance->check_out_2->format('H:i:s')) : null;
-                        // Use status_2 if available, else copy status
                         $status = $attendance->status_2 !== 'absent' ? $attendance->status_2 : $status;
                     } else {
                         $checkInStr = $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s')) : null;
@@ -152,7 +155,7 @@ class PayrollService
                             $stats['details'][] = ['type' => 'Sakit Progresif', 'info' => "Hari ke-{$sickCounter}", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin]; 
                         }
                     }
-                    continue; // Skip potongan TL/Mangkir kalau cuti/sakit/off
+                    continue; 
                 }
 
                 $canReevaluate = in_array($status, ['absent', 'present', 'late', 'picket']);
@@ -163,40 +166,40 @@ class PayrollService
                         $targetTimestamp = strtotime($currentDate . ' ' . $scheduledInTime);
                         $diffMin = (int) ceil(($actualTimestamp - $targetTimestamp) / 60);
 
-                        if ($diffMin >= -180) { // Toleransi absen 3 jam lebih awal
+                        if ($diffMin >= -180) { 
                             if ($diffMin > 0) {
                                 $status = 'late';
                             } else {
                                 $status = ($sched['is_picket'] ?? false) ? 'picket' : 'present';
                             }
                         } else {
-                            $status = 'absent'; // Sangat pagi = mangkir
+                            $status = 'absent';
                         }
                     }
                 }
 
                 $isEligibleMeal = in_array($status, ['present', 'late', 'duty_half', 'picket']);
-                
-                // Uang makan double jika shift malam
-                $mealMultiplier = $isNightShift ? 2 : 1;
-                $dailyMealAmount = $isEligibleMeal ? ($mealRate * $mealMultiplier) : 0;
-
-                $stats['processed_logs'][] = [
-                    'date' => $currentDate, 
-                    'status' => $status, 
-                    'check_in' => $checkInStr ?: '--:--', 
-                    'check_out' => $checkOutStr ?: '--:--', 
-                    'is_scheduled' => true, 
-                    'meal_amount' => $dailyMealAmount,
-                    'shift' => $shiftName
-                ];
-
-                if ($isEligibleMeal) { 
-                    $stats['meal_allowance_days'] += $mealMultiplier; 
-                    $stats['total_present']++; 
+                if ($isEligibleMeal) {
+                    $dayPresentCount++;
+                    if ($isNightShift) $hasNightShiftPresence = true;
+                    $stats['total_present']++;
                 }
 
-                // Kalkulasi Potongan
+                $dayShiftResults[] = [
+                    'date' => $currentDate,
+                    'status' => $status,
+                    'check_in' => $checkInStr ?: '--:--',
+                    'check_out' => $checkOutStr ?: '--:--',
+                    'is_scheduled' => true,
+                    'shift' => $shiftName,
+                    'is_eligible' => $isEligibleMeal,
+                    'is_night' => $isNightShift,
+                    'is_default_office' => $isDefaultOffice,
+                    'scheduled_in' => $scheduledInTime,
+                    'scheduled_out' => $scheduledOutTime
+                ];
+
+                // Kalkulasi Potongan Tunkin
                 $lateMin = 0;
                 if ($checkInStr && $scheduledInTime) {
                     $actualTimestamp = strtotime($currentDate . ' ' . $checkInStr);
@@ -260,6 +263,31 @@ class PayrollService
                     $stats['details'][] = ['type' => 'Tanpa Keterangan', 'info' => "Tidak Hadir ({$shiftName})", 'date' => $currentDate, 'percent' => $p, 'rupiah' => ($p / 100) * $baseTunkin];
                 }
             }
+
+            // Hitung total Uang Makan harian (Max 2x)
+            $dayMultiplier = 0;
+            if ($dayPresentCount > 0) {
+                // Jika shift malam (hasNightShiftPresence) ATAU double shift (dayPresentCount > 1) -> 2x
+                // Selain itu (pagi saja) -> 1x
+                $dayMultiplier = ($hasNightShiftPresence || $dayPresentCount > 1) ? 2 : 1;
+                $stats['meal_allowance_days'] += $dayMultiplier;
+            }
+
+            // Simpan ke log proses (bagi nominal uang makan agar rapi di tabel)
+            foreach ($dayShiftResults as $idx => $res) {
+                $shiftMeal = 0;
+                if ($res['is_eligible']) {
+                    if ($dayMultiplier == 2) {
+                        // Jika 2x, bagi 1x per shift jika double, atau 2x sekaligus jika single night shift
+                        $shiftMeal = ($dayPresentCount > 1) ? $mealRate : ($res['is_night'] ? $mealRate * 2 : $mealRate);
+                    } else {
+                        $shiftMeal = $mealRate;
+                    }
+                }
+                $res['meal_amount'] = $shiftMeal;
+                $stats['processed_logs'][] = $res;
+            }
+        }
         }
 
         if ($stats['late_count'] > $rules['max_late']) $stats['violation_note'] = "PELANGGARAN: Telat {$stats['late_count']}x";

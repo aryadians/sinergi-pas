@@ -71,7 +71,8 @@ class AttendanceController extends Controller
                 }
 
                 $shiftCount = min(2, count($schedules));
-                $dayPresent = false;
+                $dayPresentCount = 0;
+                $hasNightShift = false;
 
                 for ($i = 0; $i < $shiftCount; $i++) {
                     $sched = $schedules[$i];
@@ -109,18 +110,23 @@ class AttendanceController extends Controller
                     }
 
                     if ($status !== 'absent') {
-                        $dayPresent = true;
+                        $dayPresentCount++;
                         if ($status === 'late') $totalLate++;
-                        $empValidDays++;
-                        if ($status !== 'duty_full' && $status !== 'tubel') {
-                            $shiftName = $sched['shift']->name ?? '';
-                            $isNightShift = str_contains(strtoupper($shiftName), 'MALAM');
-                            $mealMultiplier = $isNightShift ? 2 : 1;
-                            $empTotalAllowance += ($empRate * $mealMultiplier);
-                        }
+                        
+                        $shiftName = strtoupper($sched['shift']->name ?? '');
+                        if (str_contains($shiftName, 'MALAM')) $hasNightShift = true;
                     }
                 }
-                if ($dayPresent) $totalPresent++;
+
+                if ($dayPresentCount > 0) {
+                    $totalPresent++;
+                    // Jika ada minimal 1 shift hadir
+                    // Multiplier: 2x jika shift malam ATAU double shift. Selain itu 1x.
+                    $dayMultiplier = ($hasNightShift || $dayPresentCount > 1) ? 2 : 1;
+                    
+                    $empValidDays += $dayMultiplier;
+                    $empTotalAllowance += ($empRate * $dayMultiplier);
+                }
             }
             $totalValidDays += $empValidDays;
             $totalAllowance += $empTotalAllowance;
