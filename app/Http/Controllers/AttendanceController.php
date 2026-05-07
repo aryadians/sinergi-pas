@@ -372,8 +372,8 @@ class AttendanceController extends Controller
                                 if (in_array($sIdx, $usedScans)) continue;
                                 $diffMins = ($scan->timestamp - $target['time']->timestamp) / 60;
                                 
-                                // Toleransi Masuk: 3 jam lebih awal s/d 4 jam telat
-                                if ($target['type'] === 'in' && ($diffMins < -180 || $diffMins > 240)) continue;
+                                // Toleransi Masuk: 4 jam lebih awal s/d 4 jam telat
+                                if ($target['type'] === 'in' && ($diffMins < -240 || $diffMins > 240)) continue;
                                 // Toleransi Pulang: 4 jam lebih awal s/d 8 jam telat
                                 if ($target['type'] === 'out' && ($diffMins < -240 || $diffMins > 480)) continue;
                                 
