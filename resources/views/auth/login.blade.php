@@ -47,6 +47,24 @@
 </head>
 <body class="antialiased bg-navy selection:bg-blue-500 selection:text-white">
 
+    @if(isset($announcements) && $announcements->isNotEmpty())
+    <!-- Announcement Bar -->
+    <div class="w-full bg-blue-600 text-white overflow-hidden py-2 px-4 shadow-md z-50 relative">
+        <div class="flex items-center gap-3">
+            <span class="shrink-0 flex items-center gap-2 text-white font-black uppercase text-[10px] tracking-widest bg-black/20 px-3 py-1 rounded-full">
+                <i class="fas fa-bullhorn"></i> INFO
+            </span>
+            <div class="flex-1 overflow-hidden relative">
+                <marquee class="text-xs font-bold tracking-wide mt-1" scrollamount="5">
+                    @foreach($announcements as $ann)
+                        <span class="mr-12">• {{ $ann->message }}</span>
+                    @endforeach
+                </marquee>
+            </div>
+        </div>
+    </div>
+    @endif
+
     <div class="min-h-screen flex flex-col md:flex-row overflow-y-auto">
         
         <!-- SISI KIRI: FORM LOGIN -->

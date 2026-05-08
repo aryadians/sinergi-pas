@@ -12,7 +12,9 @@ class AuthController extends Controller
         if (Auth::check()) {
             return redirect()->route('dashboard');
         }
-        return view('auth.login');
+        
+        $announcements = \App\Models\Announcement::where('is_active', true)->latest()->get();
+        return view('auth.login', compact('announcements'));
     }
 
     public function login(Request $request)
