@@ -299,12 +299,15 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
+        $wbsReports = \App\Models\WhistleblowerReport::latest()->take(5)->get();
+        $totalWbsReports = \App\Models\WhistleblowerReport::count();
+
         return compact(
             'totalEmployees', 'totalDocuments', 'docsToday', 'pendingDocs', 
             'openIssues', 'storageUsed', 'unitPerformance', 
             'latestEmployees', 'chartData', 'workUnits', 'nonCompliantEmployees',
             'nonCompliantEmployeesTotal', 'widgets', 'recentLogs', 'totalMandatoryCategories',
-            'latestSalarySlips'
+            'latestSalarySlips', 'wbsReports', 'totalWbsReports'
         );
     }
 

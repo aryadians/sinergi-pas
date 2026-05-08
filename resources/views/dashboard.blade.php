@@ -217,6 +217,28 @@
 
         <!-- Right: Audit Trail -->
         <div class="space-y-8">
+            <div class="bg-red-900/10 rounded-[40px] border border-red-200 shadow-sm overflow-hidden flex flex-col h-[300px] card-3d">
+                <div class="p-6 border-b border-red-200/50 bg-red-50/50 flex justify-between items-center">
+                    <h3 class="text-[10px] font-black text-red-900 uppercase tracking-[0.3em]">Pengaduan WBS Terbaru</h3>
+                    <a href="{{ route('admin.wbs.index') }}" class="text-[10px] font-black text-red-600 uppercase tracking-widest hover:underline">{{ number_format($totalWbsReports) }} Total</a>
+                </div>
+                <div class="p-6 overflow-y-auto custom-scrollbar space-y-4 flex-1">
+                    @forelse($wbsReports as $report)
+                    <div class="flex items-center justify-between p-4 rounded-2xl bg-white border border-red-100 shadow-sm hover:border-red-300 transition-all group">
+                        <div class="min-w-0">
+                            <p class="text-xs font-black text-slate-900 group-hover:text-red-600 transition-colors">{{ $report->ticket_number }}</p>
+                            <p class="text-[9px] font-bold text-slate-400 uppercase truncate">{{ $report->category }}</p>
+                        </div>
+                        <a href="{{ route('admin.wbs.show', $report->id) }}" class="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all">
+                            <i data-lucide="eye" class="w-3 h-3"></i>
+                        </a>
+                    </div>
+                    @empty
+                        <p class="text-[10px] font-bold text-slate-400 text-center italic mt-10">Belum ada laporan baru</p>
+                    @endforelse
+                </div>
+            </div>
+
             <div class="bg-slate-900 rounded-[40px] border border-slate-800 shadow-2xl overflow-hidden flex flex-col h-[600px] card-3d">
                 <div class="p-6 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
                     <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.3em]">System Audit Trail</h3>
