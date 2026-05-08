@@ -104,14 +104,17 @@
                                 <p class="text-[9px] font-black text-slate-400 uppercase mt-0.5">{{ $evidence->file_type }}</p>
                             </div>
                             @if($evidence->file_type === 'image')
-                                <a href="{{ $evidence->file_path }}" download="bukti_{{ $loop->iteration }}.png" class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-slate-200 text-slate-500 transition-colors shrink-0" title="Download">
-                                    <i data-lucide="download" class="w-4 h-4"></i>
-                                </a>
-                            @else
-                                <a href="{{ route('wbs.evidence.download', $evidence->id) }}" class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-slate-200 text-slate-500 transition-colors shrink-0">
-                                    <i data-lucide="download" class="w-4 h-4"></i>
-                                </a>
-                            @endif                        </div>
+                                <button type="button" onclick="previewFile('{{ $evidence->file_path }}', 'image', '{{ $evidence->original_name }}')" class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-blue-600 hover:text-white text-slate-500 transition-colors shrink-0" title="Lihat">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                            @elseif($evidence->file_type === 'document')
+                                <button type="button" onclick="previewFile('{{ route('wbs.evidence.download', $evidence->id) }}', 'pdf', '{{ $evidence->original_name }}')" class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-blue-600 hover:text-white text-slate-500 transition-colors shrink-0" title="Lihat">
+                                    <i data-lucide="eye" class="w-4 h-4"></i>
+                                </button>
+                            @endif
+                            <a href="{{ route('wbs.evidence.download', $evidence->id) }}" class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-emerald-600 hover:text-white text-slate-500 transition-colors shrink-0" title="Download">
+                                <i data-lucide="download" class="w-4 h-4"></i>
+                            </a>                        </div>
                     @endforeach
                 </div>
             </div>
@@ -163,4 +166,41 @@
     </div>
 
 </div>
+
+<!-- Preview Modal -->
+<div id="previewModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 hidden p-4" onclick="closePreview()">
+    <div class="bg-white rounded-3xl p-4 max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col shadow-2xl relative" onclick="event.stopPropagation()">
+        <div class="flex justify-between items-center mb-4">
+            <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest truncate" id="previewTitle">Bukti</h4>
+            <button onclick="closePreview()" class="p-2 bg-slate-100 rounded-full hover:bg-red-100 text-slate-500 hover:text-red-600 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+        <div class="flex-1 overflow-auto flex items-center justify-center bg-slate-50 rounded-2xl" id="previewBody">
+            <!-- Content injected here -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function previewFile(src, type, name) {
+        const modal = document.getElementById('previewModal');
+        const body = document.getElementById('previewBody');
+        document.getElementById('previewTitle').innerText = name;
+        
+        body.innerHTML = '';
+        if (type === 'image') {
+            body.innerHTML = `<img src="${src}" class="max-w-full max-h-[70vh] object-contain">`;
+        } else if (type === 'pdf') {
+            body.innerHTML = `<iframe src="${src}" class="w-full h-[70vh]"></iframe>`;
+        }
+        
+        modal.classList.remove('hidden');
+        lucide.createIcons();
+    }
+
+    function closePreview() {
+        document.getElementById('previewModal').classList.add('hidden');
+    }
+</script>
 @endsection
