@@ -309,7 +309,7 @@
         document.getElementById('members_squad_name').innerText = squad.name;
         document.getElementById('squad_icon_header').innerText = squad.name.substring(0, 1).toUpperCase();
         document.getElementById('addMemberForm').action = `/admin/squads/${squad.id}/add-member`;
-        document.getElementById('removeMemberForm').action = `/admin/squads/${squad.id}/remove-member`;
+        document.getElementById('removeMemberForm').action = `/admin/squads/${squad.id}/remove-members-bulk`;
         
         // Reset UI
         document.getElementById('selectAllMembers').checked = false;
