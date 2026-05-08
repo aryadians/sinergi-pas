@@ -108,7 +108,7 @@
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </button>
                             @elseif($evidence->file_type === 'document')
-                                <button type="button" onclick="previewFile('{{ route('wbs.evidence.download', $evidence->id) }}', 'pdf', '{{ $evidence->original_name }}')" class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-blue-600 hover:text-white text-slate-500 transition-colors shrink-0" title="Lihat">
+                                <button type="button" onclick="previewFile('{{ route('wbs.evidence.download', $evidence->id) }}?preview=1', 'pdf', '{{ $evidence->original_name }}')" class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-blue-600 hover:text-white text-slate-500 transition-colors shrink-0" title="Lihat">
                                     <i data-lucide="eye" class="w-4 h-4"></i>
                                 </button>
                             @endif
