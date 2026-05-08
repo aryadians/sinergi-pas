@@ -11,6 +11,23 @@
 @endphp
 
 <div class="space-y-10 page-fade">
+    @if(isset($announcements) && $announcements->isNotEmpty())
+    <div class="bg-blue-900 rounded-[32px] px-8 py-4 overflow-hidden shadow-xl border border-blue-800">
+        <div class="flex items-center gap-4">
+            <span class="shrink-0 flex items-center gap-2 text-blue-400 font-black uppercase text-[10px] tracking-widest bg-blue-800/50 px-4 py-1.5 rounded-full">
+                <i data-lucide="megaphone" class="w-4 h-4"></i> Pengumuman
+            </span>
+            <div class="flex-1 overflow-hidden relative">
+                <marquee class="text-sm font-bold text-white tracking-wide" scrollamount="6">
+                    @foreach($announcements as $ann)
+                        <span class="mr-16">• {{ $ann->message }}</span>
+                    @endforeach
+                </marquee>
+            </div>
+        </div>
+    </div>
+    @endif
+
     @if($rejectedDocsCount > 0)
     <!-- Rejected Documents Alert -->
     <div class="bg-red-50 border-2 border-red-100 rounded-[32px] p-6 flex items-center justify-between shadow-sm animate-pulse group hover:scale-[1.01] transition-all">
