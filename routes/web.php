@@ -29,6 +29,7 @@ Route::middleware('guest')->group(function () {
 // WBS Public Routes
 Route::get('/wbs/track', [\App\Http\Controllers\WbsController::class, 'track'])->name('wbs.track');
 Route::get('/wbs/track/{ticket}', [\App\Http\Controllers\WbsController::class, 'showTrack'])->name('wbs.track.show');
+Route::get('/wbs/evidence/{id}/download', [\App\Http\Controllers\WbsEvidenceController::class, 'download'])->name('wbs.evidence.download');
 
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
