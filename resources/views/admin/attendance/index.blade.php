@@ -207,6 +207,7 @@
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Jadwal Aktif</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Status Kehadiran</th>
                             <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-right">Uang Makan</th>
+                            <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-50">
@@ -348,10 +349,15 @@
                                     @endif
                                 </div>
                             </td>
+                            <td class="px-6 py-4 align-top text-center">
+                                <button type="button" onclick="openEditModal({{ json_encode($log) }})" class="w-8 h-8 bg-slate-100 hover:bg-blue-100 text-slate-500 hover:text-blue-600 rounded-xl flex items-center justify-center transition-colors">
+                                    <i data-lucide="edit-3" class="w-4 h-4"></i>
+                                </button>
+                            </td>
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5" class="px-6 py-20 text-center">
+                            <td colspan="6" class="px-6 py-20 text-center">
                                 <p class="text-xs font-bold text-slate-400 uppercase tracking-widest italic text-slate-300">Belum ada aktivitas absensi tercatat</p>
                             </td>
                         </tr>
@@ -459,7 +465,111 @@
     </div>
 </div>
 
+<!-- Edit Attendance Modal -->
+<div id="editModal" class="fixed inset-0 bg-slate-900/60 hidden flex items-center justify-center z-50 p-6 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl animate-in zoom-in duration-200 flex flex-col max-h-[90vh]">
+        <div class="p-8 border-b border-slate-100 flex justify-between items-center shrink-0 bg-slate-50/50 rounded-t-[32px]">
+            <div>
+                <h3 class="text-2xl font-black text-slate-900 italic tracking-tight">Koreksi Absensi</h3>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1" id="edit_emp_name"></p>
+            </div>
+            <button onclick="document.getElementById('editModal').classList.add('hidden')" class="w-10 h-10 bg-white rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:text-red-500 hover:border-red-200 transition-colors">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="p-8 overflow-y-auto custom-scrollbar flex-1">
+            <form id="editForm" action="{{ route('admin.attendance.store-manual') }}" method="POST" class="space-y-6">
+                @csrf
+                <input type="hidden" name="log_id" id="edit_log_id">
+                
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Masuk 1</label>
+                        <input type="time" name="check_in" id="edit_check_in" step="1" class="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pulang 1</label>
+                        <input type="time" name="check_in_2" id="edit_check_out" step="1" class="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Masuk 2</label>
+                        <input type="time" name="check_out" id="edit_check_in_2" step="1" class="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Pulang 2</label>
+                        <input type="time" name="check_out_2" id="edit_check_out_2" step="1" class="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status Shift 1</label>
+                        <select name="status" id="edit_status" class="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700">
+                            <option value="absent">ALPA / LIBUR</option>
+                            <option value="present">HADIR TEPAT WAKTU</option>
+                            <option value="late">TERLAMBAT</option>
+                            <option value="picket">DINAS PIKET</option>
+                            <option value="sick">SAKIT</option>
+                            <option value="on_leave">CUTI</option>
+                            <option value="duty_full">DINAS LUAR (FULL)</option>
+                            <option value="duty_half">DINAS LUAR (HALF)</option>
+                            <option value="tubel">TUGAS BELAJAR</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Status Shift 2</label>
+                        <select name="status_2" id="edit_status_2" class="w-full px-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-blue-500 outline-none transition-all font-bold text-sm text-slate-700">
+                            <option value="absent">ALPA / LIBUR</option>
+                            <option value="present">HADIR TEPAT WAKTU</option>
+                            <option value="late">TERLAMBAT</option>
+                            <option value="picket">DINAS PIKET</option>
+                            <option value="sick">SAKIT</option>
+                            <option value="on_leave">CUTI</option>
+                            <option value="duty_full">DINAS LUAR (FULL)</option>
+                            <option value="duty_half">DINAS LUAR (HALF)</option>
+                            <option value="tubel">TUGAS BELAJAR</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="p-5 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3 mt-4">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-amber-500 shrink-0"></i>
+                    <div>
+                        <h4 class="text-xs font-black text-amber-800 uppercase tracking-widest">Peringatan Koreksi</h4>
+                        <p class="text-[10px] text-amber-700 font-bold mt-1">Mengubah status menjadi "Hadir / Piket" secara manual akan memengaruhi perhitungan uang makan. Pastikan data yang dimasukkan valid.</p>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <div class="p-8 border-t border-slate-100 bg-slate-50/50 shrink-0 rounded-b-[32px] flex justify-end gap-3">
+            <button type="button" onclick="document.getElementById('editModal').classList.add('hidden')" class="px-6 py-3.5 rounded-2xl font-bold text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-200 transition-colors">Batal</button>
+            <button type="button" onclick="document.getElementById('editForm').submit()" class="px-8 py-3.5 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/30 btn-3d">Simpan Koreksi</button>
+        </div>
+    </div>
+</div>
+
 <script>
+    function openEditModal(log) {
+        document.getElementById('edit_log_id').value = log.id;
+        document.getElementById('edit_emp_name').innerText = log.employee.full_name + ' • ' + log.date.split('T')[0];
+        
+        // Setup times properly. If length is > 8, take first 8 (H:i:s)
+        document.getElementById('edit_check_in').value = log.check_in ? log.check_in.substring(0,8) : '';
+        document.getElementById('edit_check_out').value = log.check_out ? log.check_out.substring(0,8) : '';
+        document.getElementById('edit_check_in_2').value = log.check_in_2 ? log.check_in_2.substring(0,8) : '';
+        document.getElementById('edit_check_out_2').value = log.check_out_2 ? log.check_out_2.substring(0,8) : '';
+        
+        document.getElementById('edit_status').value = log.status || 'absent';
+        document.getElementById('edit_status_2').value = log.status_2 || 'absent';
+        
+        document.getElementById('editModal').classList.remove('hidden');
+    }
+
     function openExportModal() { document.getElementById('exportModal').classList.remove('hidden'); }
     
     function submitGlobalExport() {

@@ -473,6 +473,35 @@ class AttendanceController extends Controller
         } catch (\Exception $e) { return back()->with('error', 'Gagal: ' . $e->getMessage()); }
     }
 
+    public function storeManual(Request $request)
+    {
+        $request->validate([
+            'log_id' => 'required|exists:attendances,id',
+            'status' => 'required|string',
+            'status_2' => 'required|string',
+        ]);
+
+        $log = Attendance::findOrFail($request->log_id);
+        
+        $log->update([
+            'check_in' => $request->check_in,
+            'check_out' => $request->check_out,
+            'check_in_2' => $request->check_in_2,
+            'check_out_2' => $request->check_out_2,
+            'status' => $request->status,
+            'status_2' => $request->status_2,
+        ]);
+
+        AuditLog::create([
+            'user_id' => auth()->id(),
+            'activity' => 'update_attendance_manual',
+            'ip_address' => $request->ip(),
+            'details' => auth()->user()->name . " mengoreksi absensi pegawai secara manual untuk tanggal " . $log->date->format('Y-m-d'),
+        ]);
+
+        return back()->with('success', 'Koreksi absensi berhasil disimpan.');
+    }
+
     public function export(Request $request)
     {
         set_time_limit(600);
