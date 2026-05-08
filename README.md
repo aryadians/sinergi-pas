@@ -94,7 +94,19 @@ graph TD
 📍 Jl. KH. Wahid Hasyim No. 151, Jombang
 📞 (0321) 861114
 
----
-<div align="center">
-  Dibuat dengan ❤️ untuk Masa Depan Pemasyarakatan yang Lebih Digital dan Akuntabel.
-</div>
+### 🚨 5. Whistleblowing System (WBS Internal)
+Sistem pelaporan pelanggaran untuk menjaga integritas Lapas:
+- **Lapor Tanpa Cemas:** Fitur pelaporan anonim dengan enkripsi data.
+- **Tracking Tiket:** Pegawai dapat memantau status laporan melalui nomor tiket unik tanpa perlu login.
+- **Lampiran Komprehensif:** Mendukung upload multi-file (Foto, Video, Audio, Dokumen) dengan preview sebelum dikirim.
+- **Manajemen Admin:** Panel admin khusus untuk meninjau, menginvestigasi, dan membalas pengaduan secara terpusat.
+
+### 🔄 6. Sistem Absensi Double Shift & Dinamis
+- **Logika Double Shift:** Mendukung hingga 2 shift dalam 1 hari dengan 4 kali scan (Masuk 1, Pulang 1, Masuk 2, Pulang 2) secara cerdas menggunakan algoritma *bipartite matching*.
+- **Uang Makan Dinamis:** Perhitungan otomatis uang makan 2x lipat untuk *double shift* atau shift malam, dengan *cap* maksimal 2x per hari.
+- **Manajemen Piket Individu:** Penyesuaian jam kerja spesifik untuk piket individu yang berbeda dari jadwal regu.
+
+### 📊 7. Dashboard Analitik Disiplin
+- **Visualisasi Tren:** Grafik tren keterlambatan mingguan untuk memantau kedisiplinan pegawai secara visual di dasbor admin.
+- **Kalkulasi Transparan:** Penjelasan rumus poin (Kehadiran +10, Telat -5, Denda -2) yang ditampilkan langsung kepada pegawai agar sistem perhitungan lebih terbuka.
+
