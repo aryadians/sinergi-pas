@@ -94,7 +94,7 @@
     <div id="tab-individual" class="sched-tab-content hidden space-y-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <!-- Form Plot -->
-            <div class="lg:col-span-4 sticky top-8">
+            <div class="lg:col-span-4 lg:sticky lg:top-8">
                 <div class="bg-slate-900 rounded-[32px] p-8 shadow-2xl relative overflow-hidden border border-white/5 group">
                     <div class="absolute -right-16 -top-16 w-64 h-64 bg-blue-600/10 blur-[80px] transition-all duration-700"></div>
                     
@@ -200,7 +200,7 @@
 
             <!-- List Piket -->
             <div class="lg:col-span-8">
-                <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[600px] card-3d">
+                <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[400px] lg:min-h-[600px] card-3d">
                     <!-- Search Header -->
                     <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row gap-6 justify-between items-center">
                         <div class="flex items-center gap-4">
@@ -318,7 +318,7 @@
     <div id="tab-holiday" class="sched-tab-content hidden space-y-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <!-- Form Plot -->
-            <div class="lg:col-span-4 sticky top-8">
+            <div class="lg:col-span-4 lg:sticky lg:top-8">
                 <div class="bg-slate-900 rounded-[32px] p-8 shadow-2xl relative overflow-hidden border border-white/5 group">
                     <div class="absolute -right-16 -top-16 w-64 h-64 bg-red-600/10 blur-[80px] transition-all duration-700"></div>
                     
@@ -355,7 +355,7 @@
 
             <!-- List Holidays -->
             <div class="lg:col-span-8">
-                <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[600px] card-3d">
+                <div class="bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden flex flex-col min-h-[400px] lg:min-h-[600px] card-3d">
                     <!-- Header -->
                     <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-col md:flex-row gap-6 justify-between items-center">
                         <div class="flex items-center gap-4">
