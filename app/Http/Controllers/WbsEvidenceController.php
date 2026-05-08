@@ -11,11 +11,18 @@ class WbsEvidenceController extends Controller
     {
         $evidence = WhistleblowerEvidence::findOrFail($id);
         
-        // Cek apakah file ada di storage
-        if (!Storage::disk('public')->exists($evidence->file_path)) {
+        // Cek jika base64 (image)
+        if (str_starts_with($evidence->file_path, 'data:')) {
+            return response($evidence->file_path);
+        }
+
+        // Cek file fisik di folder public
+        $filePath = public_path($evidence->file_path);
+        
+        if (!file_exists($filePath)) {
             return back()->with('error', 'File tidak ditemukan di server.');
         }
 
-        return Storage::disk('public')->download($evidence->file_path, $evidence->original_name);
+        return response()->download($filePath, $evidence->original_name);
     }
 }

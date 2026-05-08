@@ -42,14 +42,11 @@ class WbsController extends Controller
                     $content = file_get_contents($file->getRealPath());
                     $base64 = 'data:' . $mimeType . ';base64,' . base64_encode($content);
                     $path = $base64;
-                } elseif (str_starts_with($mimeType, 'video/')) {
-                    $type = 'video';
-                    $path = $file->store('wbs_evidences', 'public');
-                } elseif (str_starts_with($mimeType, 'audio/')) {
-                    $type = 'audio';
-                    $path = $file->store('wbs_evidences', 'public');
                 } else {
-                    $path = $file->store('wbs_evidences', 'public');
+                    $type = (str_starts_with($mimeType, 'video/')) ? 'video' : ((str_starts_with($mimeType, 'audio/')) ? 'audio' : 'document');
+                    $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
+                    $file->move(public_path('uploads/wbs'), $filename);
+                    $path = 'uploads/wbs/' . $filename;
                 }
 
                 WhistleblowerEvidence::create([
