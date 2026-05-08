@@ -108,11 +108,10 @@
                                     <i data-lucide="download" class="w-4 h-4"></i>
                                 </a>
                             @else
-                                <a href="{{ asset('storage/' . $evidence->file_path) }}" target="_blank" class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-slate-200 text-slate-500 transition-colors shrink-0">
-                                    <i data-lucide="external-link" class="w-4 h-4"></i>
+                                <a href="{{ route('wbs.evidence.download', $evidence->id) }}" class="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center hover:bg-slate-200 text-slate-500 transition-colors shrink-0">
+                                    <i data-lucide="download" class="w-4 h-4"></i>
                                 </a>
-                            @endif
-                        </div>
+                            @endif                        </div>
                     @endforeach
                 </div>
             </div>
