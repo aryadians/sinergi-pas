@@ -23,11 +23,13 @@ class DashboardController extends Controller
         $user = auth()->user();
         $workUnitId = $request->work_unit_id;
         $today = Carbon::today();
+        $announcements = \App\Models\Announcement::where('is_active', true)->latest()->get();
 
         // --- ADMIN VIEW DATA ---
         if ($user->role === 'superadmin') {
             $data = $this->getDashboardData($workUnitId);
             $data['disciplinaryData'] = $this->getDisciplinaryData();
+            $data['announcements'] = $announcements;
             return view('dashboard', $data);
         } 
         
@@ -70,7 +72,7 @@ class DashboardController extends Controller
 
         return view('dashboard-pegawai', compact(
             'myDocumentsCount', 'verifiedDocs', 'rejectedDocsCount', 'careerProgress', 'latestSalary', 
-            'employee', 'recentDocuments', 'myAttendanceToday'
+            'employee', 'recentDocuments', 'myAttendanceToday', 'announcements'
         ));
     }
 
