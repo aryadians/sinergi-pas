@@ -57,4 +57,16 @@ class WbsController extends Controller
 
         return back()->with('success', 'Status laporan berhasil diperbarui.');
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate([
+            'report_ids' => 'required|array',
+            'report_ids.*' => 'exists:whistleblower_reports,id'
+        ]);
+
+        WhistleblowerReport::whereIn('id', $request->report_ids)->delete();
+
+        return back()->with('success', 'Laporan terpilih berhasil dihapus.');
+    }
 }

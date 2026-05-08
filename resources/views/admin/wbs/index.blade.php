@@ -76,11 +76,14 @@
             </div>
 
             <div class="w-full md:w-auto flex gap-2">
-                <button type="submit" class="w-full md:w-auto px-8 py-4 bg-slate-900 hover:bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95">
+                <button type="button" onclick="bulkDelete()" class="px-6 py-4 bg-red-50 text-red-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-red-600 hover:text-white transition-all shadow-sm flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Hapus Terpilih
+                </button>
+                <button type="submit" class="px-8 py-4 bg-slate-900 hover:bg-red-600 text-white rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg active:scale-95">
                     Terapkan
                 </button>
                 @if(request()->hasAny(['search', 'status']))
-                    <a href="{{ route('admin.wbs.index') }}" class="w-full md:w-auto px-5 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center">
+                    <a href="{{ route('admin.wbs.index') }}" class="px-5 py-4 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest transition-all flex items-center justify-center">
                         <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
                     </a>
                 @endif
@@ -105,6 +108,9 @@
             <table class="w-full text-left">
                 <thead>
                     <tr class="bg-slate-50 border-b border-slate-100">
+                        <th class="px-6 py-4">
+                            <input type="checkbox" id="selectAll" class="w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-0">
+                        </th>
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Tiket & Tanggal</th>
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kategori</th>
                         <th class="px-6 py-4 text-[10px] font-bold text-slate-400 uppercase tracking-widest">Status</th>
@@ -114,6 +120,9 @@
                 <tbody class="divide-y divide-slate-50">
                     @forelse($reports as $report)
                     <tr class="hover:bg-slate-50/50 transition-colors group">
+                        <td class="px-6 py-4">
+                            <input type="checkbox" name="report_ids[]" value="{{ $report->id }}" class="report-checkbox w-4 h-4 rounded border-slate-300 text-red-600 focus:ring-0">
+                        </td>
                         <td class="px-6 py-4">
                             <p class="text-sm font-black text-slate-900">{{ $report->ticket_number }}</p>
                             <p class="text-[10px] font-bold text-slate-400 uppercase mt-1">{{ $report->created_at->format('d M Y H:i') }}</p>
@@ -161,4 +170,42 @@
         @endif
     </div>
 </div>
+<script>
+    document.getElementById('selectAll').addEventListener('change', function() {
+        document.querySelectorAll('.report-checkbox').forEach(checkbox => checkbox.checked = this.checked);
+    });
+
+    function bulkDelete() {
+        const selected = Array.from(document.querySelectorAll('.report-checkbox:checked')).map(cb => cb.value);
+        if (selected.length === 0) {
+            Swal.fire('Peringatan', 'Pilih minimal satu laporan!', 'warning');
+            return;
+        }
+
+        Swal.fire({
+            title: 'Hapus Laporan?',
+            text: `Anda akan menghapus ${selected.length} laporan terpilih.`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            confirmButtonText: 'Ya, Hapus!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = "{{ route('admin.wbs.bulk-destroy') }}";
+                form.innerHTML = '@csrf @method("DELETE")';
+                selected.forEach(id => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'report_ids[]';
+                    input.value = id;
+                    form.appendChild(input);
+                });
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    }
+</script>
 @endsection

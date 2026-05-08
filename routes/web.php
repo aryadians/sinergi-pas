@@ -120,6 +120,7 @@ Route::middleware('auth')->group(function () {
 
         // WBS (Admin)
         Route::get('/admin/wbs', [\App\Http\Controllers\Admin\WbsController::class, 'index'])->name('admin.wbs.index');
+        Route::delete('/admin/wbs/bulk-destroy', [\App\Http\Controllers\Admin\WbsController::class, 'bulkDestroy'])->name('admin.wbs.bulk-destroy');
         Route::get('/admin/wbs/{id}', [\App\Http\Controllers\Admin\WbsController::class, 'show'])->name('admin.wbs.show');
         Route::put('/admin/wbs/{id}', [\App\Http\Controllers\Admin\WbsController::class, 'update'])->name('admin.wbs.update');
 
