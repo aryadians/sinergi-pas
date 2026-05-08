@@ -234,7 +234,7 @@
 
                 <a href="{{ route('wbs.create') }}" class="sidebar-item {{ request()->routeIs('wbs.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl mt-4 bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
                     <i data-lucide="megaphone" class="w-5 h-5"></i>
-                    <span class="text-sm font-black">Lapor WBS (Aman)</span>
+                    <span class="text-sm font-black">Lapor WBS</span>
                 </a>
                 @endif
                 
