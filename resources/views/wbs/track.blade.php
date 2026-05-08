@@ -32,7 +32,7 @@
         @endif
 
         <div class="bg-white rounded-[32px] p-8 shadow-2xl">
-            <form action="{{ route('wbs.track.show', '') }}" method="GET" id="trackForm" class="space-y-6">
+            <form action="#" method="GET" id="trackForm" class="space-y-6">
                 <div>
                     <label class="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 ml-1">Nomor Tiket Pengaduan</label>
                     <div class="relative group">
@@ -64,7 +64,8 @@
         function submitForm() {
             const ticket = document.getElementById('ticket_number').value.trim();
             if (ticket) {
-                window.location.href = "{{ route('wbs.track.show', '') }}/" + ticket;
+                // Gunakan base URL manual untuk menghindari masalah parameter route
+                window.location.href = "{{ url('/wbs/track') }}/" + ticket;
             }
         }
         
