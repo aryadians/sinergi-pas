@@ -75,6 +75,9 @@ Route::middleware('auth')->group(function () {
     // Best Employee (Accessible by all authenticated users)
     Route::get('/best-employee', [\App\Http\Controllers\Admin\BestEmployeeController::class, 'index'])->name('admin.best-employee.index');
 
+    // Global Running Text API
+    Route::get('/settings/running-text', [SettingController::class, 'getRunningText'])->name('settings.running-text');
+
     // System Settings (Superadmin)
     Route::middleware('can:superadmin')->group(function () {
         Route::get('/dashboard/export/pdf', [DashboardController::class, 'exportPdf'])->name('dashboard.export.pdf');
@@ -92,7 +95,6 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
-        Route::get('/settings/running-text', [SettingController::class, 'getRunningText'])->name('settings.running-text');
 
         // Rank Management
         Route::delete('/admin/ranks/bulk', [\App\Http\Controllers\Admin\RankController::class, 'bulkDestroy'])->name('admin.ranks.bulk-destroy');
