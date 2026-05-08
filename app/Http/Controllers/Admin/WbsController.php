@@ -8,10 +8,32 @@ use Illuminate\Http\Request;
 
 class WbsController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $reports = WhistleblowerReport::latest()->paginate(20);
-        return view('admin.wbs.index', compact('reports'));
+        $query = WhistleblowerReport::query();
+
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where('ticket_number', 'like', "%{$search}%")
+                  ->orWhere('description', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%");
+        }
+
+        if ($request->filled('status') && $request->status !== 'all') {
+            $query->where('status', $request->status);
+        }
+
+        $reports = $query->latest()->paginate(20)->withQueryString();
+
+        $stats = [
+            'total' => WhistleblowerReport::count(),
+            'pending' => WhistleblowerReport::where('status', 'pending')->count(),
+            'investigating' => WhistleblowerReport::where('status', 'investigating')->count(),
+            'resolved' => WhistleblowerReport::where('status', 'resolved')->count(),
+            'rejected' => WhistleblowerReport::where('status', 'rejected')->count(),
+        ];
+
+        return view('admin.wbs.index', compact('reports', 'stats'));
     }
 
     public function show($id)
