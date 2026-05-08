@@ -94,23 +94,27 @@
     <div id="tab-individual" class="sched-tab-content hidden space-y-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             <!-- Form Plot -->
-            <div class="lg:col-span-4 lg:sticky lg:top-8">
-                <div class="bg-slate-900 rounded-[32px] p-8 shadow-2xl relative overflow-hidden border border-white/5 group">
+            <div class="lg:col-span-4 sticky top-8 z-20">
+                <div class="bg-slate-900 rounded-[32px] p-6 lg:p-8 shadow-2xl relative overflow-hidden border border-white/5 group flex flex-col max-h-[85vh]">
                     <div class="absolute -right-16 -top-16 w-64 h-64 bg-blue-600/10 blur-[80px] transition-all duration-700"></div>
                     
-                    <div class="relative z-10">
-                        <div class="flex items-center gap-4 mb-8">
-                            <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
-                                <i data-lucide="user-plus" class="w-6 h-6 text-blue-400"></i>
+                    <div class="relative z-10 shrink-0">
+                        <div class="flex items-center gap-4 mb-6">
+                            <div class="w-10 h-10 lg:w-12 lg:h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center">
+                                <i data-lucide="user-plus" class="w-5 h-5 lg:w-6 lg:h-6 text-blue-400"></i>
                             </div>
                             <div>
-                                <h3 class="text-lg font-black text-white uppercase tracking-tight italic">Plot Personel</h3>
+                                <h3 class="text-base lg:text-lg font-black text-white uppercase tracking-tight italic">Plot Personel</h3>
                                 <p class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Tugas Khusus & Izin</p>
                             </div>
                         </div>
+                    </div>
+                    
+                    <form action="{{ route('admin.schedules.store-individual') }}" method="POST" class="flex flex-col gap-6 relative z-10 flex-1 min-h-0">
+                        @csrf
                         
-                        <form action="{{ route('admin.schedules.store-individual') }}" method="POST" class="space-y-6">
-                            @csrf
+                        <!-- Scrollable middle section -->
+                        <div class="flex-1 overflow-y-auto custom-scrollbar space-y-6 pr-2">
                             <div class="space-y-3">
                                 <div class="flex justify-between items-center mb-1">
                                     <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Pilih Pegawai (Bisa Banyak)</label>
@@ -122,7 +126,7 @@
                                     <input type="text" placeholder="Cari nama pegawai..." onkeyup="filterEmployeeList(this.value)" class="w-full pl-10 pr-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white text-[11px] font-bold outline-none focus:border-blue-500/50 transition-all placeholder:text-slate-700">
                                 </div>
 
-                                <div class="max-h-64 overflow-y-auto custom-scrollbar space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10" id="employeeChecklist">
+                                <div class="max-h-48 lg:max-h-64 overflow-y-auto custom-scrollbar space-y-4 bg-white/5 p-4 rounded-2xl border border-white/10" id="employeeChecklist">
                                     @foreach($employeesByGroup as $groupLabel => $items)
                                         <div class="space-y-2 group-section">
                                             <div class="flex items-center justify-between px-2 py-1 bg-white/5 rounded-lg border border-white/5">
@@ -190,11 +194,11 @@
                                 </div>
                             </div>
 
-                            <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-500 transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
+                            <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-500 transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 shrink-0">
                                 <i data-lucide="check-circle" class="w-4 h-4"></i> Simpan Penugasan
                             </button>
-                        </form>
-                    </div>
+                        </div>
+                    </form>
                 </div>
             </div>
 
