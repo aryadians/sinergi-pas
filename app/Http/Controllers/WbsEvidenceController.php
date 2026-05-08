@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\WhistleblowerEvidence;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 class WbsEvidenceController extends Controller
