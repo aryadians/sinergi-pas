@@ -26,6 +26,10 @@ Route::middleware('guest')->group(function () {
     Route::post('/reset-password', [ForgotPasswordController::class, 'reset'])->name('password.update');
 });
 
+// WBS Public Routes
+Route::get('/wbs/track', [\App\Http\Controllers\WbsController::class, 'track'])->name('wbs.track');
+Route::get('/wbs/track/{ticket}', [\App\Http\Controllers\WbsController::class, 'showTrack'])->name('wbs.track.show');
+
 // Authenticated Routes
 Route::middleware('auth')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
@@ -65,6 +69,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/payroll/download', [SelfServiceController::class, 'downloadMySlip'])->name('payroll.download');
         Route::get('/attendance', [SelfServiceController::class, 'myAttendance'])->name('attendance');
     });
+
+    // WBS (Pegawai)
+    Route::get('/wbs/create', [\App\Http\Controllers\WbsController::class, 'create'])->name('wbs.create');
+    Route::post('/wbs/store', [\App\Http\Controllers\WbsController::class, 'store'])->name('wbs.store');
 
     // Notifications
     Route::post('/notifications/mark-read', function() {
@@ -108,6 +116,11 @@ Route::middleware('auth')->group(function () {
         Route::post('/settings/work-units', [SettingController::class, 'storeWorkUnit'])->name('settings.work-units.store');
         Route::delete('/settings/work-units/bulk', [SettingController::class, 'bulkDestroyWorkUnit'])->name('settings.work-units.bulk-destroy');
         Route::delete('/settings/work-units/{workUnit}', [SettingController::class, 'destroyWorkUnit'])->name('settings.work-units.destroy');
+
+        // WBS (Admin)
+        Route::get('/admin/wbs', [\App\Http\Controllers\Admin\WbsController::class, 'index'])->name('admin.wbs.index');
+        Route::get('/admin/wbs/{id}', [\App\Http\Controllers\Admin\WbsController::class, 'show'])->name('admin.wbs.show');
+        Route::put('/admin/wbs/{id}', [\App\Http\Controllers\Admin\WbsController::class, 'update'])->name('admin.wbs.update');
 
         // Report Issues Management
         Route::get('/admin/report-issues', [\App\Http\Controllers\Admin\ReportIssueController::class, 'index'])->name('admin.report-issues.index');

@@ -231,12 +231,22 @@
                     <i data-lucide="calendar-check" class="w-5 h-5"></i>
                     <span class="text-sm font-semibold">Monitor Absensi</span>
                 </a>
+
+                <a href="{{ route('wbs.create') }}" class="sidebar-item {{ request()->routeIs('wbs.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl mt-4 bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                    <i data-lucide="megaphone" class="w-5 h-5"></i>
+                    <span class="text-sm font-black">Lapor WBS (Aman)</span>
+                </a>
                 @endif
                 
                 @if(auth()->user()->role === 'superadmin')
                 <div class="pt-4 pb-2 px-4">
                     <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kepegawaian</p>
                 </div>
+
+                <a href="{{ route('admin.wbs.index') }}" class="sidebar-item {{ request()->routeIs('admin.wbs.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl mb-4 bg-red-50 text-red-600 hover:bg-red-100 transition-colors">
+                    <i data-lucide="alert-triangle" class="w-5 h-5"></i>
+                    <span class="text-sm font-black">Pengaduan WBS</span>
+                </a>
 
                 <a href="{{ route('employees.index') }}" class="sidebar-item {{ request()->routeIs('employees.*') ? 'active' : 'text-slate-500' }} flex items-center gap-3 px-4 py-3 rounded-xl">
                     <i data-lucide="users" class="w-5 h-5"></i>

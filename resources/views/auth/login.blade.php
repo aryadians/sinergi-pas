@@ -132,6 +132,13 @@
                         </button>
                     </form>
 
+                    <!-- WBS Tracking Link -->
+                    <div class="mt-6 text-center">
+                        <a href="{{ route('wbs.track') }}" class="inline-flex items-center gap-2 text-xs font-bold text-red-500 hover:text-red-700 transition-colors uppercase tracking-widest bg-red-50 px-4 py-2 rounded-xl">
+                            <i class="fas fa-search"></i> Lacak Pengaduan WBS
+                        </a>
+                    </div>
+
                     <!-- Footer Card -->
                     <div class="mt-10 pt-8 border-t border-slate-100 text-center">
                         <div class="inline-flex items-center gap-2">
