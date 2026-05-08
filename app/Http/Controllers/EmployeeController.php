@@ -22,7 +22,9 @@ class EmployeeController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Employee::with(['user', 'work_unit', 'position_relation', 'rank_relation', 'category', 'squad']);
+        $query = Employee::whereHas('user', function($q) {
+            $q->where('role', '!=', 'superadmin');
+        })->with(['user', 'work_unit', 'position_relation', 'rank_relation', 'category', 'squad']);
 
         if ($request->filled('search')) {
             $search = $request->search;

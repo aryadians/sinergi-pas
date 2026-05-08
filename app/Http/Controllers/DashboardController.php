@@ -80,7 +80,9 @@ class DashboardController extends Controller
     {
         $month = now()->format('Y-m');
         $payrollService = app(\App\Services\PayrollService::class);
-        $employees = Employee::whereHas('user')->get();
+        $employees = Employee::whereHas('user', function($q) {
+            $q->where('role', '!=', 'superadmin');
+        })->get();
 
         $stats = [];
         foreach ($employees as $emp) {

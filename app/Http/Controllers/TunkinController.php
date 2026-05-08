@@ -27,7 +27,10 @@ class TunkinController extends Controller
         $monthStr = $request->month ?? now()->format('Y-m');
         $date = Carbon::parse($monthStr . '-01');
         
-        $query = Employee::with(['tunkin', 'rank_relation', 'position_relation', 'work_unit']);
+        $query = Employee::with(['tunkin', 'rank_relation', 'position_relation', 'work_unit'])
+            ->whereHas('user', function($q) {
+                $q->where('role', '!=', 'superadmin');
+            });
         
         if ($request->filled('search')) {
             $search = $request->search;

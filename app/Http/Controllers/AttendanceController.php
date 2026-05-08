@@ -35,7 +35,7 @@ class AttendanceController extends Controller
         $monthStr = Carbon::parse($startDate)->format('Y-m');
 
         $employees = Employee::with(['work_unit', 'squad', 'rank_relation'])
-            ->whereHas('user')
+            ->whereHas('user', function($q) { $q->where('role', '!=', 'superadmin'); })
             ->when($search, function($q) use ($search) {
                 $q->where('full_name', 'like', "%$search%")
                   ->orWhere('nip', 'like', "%$search%");
@@ -46,7 +46,7 @@ class AttendanceController extends Controller
             ->orderBy('full_name')
             ->paginate(50)->withQueryString();
 
-        $allFilteredEmployees = Employee::whereHas('user')
+        $allFilteredEmployees = Employee::whereHas('user', function($q) { $q->where('role', '!=', 'superadmin'); })
             ->when($search, function($q) use ($search) {
                 $q->where('full_name', 'like', "%$search%")
                   ->orWhere('nip', 'like', "%$search%");
@@ -139,7 +139,7 @@ class AttendanceController extends Controller
 
         $summary = (object)['total_present' => $totalPresent, 'total_valid_days' => $totalValidDays, 'total_late' => $totalLate, 'total_allowance' => $totalAllowance];
 
-        $allEmployees = Employee::whereHas('user')->orderBy('full_name')->get();
+        $allEmployees = Employee::whereHas('user', function($q) { $q->where('role', '!=', 'superadmin'); })->orderBy('full_name')->get();
 
         $attendanceLogs = Attendance::whereHas('employee')->with(['employee.rank_relation'])
             ->whereBetween('date', [$startDate, $endDate])
@@ -481,7 +481,7 @@ class AttendanceController extends Controller
         $startDate = $request->start_date ?? now()->startOfMonth()->format('Y-m-d');
         $endDate = $request->end_date ?? now()->endOfMonth()->format('Y-m-d');
         
-        $query = Employee::query()->orderBy('full_name');
+        $query = Employee::whereHas('user', function($q) { $q->where('role', '!=', 'superadmin'); })->orderBy('full_name');
         if ($request->filled('employee_id')) $query->where('id', $request->employee_id);
         if ($request->filled('work_unit_id')) $query->where('work_unit_id', $request->work_unit_id);
 

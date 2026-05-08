@@ -23,7 +23,9 @@ class BestEmployeeController extends Controller
         $date = Carbon::parse($monthStr . '-01');
         
         $employees = Employee::with(['rank_relation', 'work_unit', 'user'])
-            ->whereHas('user')
+            ->whereHas('user', function($q) {
+                $q->where('role', '!=', 'superadmin');
+            })
             ->get();
 
         $rankedEmployees = [];
