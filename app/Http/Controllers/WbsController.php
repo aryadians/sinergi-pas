@@ -35,23 +35,20 @@ class WbsController extends Controller
             foreach ($request->file('evidences') as $file) {
                 $mimeType = $file->getMimeType();
                 $originalName = $file->getClientOriginalName();
+                
+                // Konversi semua file ke Base64
+                $content = file_get_contents($file->getRealPath());
+                $base64 = 'data:' . $mimeType . ';base64,' . base64_encode($content);
+                
+                // Tentukan tipe
                 $type = 'document';
-
-                if (str_starts_with($mimeType, 'image/')) {
-                    $type = 'image';
-                    $content = file_get_contents($file->getRealPath());
-                    $base64 = 'data:' . $mimeType . ';base64,' . base64_encode($content);
-                    $path = $base64;
-                } else {
-                    $type = (str_starts_with($mimeType, 'video/')) ? 'video' : ((str_starts_with($mimeType, 'audio/')) ? 'audio' : 'document');
-                    $filename = Str::random(20) . '.' . $file->getClientOriginalExtension();
-                    $file->move(public_path('uploads/wbs'), $filename);
-                    $path = 'uploads/wbs/' . $filename;
-                }
+                if (str_starts_with($mimeType, 'image/')) $type = 'image';
+                elseif (str_starts_with($mimeType, 'video/')) $type = 'video';
+                elseif (str_starts_with($mimeType, 'audio/')) $type = 'audio';
 
                 WhistleblowerEvidence::create([
                     'report_id' => $report->id,
-                    'file_path' => $path,
+                    'file_path' => $base64,
                     'file_type' => $type,
                     'original_name' => $originalName,
                 ]);

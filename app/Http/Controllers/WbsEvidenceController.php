@@ -11,18 +11,19 @@ class WbsEvidenceController extends Controller
     {
         $evidence = WhistleblowerEvidence::findOrFail($id);
         
-        // Cek jika base64 (image)
-        if (str_starts_with($evidence->file_path, 'data:')) {
-            return response($evidence->file_path);
-        }
-
-        // Cek file fisik di folder public
-        $filePath = public_path($evidence->file_path);
+        // Karena semua file sudah base64, kita langsung render data URL tersebut
+        // Untuk memaksa download, kita bisa menggunakan base64_decode di server, 
+        // tapi untuk kemudahan tampilan di browser, kita bisa langsung redirect atau stream.
         
-        if (!file_exists($filePath)) {
-            return back()->with('error', 'File tidak ditemukan di server.');
-        }
+        $base64 = $evidence->file_path;
+        
+        // Memisahkan data dari header (data:mime/type;base64,...)
+        $data = explode(',', $base64);
+        $fileData = base64_decode($data[1]);
+        $mimeType = explode(';', explode(':', $data[0])[1])[0];
 
-        return response()->download($filePath, $evidence->original_name);
+        return response($fileData)
+            ->header('Content-Type', $mimeType)
+            ->header('Content-Disposition', 'attachment; filename="' . $evidence->original_name . '"');
     }
 }
