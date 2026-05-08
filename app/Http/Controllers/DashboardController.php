@@ -208,7 +208,10 @@ class DashboardController extends Controller
 
     private function getDashboardData($workUnitId = null, $includeAll = false)
     {
-        $employeeQuery = Employee::query();
+        $employeeQuery = Employee::whereHas('user', function($q) {
+            $q->where('role', '!=', 'superadmin');
+        });
+        
         if ($workUnitId) { $employeeQuery->where('work_unit_id', $workUnitId); }
 
         $totalEmployees = (clone $employeeQuery)->count();
