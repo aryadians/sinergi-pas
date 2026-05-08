@@ -8,7 +8,7 @@
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <form action="{{ route('my.attendance') }}" method="GET" class="flex items-center gap-3 bg-white p-2 rounded-2xl border border-slate-200 shadow-sm w-full md:w-auto">
             <i data-lucide="calendar" class="w-4 h-4 text-slate-400 ml-2"></i>
-            <input type="month" name="month" value="{{ $monthStr }}" onchange="this.form.submit()" class="px-4 py-2 rounded-xl bg-slate-50 border-none text-sm font-black text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
+            <input type="month" name="month" value="{{ $monthStr }}" min="2026-05" onchange="this.form.submit()" class="px-4 py-2 rounded-xl bg-slate-50 border-none text-sm font-black text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none">
         </form>
 
         <div class="px-6 py-3 rounded-2xl bg-blue-50 border border-blue-100 text-blue-600 flex items-center gap-3">

@@ -31,6 +31,12 @@ class SelfServiceController extends Controller
         }
 
         $monthStr = $request->month ?? now()->format('Y-m');
+        
+        // Batasi minimal bulan Mei 2026 untuk pegawai
+        if (Carbon::parse($monthStr . '-01')->startOfMonth() < Carbon::parse('2026-05-01')) {
+            $monthStr = '2026-05';
+        }
+
         $date = Carbon::parse($monthStr . '-01');
         
         $payroll = $this->payrollService->calculateMonthlyPayroll($employee, $monthStr);
@@ -59,6 +65,12 @@ class SelfServiceController extends Controller
         }
 
         $monthStr = $request->month ?? now()->format('Y-m');
+        
+        // Batasi minimal bulan Mei 2026 untuk pegawai
+        if (Carbon::parse($monthStr . '-01')->startOfMonth() < Carbon::parse('2026-05-01')) {
+            $monthStr = '2026-05';
+        }
+
         $date = Carbon::parse($monthStr . '-01');
 
         $payroll = $this->payrollService->calculateMonthlyPayroll($employee, $monthStr);
@@ -97,6 +109,11 @@ class SelfServiceController extends Controller
         }
 
         $monthStr = $request->month ?? now()->format('Y-m');
+        
+        // Batasi minimal bulan Mei 2026 untuk pegawai
+        if (Carbon::parse($monthStr . '-01')->startOfMonth() < Carbon::parse('2026-05-01')) {
+            $monthStr = '2026-05';
+        }
         
         $payroll = $this->payrollService->calculateMonthlyPayroll($employee, $monthStr);
         
