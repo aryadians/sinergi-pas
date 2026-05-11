@@ -490,7 +490,6 @@ class AttendanceController extends Controller
         
         $eligibleStatuses = ['present', 'late', 'picket'];
         
-        // Multiplier check (Shift Malam)
         $multiplier1 = 1;
         $multiplier2 = 1;
         
@@ -504,12 +503,20 @@ class AttendanceController extends Controller
             if ($hour >= 18 || $hour < 5) $multiplier2 = 2;
         }
 
-        $allowance1 = in_array($request->status, $eligibleStatuses) ? ($empRate * $multiplier1) : 0;
-        $allowance2 = in_array($request->status_2, $eligibleStatuses) ? ($empRate * $multiplier2) : 0;
+        // Jika request memiliki nilai nominal manual, gunakan itu. Jika tidak, hitung otomatis.
+        $allowance1 = $request->filled('allowance_amount') 
+            ? (float)$request->allowance_amount 
+            : (in_array($request->status, $eligibleStatuses) ? ($empRate * $multiplier1) : 0);
+            
+        $allowance2 = $request->filled('allowance_amount_2') 
+            ? (float)$request->allowance_amount_2 
+            : (in_array($request->status_2, $eligibleStatuses) ? ($empRate * $multiplier2) : 0);
 
-        // Cap 2x rate
-        if (($allowance1 + $allowance2) > ($empRate * 2)) {
-            $allowance2 = ($empRate * 2) - $allowance1;
+        // Cap 2x rate hanya jika dihitung otomatis (opsional, tapi jika manual kita bebaskan admin)
+        if (!$request->filled('allowance_amount') && !$request->filled('allowance_amount_2')) {
+            if (($allowance1 + $allowance2) > ($empRate * 2)) {
+                $allowance2 = ($empRate * 2) - $allowance1;
+            }
         }
 
         $log->update([

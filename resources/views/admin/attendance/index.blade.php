@@ -536,6 +536,23 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Uang Makan Shift 1 (Rp)</label>
+                        <div class="relative group">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">Rp</span>
+                            <input type="number" name="allowance_amount" id="edit_allowance_amount" class="w-full pl-10 pr-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-emerald-500 outline-none transition-all font-black text-sm text-emerald-600">
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Uang Makan Shift 2 (Rp)</label>
+                        <div class="relative group">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xs">Rp</span>
+                            <input type="number" name="allowance_amount_2" id="edit_allowance_amount_2" class="w-full pl-10 pr-5 py-3.5 rounded-2xl bg-slate-50 border-2 border-transparent focus:bg-white focus:border-emerald-500 outline-none transition-all font-black text-sm text-emerald-600">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="p-5 bg-amber-50 rounded-2xl border border-amber-100 flex gap-3 mt-4">
                     <i data-lucide="alert-circle" class="w-5 h-5 text-amber-500 shrink-0"></i>
                     <div>
@@ -566,6 +583,9 @@
         
         document.getElementById('edit_status').value = log.status || 'absent';
         document.getElementById('edit_status_2').value = log.status_2 || 'absent';
+        
+        document.getElementById('edit_allowance_amount').value = log.allowance_amount || 0;
+        document.getElementById('edit_allowance_amount_2').value = log.allowance_amount_2 || 0;
         
         document.getElementById('editModal').classList.remove('hidden');
     }
