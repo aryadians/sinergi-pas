@@ -17,10 +17,6 @@
                     <i data-lucide="megaphone" class="w-4 h-4"></i>
                     <span>Siaran & Style</span>
                 </a>
-                <a href="#absensi" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-semibold hover:bg-white hover:border-slate-200 border border-transparent transition-all" data-nav="absensi">
-                    <i data-lucide="fingerprint" class="w-4 h-4"></i>
-                    <span>Absensi & Uang Makan</span>
-                </a>
                 <a href="#master" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-semibold hover:bg-white hover:border-slate-200 border border-transparent transition-all" data-nav="master">
                     <i data-lucide="database" class="w-4 h-4"></i>
                     <span>Master Data</span>
@@ -174,45 +170,6 @@
                     <div class="flex justify-end">
                         <button type="submit" class="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all btn-3d shadow-xl">
                             Simpan Style Visual
-                        </button>
-                    </div>
-                </form>
-            </section>
-
-            <!-- Absensi & Uang Makan -->
-            <section id="absensi" class="space-y-6 pt-10 border-t border-slate-200">
-                <div class="flex items-center gap-3 pb-2 border-b border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-900 uppercase tracking-widest text-xs">Absensi & Uang Makan</h3>
-                </div>
-
-                <form action="{{ route('settings.update') }}" method="POST" class="space-y-6">
-                    @csrf
-                    <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 card-3d">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                            <div>
-                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Threshold Terlambat (Kantor)</label>
-                                <div class="relative">
-                                    <i data-lucide="clock" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"></i>
-                                    <input type="time" name="office_late_threshold" value="{{ $settings['office_late_threshold'] ?? '07:30' }}" class="w-full pl-12 pr-5 py-4 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-black text-lg text-blue-600 transition-all">
-                                </div>
-                                <p class="text-[10px] text-slate-400 mt-3 italic font-medium leading-relaxed">Staf yang melakukan scan setelah jam ini akan otomatis tercatat sebagai "Terlambat".</p>
-                            </div>
-                            <div class="bg-slate-50 rounded-3xl p-8 border border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
-                                <div class="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-4">
-                                    <i data-lucide="banknote" class="w-6 h-6 text-emerald-500"></i>
-                                </div>
-                                <h4 class="text-sm font-bold text-slate-900 mb-2">Rate Uang Makan</h4>
-                                <p class="text-[10px] text-slate-500 font-medium leading-relaxed mb-6">Manajemen besaran uang makan kini terintegrasi langsung dengan data Golongan.</p>
-                                <a href="{{ route('admin.ranks.index') }}" class="px-6 py-3 bg-slate-900 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-600 transition-all shadow-lg">
-                                    Atur Rate di Halaman Golongan
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end">
-                        <button type="submit" class="px-10 py-4 bg-blue-600 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-700 transition-all btn-3d shadow-xl">
-                            Simpan Parameter Absensi
                         </button>
                     </div>
                 </form>
