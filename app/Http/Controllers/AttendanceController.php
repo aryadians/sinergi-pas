@@ -444,6 +444,10 @@ class AttendanceController extends Controller
                                 $shiftName = strtoupper($sched['shift']->name ?? '');
                                 $isNightShift = str_contains($shiftName, 'MALAM');
                                 $mealMultiplier = $isNightShift ? 2 : 1;
+                                
+                                // Jika ada assignedCheckIn (berhasil match), berikan uang makan.
+                                // Logika match di atas sudah punya filter toleransi -240 (4 jam sebelum).
+                                // Jadi jika 04:05 masuk jadwal 07:30 (selisih ~205m), dia lolos match dan lolos allowance.
                                 $allowance = $empRate * $mealMultiplier;
                             }
 
@@ -481,8 +485,33 @@ class AttendanceController extends Controller
             'status_2' => 'required|string',
         ]);
 
-        $log = Attendance::findOrFail($request->log_id);
+        $log = Attendance::with('employee.rank_relation')->findOrFail($request->log_id);
+        $empRate = (float)($log->employee->rank_relation->meal_allowance ?? 0);
         
+        $eligibleStatuses = ['present', 'late', 'picket'];
+        
+        // Multiplier check (Shift Malam)
+        $multiplier1 = 1;
+        $multiplier2 = 1;
+        
+        // Deteksi shift malam dari jam check-in manual jika ada
+        if ($request->check_in) {
+            $hour = (int)explode(':', $request->check_in)[0];
+            if ($hour >= 18 || $hour < 5) $multiplier1 = 2;
+        }
+        if ($request->check_in_2) {
+            $hour = (int)explode(':', $request->check_in_2)[0];
+            if ($hour >= 18 || $hour < 5) $multiplier2 = 2;
+        }
+
+        $allowance1 = in_array($request->status, $eligibleStatuses) ? ($empRate * $multiplier1) : 0;
+        $allowance2 = in_array($request->status_2, $eligibleStatuses) ? ($empRate * $multiplier2) : 0;
+
+        // Cap 2x rate
+        if (($allowance1 + $allowance2) > ($empRate * 2)) {
+            $allowance2 = ($empRate * 2) - $allowance1;
+        }
+
         $log->update([
             'check_in' => $request->check_in,
             'check_out' => $request->check_out,
@@ -490,6 +519,8 @@ class AttendanceController extends Controller
             'check_out_2' => $request->check_out_2,
             'status' => $request->status,
             'status_2' => $request->status_2,
+            'allowance_amount' => $allowance1,
+            'allowance_amount_2' => $allowance2,
         ]);
 
         AuditLog::create([
