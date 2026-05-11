@@ -30,6 +30,7 @@ class ProfileController extends Controller
 
         $request->validate([
             'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
             'photo' => 'nullable|image|mimes:jpeg,png,jpg|max:10240', // Relaxed to 10MB for server-side compression
             'password' => 'nullable|min:8|confirmed',
         ]);
@@ -39,6 +40,11 @@ class ProfileController extends Controller
         if ($request->name !== $user->name) {
             $user->update(['name' => $request->name]);
             $changes[] = 'nama';
+        }
+
+        if ($request->email !== $user->email) {
+            $user->update(['email' => $request->email]);
+            $changes[] = 'email';
         }
 
         if ($request->filled('password')) {

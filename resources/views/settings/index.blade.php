@@ -29,10 +29,6 @@
                     <i data-lucide="mail" class="w-4 h-4"></i>
                     <span>Konfigurasi Email</span>
                 </a>
-                <a href="#profil" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-semibold hover:bg-white hover:border-slate-200 border border-transparent transition-all" data-nav="profil">
-                    <i data-lucide="user-cog" class="w-4 h-4"></i>
-                    <span>Profil Admin</span>
-                </a>
                 
                 <div class="pt-6">
                     <a href="{{ route('settings.health') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-wider hover:bg-blue-100 transition-all">
@@ -399,6 +395,15 @@
                                             <i data-lucide="eye" class="w-4 h-4"></i>
                                         </button>
                                     </div>
+                                    <div class="mt-3 p-3 bg-amber-50 rounded-xl border border-amber-100 text-[10px] font-bold text-amber-700 leading-relaxed">
+                                        <i data-lucide="info" class="w-3 h-3 inline-block -mt-0.5 mr-1"></i>
+                                        <strong>Cara mendapatkan Gmail App Password:</strong><br>
+                                        1. Login ke Akun Google Anda.<br>
+                                        2. Buka "Keamanan" (Security) > Aktifkan "Verifikasi 2 Langkah" (2-Step Verification).<br>
+                                        3. Cari menu "Sandi Aplikasi" (App Passwords) di kolom pencarian Akun Google.<br>
+                                        4. Buat sandi baru (Pilih "Lainnya" dan beri nama, misal: Sinergi PAS).<br>
+                                        5. Copy 16 digit password yang muncul dan paste ke kolom di atas.
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -433,57 +438,6 @@
                     <div class="flex justify-end">
                         <button type="submit" class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all btn-3d shadow-xl">
                             Simpan Konfigurasi Email
-                        </button>
-                    </div>
-                </form>
-            </section>
-
-            <!-- Profil Admin -->
-            <section id="profil" class="space-y-6 pt-10 border-t border-slate-200">
-                <div class="flex items-center gap-3 pb-2 border-b border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-900 uppercase tracking-widest text-xs">Informasi Profil Admin</h3>
-                </div>
-
-                <form action="{{ route('settings.admin-profile.update') }}" method="POST" class="space-y-6">
-                    @csrf @method('PUT')
-                    <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 card-3d">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-                            <div class="space-y-6">
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Nama Lengkap</label>
-                                    <input type="text" name="name" value="{{ auth()->user()->name }}" required class="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm bg-slate-50">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Email Login</label>
-                                    <input type="email" name="email" value="{{ auth()->user()->email }}" required class="w-full px-5 py-4 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm bg-slate-50">
-                                    <p class="text-[9px] text-amber-600 font-bold uppercase mt-2 italic">* Pastikan email ini aktif untuk kepentingan Lupa Password.</p>
-                                </div>
-                            </div>
-                            
-                            <div class="bg-blue-50 rounded-3xl p-8 border border-blue-100 space-y-4">
-                                <h4 class="text-xs font-black text-blue-900 uppercase tracking-widest flex items-center gap-2">
-                                    <i data-lucide="lock" class="w-4 h-4"></i>
-                                    Ganti Kata Sandi (Opsional)
-                                </h4>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">Password Lama</label>
-                                    <input type="password" name="current_password" class="w-full px-5 py-3 rounded-xl border border-blue-200 focus:border-blue-500 outline-none font-bold text-sm bg-white">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">Password Baru</label>
-                                    <input type="password" name="new_password" class="w-full px-5 py-3 rounded-xl border border-blue-200 focus:border-blue-500 outline-none font-bold text-sm bg-white">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-2">Konfirmasi Password Baru</label>
-                                    <input type="password" name="new_password_confirmation" class="w-full px-5 py-3 rounded-xl border border-blue-200 focus:border-blue-500 outline-none font-bold text-sm bg-white">
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="flex justify-end">
-                        <button type="submit" class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all btn-3d shadow-xl">
-                            Update Profil Admin
                         </button>
                     </div>
                 </form>

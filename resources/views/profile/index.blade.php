@@ -99,11 +99,11 @@
                             </div>
                         </div>
                         <div class="space-y-2">
-                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Email Instansi</label>
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] ml-1">Email Aktif (Untuk Login & Lupa Password)</label>
                             <div class="relative group">
                                 <i data-lucide="mail" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-300 group-focus-within:text-blue-500 transition-colors"></i>
-                                <input type="email" value="{{ $user->email }}" disabled 
-                                    class="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-100 bg-slate-100/50 text-slate-400 text-sm font-bold cursor-not-allowed">
+                                <input type="email" name="email" value="{{ $user->email }}" required 
+                                    class="w-full pl-12 pr-6 py-4 rounded-2xl border border-slate-200 bg-slate-50 text-sm font-bold focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-50 outline-none transition-all">
                             </div>
                         </div>
                     </div>

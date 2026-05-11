@@ -58,41 +58,6 @@ class SettingController extends Controller
         return back()->with('success', 'Pengaturan berhasil diperbarui.');
     }
 
-    public function updateAdminProfile(Request $request)
-    {
-        $user = auth()->user();
-        
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
-            'current_password' => 'nullable|required_with:new_password',
-            'new_password' => 'nullable|min:8|confirmed',
-        ]);
-
-        $data = [
-            'name' => $request->name,
-            'email' => $request->email,
-        ];
-
-        if ($request->filled('new_password')) {
-            if (!\Illuminate\Support\Facades\Hash::check($request->current_password, $user->password)) {
-                return back()->withErrors(['current_password' => 'Password lama tidak sesuai.']);
-            }
-            $data['password'] = \Illuminate\Support\Facades\Hash::make($request->new_password);
-        }
-
-        $user->update($data);
-
-        AuditLog::create([
-            'user_id' => $user->id,
-            'activity' => 'update_admin_profile',
-            'ip_address' => $request->ip(),
-            'details' => $user->name . ' memperbarui profil admin-nya sendiri'
-        ]);
-
-        return back()->with('success', 'Profil admin berhasil diperbarui.');
-    }
-
     public function testEmail()
     {
         try {
