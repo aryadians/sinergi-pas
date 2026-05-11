@@ -27,7 +27,9 @@ class DocumentController extends Controller
             $categories = DocumentCategory::withCount('documents')->get();
             
             // Advanced Employee Query with Filters
-            $query = Employee::query();
+            $query = Employee::whereHas('user', function($q) {
+                $q->where('role', '!=', 'superadmin');
+            });
             
             // Search by Name or NIP
             if ($request->filled('search')) {
