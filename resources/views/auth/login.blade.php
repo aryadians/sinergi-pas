@@ -124,6 +124,9 @@
                                     <i id="eyeIcon" class="fas fa-eye"></i>
                                 </button>
                             </div>
+                            <div class="flex justify-end px-1">
+                                <a href="{{ route('password.request') }}" class="text-[10px] font-bold text-blue-500 hover:text-blue-700 uppercase tracking-widest transition-colors mt-1">Lupa Password?</a>
+                            </div>
                         </div>
 
                         <button type="submit" 
