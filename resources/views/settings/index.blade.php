@@ -63,6 +63,7 @@
                                     ['key' => 'widget_stats', 'label' => 'Statistik Utama', 'icon' => 'bar-chart-3'],
                                     ['key' => 'widget_employees', 'label' => 'Unit Kerja', 'icon' => 'users'],
                                     ['key' => 'widget_chart', 'label' => 'Grafik Berkas', 'icon' => 'pie-chart'],
+                                    ['key' => 'widget_wbs', 'label' => 'Aktivitas WBS', 'icon' => 'shield-alert'],
                                     ['key' => 'widget_activity', 'label' => 'Audit Trail', 'icon' => 'activity'],
                                 ];
                             @endphp

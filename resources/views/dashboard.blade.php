@@ -217,6 +217,7 @@
 
         <!-- Right: Audit Trail -->
         <div class="space-y-8">
+            @if(($widgets['widget_wbs'] ?? 'on') === 'on')
             <div class="bg-red-900/10 rounded-[40px] border border-red-200 shadow-sm overflow-hidden flex flex-col h-[300px] card-3d">
                 <div class="p-6 border-b border-red-200/50 bg-red-50/50 flex justify-between items-center">
                     <h3 class="text-[10px] font-black text-red-900 uppercase tracking-[0.3em]">Pengaduan WBS Terbaru</h3>
@@ -238,6 +239,7 @@
                     @endforelse
                 </div>
             </div>
+            @endif
 
             <div class="bg-slate-900 rounded-[40px] border border-slate-800 shadow-2xl overflow-hidden flex flex-col h-[600px] card-3d">
                 <div class="p-6 border-b border-slate-800 bg-slate-800/50 flex justify-between items-center">
