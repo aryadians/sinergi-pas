@@ -42,6 +42,11 @@ class AppServiceProvider extends ServiceProvider
                         'mail.from.address' => $settings->get('mail_from_address', config('mail.from.address')),
                         'mail.from.name' => $settings->get('mail_from_name', config('mail.from.name')),
                     ]);
+
+                    // Refresh mailer instance
+                    if (app()->bound('mail.manager')) {
+                        \Illuminate\Support\Facades\Mail::purge();
+                    }
                 }
             }
         } catch (\Exception $e) {
