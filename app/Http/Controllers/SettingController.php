@@ -31,9 +31,6 @@ class SettingController extends Controller
             'running_text_bg' => ['nullable', 'string', 'max:20'],
             'running_text_color' => ['nullable', 'string', 'max:20'],
             'compliance_whatsapp_number' => ['nullable', 'string', 'max:30'],
-            'meal_allowance_ii' => ['nullable', 'numeric'],
-            'meal_allowance_iii' => ['nullable', 'numeric'],
-            'meal_allowance_iv' => ['nullable', 'numeric'],
         ]);
 
         foreach ($request->except('_token') as $key => $value) {

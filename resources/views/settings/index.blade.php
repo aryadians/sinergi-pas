@@ -85,41 +85,9 @@
                         </div>
                     </div>
 
-                    <!-- Kop Surat -->
-                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 card-3d">
-                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6 flex items-center gap-2">
-                            <i data-lucide="building" class="w-4 h-4"></i>
-                            Identitas Kop Surat
-                        </h4>
-                        
-                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Instansi Utama (Baris 1)</label>
-                                    <input type="text" name="kop_line_1" id="kop_1" value="{{ $settings['kop_line_1'] ?? 'KEMENTERIAN HUKUM DAN HAM RI' }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm" onkeyup="syncKop()">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Satuan Kerja (Baris 2)</label>
-                                    <input type="text" name="kop_line_2" id="kop_2" value="{{ $settings['kop_line_2'] ?? 'LAPAS KELAS IIB JOMBANG' }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm" onkeyup="syncKop()">
-                                </div>
-                            </div>
-
-                            <div class="bg-slate-50 rounded-[32px] border border-slate-100 p-8 flex flex-col items-center justify-center">
-                                <div class="flex items-center gap-5 border-b-2 border-slate-900 pb-4 w-full">
-                                    <img src="{{ asset('logo1.png') }}" class="w-14 h-14 object-contain">
-                                    <div class="text-left">
-                                        <h2 id="preview_kop_1" class="text-[10px] font-bold text-slate-900 uppercase leading-tight">{{ $settings['kop_line_1'] ?? 'KEMENTERIAN HUKUM DAN HAM RI' }}</h2>
-                                        <h3 id="preview_kop_2" class="text-sm font-black text-slate-900 uppercase leading-tight">{{ $settings['kop_line_2'] ?? 'LAPAS KELAS IIB JOMBANG' }}</h3>
-                                    </div>
-                                </div>
-                                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-4">Preview Header Laporan</p>
-                            </div>
-                        </div>
-                    </div>
-
                     <div class="flex justify-end">
                         <button type="submit" class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all btn-3d shadow-xl">
-                            Simpan Identitas
+                            Simpan Konfigurasi Widget
                         </button>
                     </div>
                 </form>
