@@ -25,6 +25,10 @@
                     <i data-lucide="database" class="w-4 h-4"></i>
                     <span>Master Data</span>
                 </a>
+                <a href="#email" class="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 font-semibold hover:bg-white hover:border-slate-200 border border-transparent transition-all" data-nav="email">
+                    <i data-lucide="mail" class="w-4 h-4"></i>
+                    <span>Konfigurasi Email</span>
+                </a>
                 
                 <div class="pt-6">
                     <a href="{{ route('settings.health') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-50 text-blue-700 font-bold text-xs uppercase tracking-wider hover:bg-blue-100 transition-all">
@@ -331,6 +335,104 @@
                     </div>
                 </div>
             </section>
+
+            <!-- Konfigurasi Email -->
+            <section id="email" class="space-y-6 pt-10 border-t border-slate-200">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-900 uppercase tracking-widest text-xs">Konfigurasi Server Email (SMTP)</h3>
+                    <div class="flex items-center gap-2 px-3 py-1 bg-amber-50 text-amber-700 rounded-lg border border-amber-100">
+                        <i data-lucide="alert-triangle" class="w-3 h-3"></i>
+                        <span class="text-[9px] font-black uppercase tracking-widest">Penting untuk Lupa Password</span>
+                    </div>
+                </div>
+
+                <form action="{{ route('settings.update') }}" method="POST" class="space-y-6">
+                    @csrf
+                    <div class="bg-white rounded-[40px] border border-slate-200 shadow-sm p-8 card-3d">
+                        <div class="mb-8 p-6 bg-slate-50 rounded-3xl border border-slate-200 grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                            <div>
+                                <h4 class="text-xs font-black text-slate-900 uppercase tracking-widest mb-1">Driver Email Utama</h4>
+                                <p class="text-[9px] text-slate-500 font-bold uppercase tracking-tight">Pilih 'SMTP' untuk pengiriman asli, atau 'Log' untuk simulasi (debug).</p>
+                            </div>
+                            <select name="mail_mailer" class="w-full px-5 py-4 rounded-2xl border-2 border-slate-200 bg-white text-sm font-black text-blue-600 outline-none appearance-none cursor-pointer">
+                                <option value="smtp" {{ ($settings['mail_mailer'] ?? config('mail.default')) == 'smtp' ? 'selected' : '' }}>SERVER SMTP (REKOMENDASI)</option>
+                                <option value="log" {{ ($settings['mail_mailer'] ?? config('mail.default')) == 'log' ? 'selected' : '' }}>LOG FILE (HANYA SIMULASI)</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">SMTP Host</label>
+                                    <input type="text" name="mail_host" value="{{ $settings['mail_host'] ?? config('mail.mailers.smtp.host') }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm bg-slate-50" placeholder="smtp.gmail.com">
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">SMTP Port</label>
+                                        <input type="text" name="mail_port" value="{{ $settings['mail_port'] ?? config('mail.mailers.smtp.port') }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm bg-slate-50" placeholder="465">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Enkripsi</label>
+                                        <select name="mail_encryption" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm bg-slate-50 appearance-none">
+                                            <option value="ssl" {{ ($settings['mail_encryption'] ?? config('mail.mailers.smtp.encryption')) == 'ssl' ? 'selected' : '' }}>SSL</option>
+                                            <option value="tls" {{ ($settings['mail_encryption'] ?? config('mail.mailers.smtp.encryption')) == 'tls' ? 'selected' : '' }}>TLS</option>
+                                            <option value="null" {{ ($settings['mail_encryption'] ?? config('mail.mailers.smtp.encryption')) == 'null' ? 'selected' : '' }}>None</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Email Pengirim (Username)</label>
+                                    <input type="text" name="mail_username" value="{{ $settings['mail_username'] ?? config('mail.mailers.smtp.username') }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm bg-slate-50" placeholder="admin@lapasjombang.id">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Password / App Password</label>
+                                    <div class="relative">
+                                        <input type="password" name="mail_password" value="{{ $settings['mail_password'] ?? config('mail.mailers.smtp.password') }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm bg-slate-50 pr-12">
+                                        <button type="button" onclick="this.previousElementSibling.type = this.previousElementSibling.type === 'password' ? 'text' : 'password'" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-blue-500 transition-colors">
+                                            <i data-lucide="eye" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-8 pt-8 border-t border-slate-100 grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Display Name (Nama Pengirim)</label>
+                                <input type="text" name="mail_from_name" value="{{ $settings['mail_from_name'] ?? config('mail.from.name') }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm bg-slate-50" placeholder="SINERGI PAS - LAPAS JOMBANG">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-2">Display Email Address</label>
+                                <input type="text" name="mail_from_address" value="{{ $settings['mail_from_address'] ?? config('mail.from.address') }}" class="w-full px-5 py-3.5 rounded-2xl border border-slate-200 focus:border-blue-500 outline-none font-bold text-sm bg-slate-50" placeholder="noreply@sdm.lapasjombang.id">
+                            </div>
+                        </div>
+
+                        <div class="mt-8 p-6 bg-blue-50 rounded-3xl border border-blue-100 flex items-center justify-between">
+                            <div class="flex items-center gap-4">
+                                <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-blue-600 shadow-sm border border-blue-100">
+                                    <i data-lucide="send" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-xs font-black text-blue-900 uppercase tracking-widest">Uji Coba Email</h4>
+                                    <p class="text-[9px] text-blue-700 font-bold uppercase tracking-tight">Kirim email tes ke alamat Anda sendiri</p>
+                                </div>
+                            </div>
+                            <button type="button" onclick="testEmailConnection()" class="px-6 py-3 bg-blue-600 text-white rounded-xl font-bold text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg active:scale-95">
+                                Kirim Email Tes
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="px-10 py-4 bg-slate-900 text-white rounded-2xl font-bold text-xs uppercase tracking-widest hover:bg-blue-600 transition-all btn-3d shadow-xl">
+                            Simpan Konfigurasi Email
+                        </button>
+                    </div>
+                </form>
+            </section>
         </div>
     </div>
 </div>
@@ -401,6 +503,45 @@
         const kop2 = document.getElementById('kop_2').value;
         document.getElementById('preview_kop_1').innerText = kop1 || 'KEMENTERIAN HUKUM DAN HAM RI';
         document.getElementById('preview_kop_2').innerText = kop2 || 'LAPAS KELAS IIB JOMBANG';
+    }
+
+    function testEmailConnection() {
+        Swal.fire({
+            title: 'Kirim Email Tes?',
+            text: "Sistem akan mencoba mengirimkan email percobaan ke alamat email pengirim untuk memastikan konfigurasi sudah benar.",
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Kirim!',
+            customClass: { popup: 'rounded-[32px]' }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                Swal.fire({
+                    title: 'Memproses...',
+                    text: 'Sedang mencoba menghubungkan ke server email...',
+                    allowOutsideClick: false,
+                    didOpen: () => { Swal.showLoading(); }
+                });
+
+                fetch("{{ route('settings.email.test') }}", {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({ icon: 'success', title: 'Berhasil!', text: data.message, customClass: { popup: 'rounded-[32px]' } });
+                    } else {
+                        Swal.fire({ icon: 'error', title: 'Gagal!', text: data.message, customClass: { popup: 'rounded-[32px]' } });
+                    }
+                })
+                .catch(error => {
+                    Swal.fire({ icon: 'error', title: 'Error!', text: 'Terjadi kesalahan sistem saat mencoba mengirim email.', customClass: { popup: 'rounded-[32px]' } });
+                });
+            }
+        });
     }
 
     // Bulk selection logic

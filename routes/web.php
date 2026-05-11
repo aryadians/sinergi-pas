@@ -106,6 +106,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/settings/email-test', [SettingController::class, 'testEmail'])->name('settings.email.test');
 
         // Rank Management
         Route::delete('/admin/ranks/bulk', [\App\Http\Controllers\Admin\RankController::class, 'bulkDestroy'])->name('admin.ranks.bulk-destroy');

@@ -9,6 +9,7 @@ use App\Models\WorkUnit;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Mail;
 
 class SettingController extends Controller
 {
@@ -55,6 +56,28 @@ class SettingController extends Controller
         ]);
 
         return back()->with('success', 'Pengaturan berhasil diperbarui.');
+    }
+
+    public function testEmail()
+    {
+        try {
+            $to = auth()->user()->email;
+            
+            Mail::raw('Ini adalah email percobaan dari sistem Sinergi PAS Lapas Jombang. Jika Anda menerima email ini, berarti konfigurasi SMTP Anda sudah benar.', function($message) use ($to) {
+                $message->to($to)
+                        ->subject('Uji Coba Konfigurasi Email - Sinergi PAS');
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Email tes berhasil dikirim ke ' . $to . '. Silakan periksa kotak masuk atau folder spam Anda.'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengirim email: ' . $e->getMessage()
+            ]);
+        }
     }
 
     public function storePosition(Request $request)
