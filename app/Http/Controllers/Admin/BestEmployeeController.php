@@ -30,7 +30,8 @@ class BestEmployeeController extends Controller
             })
             ->get();
 
-        $rankedEmployees = [];
+        $pnsRanked = [];
+        $cpnsRanked = [];
 
         foreach ($employees as $employee) {
             // Get stats from PayrollService
@@ -43,9 +44,7 @@ class BestEmployeeController extends Controller
             $score -= ($stats['late_count'] ?? 0) * 5;
             $score -= ($stats['deduction_percentage'] ?? 0) * 2;
 
-            // Include ALL employees in the list, even if score is 0,
-            // as long as they are not superadmins.
-            $rankedEmployees[] = (object)[
+            $entry = (object)[
                 'employee' => $employee,
                 'total_present' => $stats['total_present'] ?? 0,
                 'late_count' => $stats['late_count'] ?? 0,
@@ -53,16 +52,15 @@ class BestEmployeeController extends Controller
                 'score' => $score,
                 'total_meal_allowance' => $stats['total_meal_allowance'] ?? 0,
             ];
+
+            if ($employee->is_cpns) {
+                $cpnsRanked[] = $entry;
+            } else {
+                $pnsRanked[] = $entry;
+            }
         }
 
-        // Sort by CPNS status (non-CPNS first), then by score descending, 
-        // then by total present descending, then by late ascending
-        usort($rankedEmployees, function($a, $b) {
-            // CPNS employees always go to the bottom
-            if ($a->employee->is_cpns != $b->employee->is_cpns) {
-                return $a->employee->is_cpns <=> $b->employee->is_cpns;
-            }
-
+        $sorter = function($a, $b) {
             if ($a->score !== $b->score) {
                 return $b->score <=> $a->score;
             }
@@ -70,11 +68,11 @@ class BestEmployeeController extends Controller
                 return $b->total_present <=> $a->total_present;
             }
             return $a->late_count <=> $b->late_count;
-        });
+        };
 
-        // Take all instead of top 10
-        $topEmployees = $rankedEmployees;
+        usort($pnsRanked, $sorter);
+        usort($cpnsRanked, $sorter);
 
-        return view('admin.best-employee.index', compact('topEmployees', 'monthStr', 'date'));
+        return view('admin.best-employee.index', compact('pnsRanked', 'cpnsRanked', 'monthStr', 'date'));
     }
 }
