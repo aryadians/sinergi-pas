@@ -55,8 +55,14 @@ class BestEmployeeController extends Controller
             ];
         }
 
-        // Sort by score descending, then by total present descending, then by late ascending
+        // Sort by CPNS status (non-CPNS first), then by score descending, 
+        // then by total present descending, then by late ascending
         usort($rankedEmployees, function($a, $b) {
+            // CPNS employees always go to the bottom
+            if ($a->employee->is_cpns != $b->employee->is_cpns) {
+                return $a->employee->is_cpns <=> $b->employee->is_cpns;
+            }
+
             if ($a->score !== $b->score) {
                 return $b->score <=> $a->score;
             }
