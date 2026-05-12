@@ -23,6 +23,7 @@ class BestEmployeeController extends Controller
         $monthStr = $request->month ?? now()->format('Y-m');
         $date = Carbon::parse($monthStr . '-01');
         
+        // Get all employees, excluding superadmins
         $employees = Employee::with(['rank_relation', 'work_unit', 'user'])
             ->whereHas('user', function($q) {
                 $q->where('role', '!=', 'superadmin');
@@ -37,33 +38,21 @@ class BestEmployeeController extends Controller
 
             $score = 0;
             
-            // Formula for score:
-            // Base points for attendance: +10 per valid day
-            // Penalty for late: -5 per late
-            // Penalty for deductions: - (deduction_percentage * 2)
+            // Formula for score
             $score += ($stats['total_present'] ?? 0) * 10;
             $score -= ($stats['late_count'] ?? 0) * 5;
             $score -= ($stats['deduction_percentage'] ?? 0) * 2;
 
-            // Only consider employees who have some attendance
-            $validAttendance = Attendance::where('employee_id', $employee->id)
-                ->whereBetween('date', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
-                ->where(function($query) {
-                    $query->whereIn('status', ['present', 'late', 'picket', 'duty_full', 'duty_half'])
-                          ->orWhereIn('status_2', ['present', 'late', 'picket', 'duty_full', 'duty_half']);
-                })
-                ->exists();
-
-            if ($validAttendance) {
-                $rankedEmployees[] = (object)[
-                    'employee' => $employee,
-                    'total_present' => $stats['total_present'] ?? 0,
-                    'late_count' => $stats['late_count'] ?? 0,
-                    'deduction_percentage' => $stats['deduction_percentage'] ?? 0,
-                    'score' => $score,
-                    'total_meal_allowance' => $stats['total_meal_allowance'] ?? 0,
-                ];
-            }
+            // Include ALL employees in the list, even if score is 0,
+            // as long as they are not superadmins.
+            $rankedEmployees[] = (object)[
+                'employee' => $employee,
+                'total_present' => $stats['total_present'] ?? 0,
+                'late_count' => $stats['late_count'] ?? 0,
+                'deduction_percentage' => $stats['deduction_percentage'] ?? 0,
+                'score' => $score,
+                'total_meal_allowance' => $stats['total_meal_allowance'] ?? 0,
+            ];
         }
 
         // Sort by score descending, then by total present descending, then by late ascending
