@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Attendance;
 use App\Models\Employee;
 use App\Services\PayrollService;
 use Carbon\Carbon;
@@ -45,7 +46,15 @@ class BestEmployeeController extends Controller
             $score -= ($stats['deduction_percentage'] ?? 0) * 2;
 
             // Only consider employees who have some attendance
-            if (($stats['total_present'] ?? 0) > 0) {
+            $validAttendance = Attendance::where('employee_id', $employee->id)
+                ->whereBetween('date', [$date->copy()->startOfMonth(), $date->copy()->endOfMonth()])
+                ->where(function($query) {
+                    $query->whereIn('status', ['present', 'late', 'picket', 'duty_full', 'duty_half'])
+                          ->orWhereIn('status_2', ['present', 'late', 'picket', 'duty_full', 'duty_half']);
+                })
+                ->exists();
+
+            if ($validAttendance) {
                 $rankedEmployees[] = (object)[
                     'employee' => $employee,
                     'total_present' => $stats['total_present'] ?? 0,
