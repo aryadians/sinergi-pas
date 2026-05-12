@@ -94,6 +94,11 @@ class PayrollService
             if ($isFuture) {
                 continue; // Do not process or log future dates
             }
+
+            // PERBAIKAN: Jangan hitung sebelum pegawai dibuat di sistem
+            if ($employee->created_at && $currentDateObj->isBefore($employee->created_at->startOfDay())) {
+                continue;
+            }
             
             $attendance = $attendances->get($currentDate);
             $schedules = $this->scheduleService->getAllSchedulesForDay($employee, $currentDate);
@@ -143,6 +148,11 @@ class PayrollService
                         $checkInStr = $attendance->check_in ? (is_string($attendance->check_in) ? $attendance->check_in : $attendance->check_in->format('H:i:s')) : null;
                         $checkOutStr = $attendance->check_out ? (is_string($attendance->check_out) ? $attendance->check_out : $attendance->check_out->format('H:i:s')) : null;
                         $status = $attendance->status !== 'absent' ? $attendance->status : $status;
+                    }
+                } else {
+                    // PERBAIKAN: Jika tidak ada record absensi dan ini hari kerja, maka absent
+                    if (!$isOff && in_array($status, ['present', 'picket'])) {
+                        $status = 'absent';
                     }
                 }
 
