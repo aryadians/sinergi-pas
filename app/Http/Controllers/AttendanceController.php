@@ -10,6 +10,7 @@ use App\Models\SquadSchedule;
 use App\Models\Setting;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use Barryvdh\DomPDF\Facade\Pdf;
