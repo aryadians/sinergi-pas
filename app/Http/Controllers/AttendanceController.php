@@ -619,6 +619,26 @@ class AttendanceController extends Controller
                 'endDate' => $endDate,
                 'workUnit' => $workUnit
             ])->setPaper('a4', 'landscape')->download("rekap-absensi.pdf");
+        } elseif ($filter === 'individual') {
+            $emp = Employee::with('rank_relation')->findOrFail($request->employee_id);
+            $start = Carbon::parse($startDate);
+            $end = Carbon::parse($endDate);
+            $logs = Attendance::where('employee_id', $emp->id)
+                ->whereBetween('date', [$startDate, $endDate])
+                ->orderBy('date')
+                ->get();
+            
+            $reportTitle = "ABSENSI PEGAWAI: " . strtoupper($emp->full_name) . " (" . $start->format('d/m/Y') . " - " . $end->format('d/m/Y') . ")";
+            $filename = "absensi-" . Str::slug($emp->full_name) . ".xlsx";
+
+            if ($type === 'excel') return $this->exportExcelIndividual($emp, $logs, $reportTitle, $filename);
+            
+            if (ob_get_length()) ob_end_clean();
+            return Pdf::loadView('admin.attendance.pdf-individual', [
+                'emp' => $emp,
+                'logs' => $logs,
+                'reportTitle' => $reportTitle
+            ])->setPaper('a4', 'portrait')->download("absensi-{$emp->nip}.pdf");
         }
     }
 
