@@ -593,9 +593,21 @@ class AttendanceController extends Controller
                 return (object)['full_name' => strtoupper($emp->full_name), 'nip' => $emp->nip, 'present_count' => $presentCount, 'late_count' => $lateCount, 'total_allowance' => $totalAllowance];
             });
             $reportTitle = "REKAP ABSENSI (" . $start->format('d/m/Y') . " - " . $end->format('d/m/Y') . ")";
+            
+            $workUnit = null;
+            if ($request->filled('work_unit_id')) {
+                $workUnit = \App\Models\WorkUnit::find($request->work_unit_id);
+            }
+
             if ($type === 'excel') return $this->exportExcelMonthly($data, $reportTitle, "rekap-absensi.xlsx");
             if (ob_get_length()) ob_end_clean();
-            return Pdf::loadView('admin.attendance.pdf-monthly', ['logs' => $data, 'reportTitle' => $reportTitle, 'startDate' => $startDate, 'endDate' => $endDate])->setPaper('a4', 'landscape')->download("rekap-absensi.pdf");
+            return Pdf::loadView('admin.attendance.pdf-monthly', [
+                'logs' => $data, 
+                'reportTitle' => $reportTitle, 
+                'startDate' => $startDate, 
+                'endDate' => $endDate,
+                'workUnit' => $workUnit
+            ])->setPaper('a4', 'landscape')->download("rekap-absensi.pdf");
         }
     }
 
