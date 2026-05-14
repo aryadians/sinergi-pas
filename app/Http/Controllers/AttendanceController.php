@@ -579,6 +579,7 @@ class AttendanceController extends Controller
                 $presentCount = 0;
                 $lateCount = 0;
                 $totalAllowance = 0;
+                $absentCount = 0;
                 
                 foreach ($atts as $att) {
                     if (!in_array($att->status, ['absent'])) $presentCount++;
@@ -587,10 +588,20 @@ class AttendanceController extends Controller
                     if ($att->status === 'late') $lateCount++;
                     if ($att->status_2 === 'late') $lateCount++;
                     
+                    if ($att->status === 'absent') $absentCount++;
+                    if ($att->status_2 === 'absent') $absentCount++;
+                    
                     $totalAllowance += $att->allowance_amount + $att->allowance_amount_2;
                 }
                 
-                return (object)['full_name' => strtoupper($emp->full_name), 'nip' => $emp->nip, 'present_count' => $presentCount, 'late_count' => $lateCount, 'total_allowance' => $totalAllowance];
+                return (object)[
+                    'full_name' => strtoupper($emp->full_name), 
+                    'nip' => $emp->nip, 
+                    'present_count' => $presentCount, 
+                    'late_count' => $lateCount, 
+                    'absent_count' => $absentCount,
+                    'total_allowance' => $totalAllowance
+                ];
             });
             $reportTitle = "REKAP ABSENSI (" . $start->format('d/m/Y') . " - " . $end->format('d/m/Y') . ")";
             
